@@ -1,7 +1,5 @@
 import 'package:directus_api_manager/directus_api_manager.dart';
 import 'package:directus_api_manager/src/directus_api.dart';
-import 'package:directus_api_manager/src/filter.dart';
-import 'package:directus_api_manager/src/model/directus_user.dart';
 import 'package:http/http.dart';
 
 class DirectusApiManager {
@@ -166,5 +164,12 @@ class DirectusApiManager {
         _api.prepareUpdateItemRequest(typeName, objectId, objectData);
     final response = await _sendRequest(request);
     return jsonConverter(_api.parseUpdateItemResponse(response));
+  }
+
+  Future<bool> deleteItem(
+      {required String typeName, required String objectId}) async {
+    final request = _api.prepareDeleteItemRequest(typeName, objectId);
+    final response = await _sendRequest(request);
+    return _api.parseDeleteItemResponse(response);
   }
 }

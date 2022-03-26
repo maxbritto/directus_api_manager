@@ -41,6 +41,9 @@ abstract class IDirectusAPI {
       String itemName, String itemId, Map<String, dynamic> objectData);
   dynamic parseUpdateItemResponse(Response response);
 
+  Request prepareDeleteItemRequest(String itemName, String itemId);
+  bool parseDeleteItemResponse(Response response);
+
   Future<Request?> prepareRefreshTokenRequest();
   Request? parseRefreshTokenResponse(
       Response response, Request? pendingRequest);
@@ -381,6 +384,20 @@ class DirectusAPI implements IDirectusAPI {
     request.body = jsonEncode(updatedUser.allProperties..remove("id"));
     request.addJsonHeaders();
     return _authenticateRequest(request);
+  }
+
+  @override
+  bool parseDeleteItemResponse(Response response) {
+    if (response.statusCode < 200 || response.statusCode > 299) {
+      throw Exception(
+          "Server denied this action HTTP code : ${response.statusCode}. ${response.reasonPhrase}. ${response.toString()}");
+    }
+    return true;
+  }
+
+  @override
+  Request prepareDeleteItemRequest(String itemName, String itemId) {
+    return Request("DELETE", Uri.parse("$_baseURL/items/$itemName/$itemId"));
   }
 }
 

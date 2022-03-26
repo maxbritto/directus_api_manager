@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:directus_api_manager/directus_api_manager.dart';
 import 'package:directus_api_manager/src/directus_api.dart';
-import 'package:directus_api_manager/src/filter.dart';
 import 'package:http/http.dart';
 import 'package:test/test.dart';
 
@@ -110,6 +109,27 @@ void main() {
       final jsonParsedBody = jsonDecode(request.body);
       expect(jsonParsedBody["title"], "Let's dance");
       expect(jsonParsedBody["pageCount"], 9);
+    });
+
+    test('Delete Item request', () {
+      final sut = makeAuthenticatedDirectusAPI();
+      final request = sut.prepareDeleteItemRequest("articles", "abc-123");
+      expect(request.url.toString(), "http://api.com/items/articles/abc-123");
+      expect(request.method, "DELETE");
+    });
+    test('Delete Item ok responses', () {
+      final sut = makeAuthenticatedDirectusAPI();
+
+      expect(sut.parseDeleteItemResponse(Response("", 200)), true);
+      expect(sut.parseDeleteItemResponse(Response("", 299)), true);
+    });
+    test('Delete Item denied responses', () {
+      final sut = makeAuthenticatedDirectusAPI();
+
+      expect(() => sut.parseDeleteItemResponse(Response("", 300)),
+          throwsException);
+      expect(() => sut.parseDeleteItemResponse(Response("", 400)),
+          throwsException);
     });
   });
   group('DirectusAPI Users management', () {
