@@ -69,9 +69,13 @@ class DirectusApiManager {
   }
 
   Future<DirectusUser?> currentDirectusUser() async {
-    final request = _api.prepareGetCurrentUserRequest();
-    final response = await _sendRequest(request);
-    return _api.parseUserResponse(response);
+    if (await hasLoggedInUser()) {
+      final request = _api.prepareGetCurrentUserRequest();
+      final response = await _sendRequest(request);
+      return _api.parseUserResponse(response);
+    } else {
+      return Future.value(null);
+    }
   }
 
   Future<DirectusUser?> getDirectusUser(String userId,

@@ -77,9 +77,47 @@ class MockHTTPClient implements Client {
 
 main() {
   test('Empty manager does not have a logged in user', () async {
-    final sut = DirectusApiManager(
-        baseURL: "http://api.com", httpClient: MockHTTPClient());
+    final mockClient = MockHTTPClient();
+    final sut =
+        DirectusApiManager(baseURL: "http://api.com", httpClient: mockClient);
     expect(await sut.hasLoggedInUser(), false);
+    mockClient.addStreamResponse(body: "", statusCode: 401);
+    expect(await sut.currentDirectusUser(), isNull);
+  });
+
+  test(
+      'Empty manager with successfull refresh token load should be able to load current user',
+      () async {
+    final mockClient = MockHTTPClient();
+    final sut = DirectusApiManager(
+      baseURL: "http://api.com",
+      httpClient: mockClient,
+      loadRefreshTokenCallback: () =>
+          Future.delayed(Duration(milliseconds: 100), () => "SAVED.TOKEN"),
+    );
+    expect(await sut.hasLoggedInUser(), true);
+    mockClient.addStreamResponse(body: """
+{
+  "data": {
+    "id": "d0ac583c-aa0c-444e-afe6-4e6c31f6fd02",
+    "first_name": "Will",
+    "last_name": "McAvoy",
+    "email": "will@acn.com",
+    "password": "**********",
+    "description": null,
+    "status": "active",
+    "role": "abc-123-abc",
+    "token": null,
+    "external_identifier": null,
+    "schools": [
+      1
+    ]
+  }
+}
+""");
+    final currentUser = await sut.currentDirectusUser();
+    expect(currentUser, isNotNull);
+    expect(currentUser?.email, "will@acn.com");
   });
 
   test('Manager with logged in user', () async {
