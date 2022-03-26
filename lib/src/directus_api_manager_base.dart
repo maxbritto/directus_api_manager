@@ -43,6 +43,8 @@ class DirectusApiManager {
     return response;
   }
 
+  Client get client => _client;
+
   Future<bool> hasLoggedInUser() async {
     return await _api.prepareRefreshTokenRequest() != null;
   }
