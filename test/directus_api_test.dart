@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:directus_api_manager/directus_api_manager.dart';
 import 'package:directus_api_manager/src/directus_api.dart';
@@ -275,11 +276,9 @@ void main() {
       final refreshResponse = Response("""
       {"data":{"access_token":"NEW.ACCESS.TOKEN","expires":900000,"refresh_token":"NEW.REFRESH.TOKEN"}}
       """, 200);
-      final newPendingReuqest =
-          sut.parseRefreshTokenResponse(refreshResponse, pendingRequest);
-      expect(newPendingReuqest, isNotNull);
-      expect(newPendingReuqest?.headers["Authorization"],
-          "Bearer NEW.ACCESS.TOKEN");
+      final newPendingRequest = sut.parseRefreshTokenResponse(refreshResponse);
+      expect(newPendingRequest, isTrue);
+
       expect(sut.accessToken, "NEW.ACCESS.TOKEN");
       expect(sut.refreshToken, "NEW.REFRESH.TOKEN");
       expect(savedToken, "NEW.REFRESH.TOKEN",
@@ -296,7 +295,7 @@ void main() {
       final response = Response("""
       {"errors":[{"message":"Invalid user credentials.","extensions":{"code":"INVALID_CREDENTIALS"}}]}
       """, 401);
-      expect(sut.parseRefreshTokenResponse(response, pendingRequest), isNull);
+      expect(sut.parseRefreshTokenResponse(response), isFalse);
       expect(sut.accessToken, isNull);
       expect(sut.refreshToken, isNull);
       expect(sut.shouldRefreshToken, false);
@@ -312,7 +311,7 @@ void main() {
       final response = Response("""
       {"errors":[{"message":"Invalid user credentials.","extensions":{"code":"INVALID_CREDENTIALS"}}]}
       """, 401);
-      expect(sut.parseRefreshTokenResponse(response, pendingRequest), isNull);
+      expect(sut.parseRefreshTokenResponse(response), isFalse);
       expect(sut.accessToken, isNull);
       expect(sut.refreshToken, isNull);
       expect(sut.shouldRefreshToken, false);

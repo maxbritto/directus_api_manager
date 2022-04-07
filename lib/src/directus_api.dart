@@ -5,19 +5,21 @@ import 'package:directus_api_manager/src/model/directus_login_result.dart';
 import 'package:directus_api_manager/src/model/directus_user.dart';
 import 'package:directus_api_manager/src/sort_property.dart';
 import 'package:http/http.dart';
+import 'package:http_parser/http_parser.dart';
 
 abstract class IDirectusAPI {
   bool get hasLoggedInUser;
   bool get shouldRefreshToken;
 
-  Request prepareGetSpecificUserRequest(String userId, {String fields = "*"});
-  Request prepareGetCurrentUserRequest();
+  BaseRequest prepareGetSpecificUserRequest(String userId,
+      {String fields = "*"});
+  BaseRequest prepareGetCurrentUserRequest();
   DirectusUser parseUserResponse(Response response);
 
-  Request prepareUpdateUserRequest(DirectusUser updatedUser);
-  Request prepareGetUserListRequest();
+  BaseRequest prepareUpdateUserRequest(DirectusUser updatedUser);
+  BaseRequest prepareGetUserListRequest();
   Iterable<DirectusUser> parseUserListResponse(Response response);
-  Request prepareCreateUserRequest(
+  BaseRequest prepareCreateUserRequest(
       {required String email,
       required String password,
       String? firstname,
@@ -25,11 +27,11 @@ abstract class IDirectusAPI {
       String? roleUUID,
       Map<String, dynamic> otherProperties = const {}});
 
-  Request prepareGetListOfItemsRequest(String itemName,
+  BaseRequest prepareGetListOfItemsRequest(String itemName,
       {String fields = "*", Filter? filter, List<SortProperty>? sortBy});
   Iterable<dynamic> parseGetListOfItemsResponse(Response response);
 
-  Request prepareGetSpecificItemRequest(String itemName, String itemId,
+  BaseRequest prepareGetSpecificItemRequest(String itemName, String itemId,
       {String fields = "*"});
   dynamic parseGetSpecificItemResponse(Response response);
 
@@ -41,14 +43,13 @@ abstract class IDirectusAPI {
       String itemName, String itemId, Map<String, dynamic> objectData);
   dynamic parseUpdateItemResponse(Response response);
 
-  Request prepareDeleteItemRequest(String itemName, String itemId);
+  BaseRequest prepareDeleteItemRequest(String itemName, String itemId);
   bool parseDeleteItemResponse(Response response);
 
   Future<Request?> prepareRefreshTokenRequest();
-  Request? parseRefreshTokenResponse(
-      Response response, Request? pendingRequest);
+  bool parseRefreshTokenResponse(Response response);
 
-  Request? prepareLogoutRequest();
+  BaseRequest? prepareLogoutRequest();
   bool parseLogoutResponse(Response response);
 
   Request prepareLoginRequest(String username, String password);
@@ -63,6 +64,11 @@ class DirectusApiError {
   final String? customMessage;
 
   DirectusApiError({this.response, this.customMessage});
+
+  @override
+  String toString() {
+    return "DirectusApiError : $customMessage : ${response?.statusCode} ${response?.body} ${response?.headers}";
+  }
 }
 
 class DirectusAPI implements IDirectusAPI {
@@ -88,10 +94,20 @@ class DirectusAPI implements IDirectusAPI {
   String? get refreshToken => _refreshToken;
 
   @override
-  bool get hasLoggedInUser => _refreshToken != null;
+  bool get hasLoggedInUser => _refreshToken != null && _accessToken != null;
   @override
-  bool get shouldRefreshToken =>
-      _accessTokenExpirationDate?.isBefore(DateTime.now()) ?? hasLoggedInUser;
+  bool get shouldRefreshToken {
+    bool shouldRefresh = false;
+    if (_refreshToken != null) {
+      final accessTokenExpirationDate = _accessTokenExpirationDate;
+      if (_accessToken == null ||
+          (accessTokenExpirationDate != null &&
+              accessTokenExpirationDate.isBefore(DateTime.now()))) {
+        shouldRefresh = true;
+      }
+    }
+    return shouldRefresh;
+  }
 
   @override
   Request prepareLoginRequest(String username, String password) {
@@ -184,7 +200,7 @@ class DirectusAPI implements IDirectusAPI {
     return request;
   }
 
-  Request _authenticateRequest(Request request) {
+  BaseRequest _authenticateRequest(BaseRequest request) {
     final accessToken = _accessToken;
     if (accessToken != null) {
       request.headers["Authorization"] = "Bearer $accessToken";
@@ -193,19 +209,9 @@ class DirectusAPI implements IDirectusAPI {
   }
 
   @override
-  Request? parseRefreshTokenResponse(
-      Response response, Request? pendingRequest) {
+  bool parseRefreshTokenResponse(Response response) {
     final responseParsingResult = parseLoginResponse(response);
-    if (responseParsingResult.type == DirectusLoginResultType.success) {
-      if (pendingRequest != null) {
-        Request newRequest = Request(pendingRequest.method, pendingRequest.url);
-        newRequest.headers.addAll(pendingRequest.headers);
-        pendingRequest = _authenticateRequest(newRequest);
-      }
-    } else {
-      pendingRequest = null;
-    }
-    return pendingRequest;
+    return responseParsingResult.type == DirectusLoginResultType.success;
   }
 
   @override
@@ -244,7 +250,7 @@ class DirectusAPI implements IDirectusAPI {
   }
 
   @override
-  Request prepareGetListOfItemsRequest(String itemName,
+  BaseRequest prepareGetListOfItemsRequest(String itemName,
       {String fields = "*", Filter? filter, List<SortProperty>? sortBy}) {
     return _prepareGetRequest("/items/$itemName",
         filter: filter, fields: fields, sortBy: sortBy);
@@ -255,7 +261,7 @@ class DirectusAPI implements IDirectusAPI {
     return _parseGenericResponse(response);
   }
 
-  Request _prepareGetRequest(String path,
+  BaseRequest _prepareGetRequest(String path,
       {String fields = "*", Filter? filter, List<SortProperty>? sortBy}) {
     final urlBuilder = StringBuffer(_baseURL + "$path?fields=$fields");
     if (filter != null) {
@@ -269,7 +275,7 @@ class DirectusAPI implements IDirectusAPI {
   }
 
   @override
-  Request prepareGetSpecificItemRequest(String itemName, String itemId,
+  BaseRequest prepareGetSpecificItemRequest(String itemName, String itemId,
       {String fields = "*"}) {
     return _prepareGetRequest("/items/$itemName/$itemId", fields: fields);
   }
@@ -303,7 +309,7 @@ class DirectusAPI implements IDirectusAPI {
     Request request = Request("POST", Uri.parse(_baseURL + "/items/$itemName"));
     request.body = jsonEncode(objectData);
     request.addJsonHeaders();
-    return _authenticateRequest(request);
+    return _authenticateRequest(request) as Request;
   }
 
   @override
@@ -313,7 +319,7 @@ class DirectusAPI implements IDirectusAPI {
         Request("PATCH", Uri.parse(_baseURL + "/items/$itemName/$itemId"));
     request.body = jsonEncode(objectData);
     request.addJsonHeaders();
-    return _authenticateRequest(request);
+    return _authenticateRequest(request) as Request;
   }
 
   @override
@@ -327,12 +333,13 @@ class DirectusAPI implements IDirectusAPI {
   }
 
   @override
-  Request prepareGetCurrentUserRequest() {
+  BaseRequest prepareGetCurrentUserRequest() {
     return prepareGetSpecificUserRequest("me");
   }
 
   @override
-  Request prepareGetSpecificUserRequest(String userId, {String fields = "*"}) {
+  BaseRequest prepareGetSpecificUserRequest(String userId,
+      {String fields = "*"}) {
     return _prepareGetRequest("/users/$userId", fields: fields);
   }
 
@@ -343,7 +350,7 @@ class DirectusAPI implements IDirectusAPI {
   }
 
   @override
-  Request prepareGetUserListRequest() {
+  BaseRequest prepareGetUserListRequest() {
     return _prepareGetRequest("/users");
   }
 
@@ -374,7 +381,7 @@ class DirectusAPI implements IDirectusAPI {
     }
     request.body = jsonEncode(userProperties);
     request.addJsonHeaders();
-    return _authenticateRequest(request);
+    return _authenticateRequest(request) as Request;
   }
 
   @override
@@ -383,16 +390,20 @@ class DirectusAPI implements IDirectusAPI {
         Request("PATCH", Uri.parse(_baseURL + "/users/" + updatedUser.id));
     request.body = jsonEncode(updatedUser.allProperties..remove("id"));
     request.addJsonHeaders();
-    return _authenticateRequest(request);
+    return _authenticateRequest(request) as Request;
   }
 
   @override
   bool parseDeleteItemResponse(Response response) {
+    _throwIfServerDeniedRequest(response);
+    return true;
+  }
+
+  void _throwIfServerDeniedRequest(Response response) {
     if (response.statusCode < 200 || response.statusCode > 299) {
       throw Exception(
-          "Server denied this action HTTP code : ${response.statusCode}. ${response.reasonPhrase}. ${response.toString()}");
+          "Server denied this action HTTP code : ${response.statusCode}. ${response.reasonPhrase}. ${response.body}");
     }
-    return true;
   }
 
   @override
