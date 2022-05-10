@@ -1,10 +1,10 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:directus_api_manager/directus_api_manager.dart';
 import 'package:directus_api_manager/src/directus_api.dart';
 import 'package:http/http.dart';
 import 'package:test/test.dart';
+import 'package:http_parser/http_parser.dart';
 
 void main() {
   const defaultAccessToken = "ABCD.1234.ABCD";
@@ -556,6 +556,56 @@ void main() {
       expect(jsonParsedBody["email"], "will@acn.com");
       expect(jsonParsedBody["first_name"], "Will");
       expect(jsonParsedBody["score"], 23);
+    });
+  });
+
+  group("DirectusAPI : Files", () {
+    test("prepareNewFileUploadRequest", () {
+      final sut = makeAuthenticatedDirectusAPI();
+      final request = sut.prepareNewFileUploadRequest(
+          fileBytes: [1, 2, 3], filename: "file.txt");
+      expect(request, isA<MultipartRequest>());
+      final multipartRequest = request as MultipartRequest;
+      expect(multipartRequest.files.length, 1);
+      final uploadedFileData = multipartRequest.files[0];
+      expect(uploadedFileData.filename, "file.txt");
+    });
+    test("contentType", () {
+      final sut = makeAuthenticatedDirectusAPI();
+      final request = sut.prepareNewFileUploadRequest(
+          fileBytes: [1, 2, 3], contentType: "image/jpg", filename: "file.txt");
+      expect(request, isA<MultipartRequest>());
+      final multipartRequest = request as MultipartRequest;
+      expect(multipartRequest.files[0].contentType.mimeType, "image/jpg");
+    });
+    test("wildcard contentType", () {
+      final sut = makeAuthenticatedDirectusAPI();
+      final request = sut.prepareNewFileUploadRequest(
+          fileBytes: [1, 2, 3], contentType: "image/*", filename: "file.txt");
+      expect(request, isA<MultipartRequest>());
+      final multipartRequest = request as MultipartRequest;
+      expect(multipartRequest.files[0].contentType.mimeType, "image/*");
+    });
+    test("Title", () {
+      final sut = makeAuthenticatedDirectusAPI();
+      final request = sut.prepareNewFileUploadRequest(
+          fileBytes: [1, 2, 3], title: "File title", filename: "file.txt");
+      expect(request, isA<MultipartRequest>());
+      final multipartRequest = request as MultipartRequest;
+      expect(multipartRequest.fields["title"], "File title");
+    });
+    test("File import from URL", () {
+      final sut = makeAuthenticatedDirectusAPI();
+      final request = sut.prepareFileImportRequest(
+          url: "https://www.purplegiraffe.fr/image.png", title: "File title");
+
+      expect(request.url.toString(), "http://api.com/files/import");
+      expect(request.method, "POST");
+      expect(
+          request.headers["Content-Type"], "application/json; charset=utf-8");
+      final json = jsonDecode(request.body);
+      expect(json["url"], "https://www.purplegiraffe.fr/image.png");
+      expect(json["data"]["title"], "File title");
     });
   });
 }

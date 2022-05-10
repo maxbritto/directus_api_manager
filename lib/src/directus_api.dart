@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:directus_api_manager/src/filter.dart';
+import 'package:directus_api_manager/src/model/directus_file.dart';
 import 'package:directus_api_manager/src/model/directus_login_result.dart';
 import 'package:directus_api_manager/src/model/directus_user.dart';
 import 'package:directus_api_manager/src/sort_property.dart';
@@ -57,6 +58,22 @@ abstract class IDirectusAPI {
 
   Request prepareUserInviteRequest(String email, String roleId);
   bool parseUserInviteResponse(Response response);
+
+  Request prepareFileImportRequest({required String url, String? title});
+  BaseRequest prepareNewFileUploadRequest(
+      {required List<int> fileBytes,
+      String? title,
+      String? contentType,
+      required String filename});
+  BaseRequest prepareUpdateFileRequest(
+      {required fileId,
+      List<int>? fileBytes,
+      String? title,
+      String? contentType,
+      required String filename});
+  DirectusFile parseFileUploadResponse(Response response);
+
+  String convertPathToFullURL({required String path});
 }
 
 class DirectusApiError {
@@ -409,6 +426,72 @@ class DirectusAPI implements IDirectusAPI {
   @override
   Request prepareDeleteItemRequest(String itemName, String itemId) {
     return Request("DELETE", Uri.parse("$_baseURL/items/$itemName/$itemId"));
+  }
+
+  @override
+  DirectusFile parseFileUploadResponse(Response response) {
+    _throwIfServerDeniedRequest(response);
+    return DirectusFile.fromJSON(jsonDecode(response.body)["data"]);
+  }
+
+  @override
+  BaseRequest prepareNewFileUploadRequest(
+      {required List<int> fileBytes,
+      String? title,
+      String? contentType,
+      required String filename}) {
+    return _prepareMultipartFileRequest(
+        "POST", "$_baseURL/files", fileBytes, title,
+        contentType: contentType, filename: filename);
+  }
+
+  MultipartRequest _prepareMultipartFileRequest(
+      String method, String url, List<int>? fileBytes, String? title,
+      {String? contentType, required String filename}) {
+    final request = MultipartRequest(method, Uri.parse(url));
+    if (title != null) {
+      request.fields["title"] = title;
+    }
+    if (fileBytes != null) {
+      request.files.add(MultipartFile.fromBytes("file", fileBytes,
+          filename: filename,
+          contentType:
+              contentType != null ? MediaType.parse(contentType) : null));
+    }
+    return _authenticateRequest(request) as MultipartRequest;
+  }
+
+  @override
+  BaseRequest prepareUpdateFileRequest(
+      {required fileId,
+      List<int>? fileBytes,
+      String? title,
+      String? contentType,
+      required String filename}) {
+    return _prepareMultipartFileRequest(
+        "PATCH", "$_baseURL/files/$fileId", fileBytes, title,
+        contentType: contentType, filename: filename);
+  }
+
+  @override
+  Request prepareFileImportRequest({required String url, String? title}) {
+    final request = Request("POST", Uri.parse("$_baseURL/files/import"));
+    request.body = jsonEncode({
+      "url": url,
+      "data": {"title": title}
+    });
+    request.addJsonHeaders();
+    return request;
+  }
+
+  @override
+  String convertPathToFullURL({required String path}) {
+    final buffer = StringBuffer(_baseURL);
+    if (_baseURL.endsWith("/") == false && path.startsWith("/") == false) {
+      buffer.write("/");
+    }
+    buffer.write(path);
+    return buffer.toString();
   }
 }
 

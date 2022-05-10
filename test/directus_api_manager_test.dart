@@ -10,11 +10,11 @@ import 'package:test/scaffolding.dart';
 class MockHTTPClient implements Client {
   final List<dynamic> _responses = [];
 
-  dynamic _nextResponse() {
+  dynamic _popNextResponse() {
     if (_responses.isEmpty) {
       return Response("", 200);
     }
-    return _responses.removeLast();
+    return _responses.removeAt(0);
   }
 
   addStreamResponse({required String body, int statusCode = 200}) {
@@ -28,50 +28,51 @@ class MockHTTPClient implements Client {
   @override
   Future<Response> delete(Uri url,
       {Map<String, String>? headers, Object? body, Encoding? encoding}) async {
-    return _nextResponse();
+    return _popNextResponse();
   }
 
   @override
   Future<Response> get(Uri url, {Map<String, String>? headers}) async {
-    return _nextResponse();
+    return _popNextResponse();
   }
 
   @override
   Future<Response> head(Uri url, {Map<String, String>? headers}) async {
-    return _nextResponse();
+    return _popNextResponse();
   }
 
   @override
   Future<Response> patch(Uri url,
       {Map<String, String>? headers, Object? body, Encoding? encoding}) async {
-    return _nextResponse();
+    return _popNextResponse();
   }
 
   @override
   Future<Response> post(Uri url,
       {Map<String, String>? headers, Object? body, Encoding? encoding}) async {
-    return _nextResponse();
+    return _popNextResponse();
   }
 
   @override
   Future<Response> put(Uri url,
       {Map<String, String>? headers, Object? body, Encoding? encoding}) async {
-    return _nextResponse();
+    return _popNextResponse();
   }
 
   @override
   Future<String> read(Uri url, {Map<String, String>? headers}) async {
-    return _nextResponse();
+    return _popNextResponse();
   }
 
   @override
   Future<Uint8List> readBytes(Uri url, {Map<String, String>? headers}) async {
-    return _nextResponse();
+    return _popNextResponse();
   }
 
   @override
   Future<StreamedResponse> send(BaseRequest request) async {
-    return _nextResponse();
+    final response = _popNextResponse();
+    return response;
   }
 }
 
@@ -96,6 +97,9 @@ main() {
           Future.delayed(Duration(milliseconds: 100), () => "SAVED.TOKEN"),
     );
     expect(await sut.hasLoggedInUser(), true);
+    mockClient.addStreamResponse(
+        body:
+            '{"data":{"access_token":"NEW.ACCESS.TOKEN","expires":900000,"refresh_token":"NEW.REFRESH.TOKEN"}}');
     mockClient.addStreamResponse(body: """
 {
   "data": {

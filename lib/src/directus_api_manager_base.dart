@@ -14,7 +14,9 @@ class DirectusApiManager {
       : _client = httpClient,
         _api = DirectusAPI(baseURL,
             saveRefreshTokenCallback: saveRefreshTokenCallback,
-            loadRefreshTokenCallback: loadRefreshTokenCallback);
+            loadRefreshTokenCallback: loadRefreshTokenCallback) {
+    DirectusFile.baseUrl = baseURL;
+  }
 
   /// Handles request preparation, sending and parsing.
   ///
@@ -187,5 +189,43 @@ class DirectusApiManager {
         parseResponse: (response) => _api.parseDeleteItemResponse(response));
   }
 
+  Future<DirectusFile> uploadFileFromUrl(
+      {required String remoteUrl, String? title}) async {
+    return _sendRequest(
+        prepareRequest: () =>
+            _api.prepareFileImportRequest(url: remoteUrl, title: title),
+        parseResponse: (response) => _api.parseFileUploadResponse(response));
+  }
+
+  Future<DirectusFile> uploadFile(
+      {required List<int> fileBytes,
+      required String filename,
+      String? title,
+      String? contentType}) {
+    return _sendRequest(
+        prepareRequest: () => _api.prepareNewFileUploadRequest(
+            fileBytes: fileBytes,
+            filename: filename,
+            title: title,
+            contentType: contentType),
+        parseResponse: (response) => _api.parseFileUploadResponse(response));
+  }
+
+  Future<DirectusFile> updateExistingFile(
+      {required List<int> fileBytes,
+      required String fileId,
+      required String filename,
+      String? contentType}) {
+    return _sendRequest(
+        prepareRequest: () => _api.prepareUpdateFileRequest(
+            fileId: fileId,
+            filename: filename,
+            fileBytes: fileBytes,
+            contentType: contentType),
+        parseResponse: (response) => _api.parseFileUploadResponse(response));
+  }
+
+  String convertPathToFullURL({required String path}) {
+    return _api.convertPathToFullURL(path: path);
   }
 }
