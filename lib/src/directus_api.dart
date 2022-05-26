@@ -233,7 +233,7 @@ class DirectusAPI implements IDirectusAPI {
 
   @override
   bool parseLogoutResponse(Response response) {
-    if (response.statusCode != 200) {
+    if (response.statusCode < 200 || response.statusCode > 299) {
       return false;
     }
     _refreshToken = null;
