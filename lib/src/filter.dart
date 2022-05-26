@@ -1,4 +1,4 @@
-enum FilterOperator { equals, contains, between }
+enum FilterOperator { equals, contains, between, isNull }
 
 /// This class is astract and should not be used directly
 ///
@@ -26,6 +26,9 @@ class PropertyFilter implements Filter {
         break;
       case FilterOperator.between:
         value = "_between";
+        break;
+      case FilterOperator.isNull:
+        value = "_null";
         break;
     }
     return value;

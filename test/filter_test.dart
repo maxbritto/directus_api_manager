@@ -9,6 +9,12 @@ main() {
     final json = sut.asJSON;
     expect(json, '{ "title": { "_eq": "Hello World!" }}');
   });
+  test('PropertyFilter isNull', () {
+    final sut = PropertyFilter(
+        field: "title", operator: FilterOperator.isNull, value: null);
+    final json = sut.asJSON;
+    expect(json, '{ "title": { "_null": null }}');
+  });
 
   test('PropertyFilter contains', () {
     final sut = PropertyFilter(
