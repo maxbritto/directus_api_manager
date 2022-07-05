@@ -4,7 +4,6 @@ import 'package:directus_api_manager/directus_api_manager.dart';
 import 'package:directus_api_manager/src/directus_api.dart';
 import 'package:http/http.dart';
 import 'package:test/test.dart';
-import 'package:http_parser/http_parser.dart';
 
 void main() {
   const defaultAccessToken = "ABCD.1234.ABCD";
@@ -114,7 +113,8 @@ void main() {
 
     test('Delete Item request', () {
       final sut = makeAuthenticatedDirectusAPI();
-      final request = sut.prepareDeleteItemRequest("articles", "abc-123");
+      final request =
+          sut.prepareDeleteItemRequest("articles", "abc-123", false);
       expect(request.url.toString(), "http://api.com/items/articles/abc-123");
       expect(request.method, "DELETE");
     });
