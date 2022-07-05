@@ -18,7 +18,7 @@ abstract class IDirectusAPI {
   DirectusUser parseUserResponse(Response response);
 
   BaseRequest prepareUpdateUserRequest(DirectusUser updatedUser);
-  BaseRequest prepareGetUserListRequest();
+  BaseRequest prepareGetUserListRequest({Filter? filter});
   Iterable<DirectusUser> parseUserListResponse(Response response);
   BaseRequest prepareCreateUserRequest(
       {required String email,
@@ -44,7 +44,8 @@ abstract class IDirectusAPI {
       String itemName, String itemId, Map<String, dynamic> objectData);
   dynamic parseUpdateItemResponse(Response response);
 
-  BaseRequest prepareDeleteItemRequest(String itemName, String itemId);
+  BaseRequest prepareDeleteItemRequest(
+      String itemName, String itemId, bool mustBeAuthenticated);
   bool parseDeleteItemResponse(Response response);
 
   Future<Request?> prepareRefreshTokenRequest();
@@ -367,8 +368,8 @@ class DirectusAPI implements IDirectusAPI {
   }
 
   @override
-  BaseRequest prepareGetUserListRequest() {
-    return _prepareGetRequest("/users");
+  BaseRequest prepareGetUserListRequest({Filter? filter}) {
+    return _prepareGetRequest("/users", filter: filter);
   }
 
   @override
@@ -424,8 +425,15 @@ class DirectusAPI implements IDirectusAPI {
   }
 
   @override
-  Request prepareDeleteItemRequest(String itemName, String itemId) {
-    return Request("DELETE", Uri.parse("$_baseURL/items/$itemName/$itemId"));
+  BaseRequest prepareDeleteItemRequest(
+      String itemName, String itemId, bool mustBeAuthenticated) {
+    Request request =
+        Request("DELETE", Uri.parse("$_baseURL/items/$itemName/$itemId"));
+    if (mustBeAuthenticated) {
+      return _authenticateRequest(request);
+    }
+
+    return request;
   }
 
   @override

@@ -36,5 +36,66 @@ main() {
       expect(sut.firstname, null);
       expect(sut.lastname, null);
     });
+
+    test('Reading first, last and full name', () {
+      final sut = DirectusUser({
+        "id": "abc-123",
+        "email": "luke@skywalker.com",
+        "first_name": "Luke",
+        "last_name": "Skywalker"
+      });
+
+      expect(sut.firstname, "Luke");
+      expect(sut.lastname, "Skywalker");
+      expect(sut.fullName, "Luke Skywalker");
+
+      final lastNameEmpty = DirectusUser({
+        "id": "abc-123",
+        "email": "luke@skywalker.com",
+        "first_name": "Luke",
+        "last_name": null
+      });
+
+      expect(lastNameEmpty.firstname, "Luke");
+      expect(lastNameEmpty.lastname, null);
+      expect(lastNameEmpty.fullName, "Luke");
+
+      final firstNameEmpty = DirectusUser({
+        "id": "abc-123",
+        "email": "luke@skywalker.com",
+        "first_name": null,
+        "last_name": "Skywalker"
+      });
+
+      expect(firstNameEmpty.firstname, null);
+      expect(firstNameEmpty.lastname, "Skywalker");
+      expect(firstNameEmpty.fullName, "Skywalker");
+
+      final firstAndLastNameEmpty = DirectusUser({
+        "id": "abc-123",
+        "email": "luke@skywalker.com",
+        "first_name": null,
+        "last_name": null
+      });
+
+      expect(firstAndLastNameEmpty.firstname, null);
+      expect(firstAndLastNameEmpty.lastname, null);
+      expect(firstAndLastNameEmpty.fullName, "");
+    });
+
+    test('Convert object properties to map', () {
+      final sut = DirectusUser({
+        "id": "abc-123",
+        "email": "luke@skywalker.com",
+        "first_name": "Luke",
+        "last_name": "Skywalker"
+      });
+      Map<String, dynamic> mapResult = sut.toMap();
+
+      expect(mapResult["id"], "abc-123");
+      expect(mapResult["email"], "luke@skywalker.com");
+      expect(mapResult["first_name"], "Luke");
+      expect(mapResult["last_name"], "Skywalker");
+    });
   });
 }
