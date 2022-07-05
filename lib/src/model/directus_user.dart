@@ -45,9 +45,20 @@ class DirectusUser {
       : allProperties = {"id": id, "email": email};
 
   String get fullName {
-    final String currentFirstName = (firstname == null) ? "" : firstname!;
-    final String currentLastName = (lastname == null) ? "" : lastname!;
-    return currentFirstName + " " + currentLastName;
+    String result = "";
+
+    final String currentFirstName = firstname ?? "";
+    final String currentLastName = lastname ?? "";
+
+    result = currentFirstName;
+
+    if (currentFirstName != "" && currentLastName != "") {
+      result = result + " ";
+    }
+
+    result = result + currentLastName;
+
+    return result;
   }
 
   Map<String, dynamic> toMap() {
