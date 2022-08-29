@@ -12,6 +12,8 @@ abstract class IDirectusAPI {
   bool get hasLoggedInUser;
   bool get shouldRefreshToken;
 
+  String? get currentAuthToken;
+
   BaseRequest prepareGetSpecificUserRequest(String userId,
       {String fields = "*"});
   BaseRequest prepareGetCurrentUserRequest();
@@ -406,7 +408,7 @@ class DirectusAPI implements IDirectusAPI {
   Request prepareUpdateUserRequest(DirectusUser updatedUser) {
     Request request =
         Request("PATCH", Uri.parse(_baseURL + "/users/" + updatedUser.id));
-    request.body = jsonEncode(updatedUser.allProperties..remove("id"));
+    request.body = jsonEncode(updatedUser.updatedProperties);
     request.addJsonHeaders();
     return _authenticateRequest(request) as Request;
   }

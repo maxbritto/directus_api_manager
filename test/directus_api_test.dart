@@ -404,7 +404,7 @@ void main() {
       expect(parsedUser.email, "admin@example.com");
       expect(parsedUser.firstname, "Admin");
       expect(parsedUser.lastname, "User");
-      expect(parsedUser.allProperties["title"], "CTO");
+      expect(parsedUser.getValue(forKey: "title"), "CTO");
     });
 
     test('Get list of users request', () {
@@ -540,22 +540,42 @@ void main() {
       expect(jsonParsedBody["score"], 23);
     });
 
-    test('Update User request', () {
+    test('Update User request with no modification', () {
       final sut = makeAuthenticatedDirectusAPI();
-      final request = sut.prepareUpdateUserRequest(DirectusUser({
+      final user = DirectusUser({
         "id": "123-abc-456",
         "email": "will@acn.com",
         "first_name": "Will",
         "score": 23
-      }));
+      });
+      user.firstname = "Will 2";
+      final request = sut.prepareUpdateUserRequest(user);
       expect(request.url.toString(), "http://api.com/users/123-abc-456");
       expect(request.method, "PATCH");
       expect(request.headers["Authorization"], "Bearer $defaultAccessToken");
       final jsonParsedBody = jsonDecode(request.body) as Map;
-      expect(jsonParsedBody.containsKey("id"), false);
-      expect(jsonParsedBody["email"], "will@acn.com");
-      expect(jsonParsedBody["first_name"], "Will");
-      expect(jsonParsedBody["score"], 23);
+      expect(jsonParsedBody["first_name"], "Will 2");
+      expect(jsonParsedBody.containsKey("email"), false,
+          reason: "Only modified properties should be sent");
+      expect(jsonParsedBody.containsKey("id"), false,
+          reason: "Only modified properties should be sent");
+      expect(jsonParsedBody.containsKey("score"), false,
+          reason: "Only modified properties should be sent");
+    });
+    test('Update User request with no modification', () {
+      final sut = makeAuthenticatedDirectusAPI();
+      final user = DirectusUser({
+        "id": "123-abc-456",
+        "email": "will@acn.com",
+        "first_name": "Will",
+        "score": 23
+      });
+      final request = sut.prepareUpdateUserRequest(user);
+      expect(request.url.toString(), "http://api.com/users/123-abc-456");
+      expect(request.method, "PATCH");
+      expect(request.headers["Authorization"], "Bearer $defaultAccessToken");
+      final jsonParsedBody = jsonDecode(request.body) as Map;
+      expect(jsonParsedBody, isEmpty);
     });
   });
 

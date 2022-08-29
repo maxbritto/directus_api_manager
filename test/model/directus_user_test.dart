@@ -97,5 +97,27 @@ main() {
       expect(mapResult["first_name"], "Luke");
       expect(mapResult["last_name"], "Skywalker");
     });
+    test('needsSaving on regular properties', () {
+      final sut = DirectusUser({
+        "id": "abc-123",
+        "email": "luke@skywalker.com",
+        "first_name": "Luke",
+        "last_name": "Skywalker"
+      });
+      expect(sut.needsSaving, false);
+      sut.firstname = "Luke 2";
+      expect(sut.needsSaving, true);
+    });
+    test('needsSaving on custom properties', () {
+      final sut = DirectusUser({
+        "id": "abc-123",
+        "email": "luke@skywalker.com",
+        "first_name": "Luke",
+        "last_name": "Skywalker"
+      });
+      expect(sut.needsSaving, false);
+      sut.setValue("new value", forKey: "secretKey");
+      expect(sut.needsSaving, true);
+    });
   });
 }

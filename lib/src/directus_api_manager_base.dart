@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:directus_api_manager/directus_api_manager.dart';
 import 'package:directus_api_manager/src/directus_api.dart';
 import 'package:http/http.dart';
@@ -5,6 +7,8 @@ import 'package:http/http.dart';
 class DirectusApiManager {
   final Client _client;
   final IDirectusAPI _api;
+
+  DirectusUser? _currentUser;
 
   DirectusApiManager(
       {required String baseURL,
@@ -78,14 +82,26 @@ class DirectusApiManager {
         parseResponse: (response) => _api.parseLoginResponse(response));
   }
 
+  Future? _lock;
   Future<DirectusUser?> currentDirectusUser() async {
-    if (await hasLoggedInUser()) {
-      return _sendRequest(
+    final lock = _lock;
+    if (lock != null) {
+      await lock;
+    }
+    final completer = Completer();
+    _lock = completer.future;
+    if (_currentUser == null && await hasLoggedInUser()) {
+      _currentUser = await _sendRequest(
           prepareRequest: () => _api.prepareGetCurrentUserRequest(),
           parseResponse: (response) => _api.parseUserResponse(response));
-    } else {
-      return Future.value(null);
     }
+    completer.complete();
+    _lock = null;
+    return _currentUser;
+  }
+
+  void discardCurrentUserCache() {
+    _currentUser = null;
   }
 
   Future<DirectusUser?> getDirectusUser(String userId, {String fields = "*"}) {
@@ -125,15 +141,18 @@ class DirectusApiManager {
         parseResponse: (response) => _api.parseUserResponse(response));
   }
 
-  Future<bool> logoutDirectusUser() {
+  Future<bool> logoutDirectusUser() async {
+    var wasLoggedOut = false;
     try {
-      return _sendRequest(
+      wasLoggedOut = await _sendRequest(
           prepareRequest: () => _api.prepareLogoutRequest(),
           dependsOnToken: false,
           parseResponse: (response) => _api.parseLogoutResponse(response));
-    } catch (_) {
-      return Future.value(false);
+    } catch (_) {}
+    if (wasLoggedOut) {
+      _currentUser = null;
     }
+    return wasLoggedOut;
   }
 
   Future<Iterable<Type>> findListOfItems<Type>(
@@ -234,4 +253,6 @@ class DirectusApiManager {
   String convertPathToFullURL({required String path}) {
     return _api.convertPathToFullURL(path: path);
   }
+
+  String? get currentAuthToken => _api.currentAuthToken;
 }
