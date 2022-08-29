@@ -101,7 +101,8 @@ void main() {
       final sut = makeAuthenticatedDirectusAPI();
       final request = sut.prepareUpdateItemRequest(
           "articles", "abc-123", {"title": "Let's dance", "pageCount": 9});
-      expect(request.url.toString(), "http://api.com/items/articles/abc-123");
+      expect(request.url.toString(),
+          "http://api.com/items/articles/abc-123?fields=*");
       expect(request.method, "PATCH");
       expect(
           request.headers["Content-Type"], "application/json; charset=utf-8");

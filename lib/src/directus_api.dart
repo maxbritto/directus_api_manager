@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 
 import 'package:directus_api_manager/src/filter.dart';
 import 'package:directus_api_manager/src/model/directus_file.dart';
@@ -38,16 +39,18 @@ abstract class IDirectusAPI {
       {String fields = "*"});
   dynamic parseGetSpecificItemResponse(Response response);
 
-  Request prepareCreateNewItemRequest(
-      String itemName, Map<String, dynamic> objectData);
+  Request prepareCreateNewItemRequest(String itemName, dynamic objectData);
   dynamic parseCreateNewItemResponse(Response response);
 
   Request prepareUpdateItemRequest(
-      String itemName, String itemId, Map<String, dynamic> objectData);
+      String itemName, String itemId, Map<String, dynamic> objectData,
+      {String fields = "*"});
   dynamic parseUpdateItemResponse(Response response);
 
   BaseRequest prepareDeleteItemRequest(
       String itemName, String itemId, bool mustBeAuthenticated);
+  BaseRequest prepareDeleteMultipleItemRequest(
+      String itemName, List<dynamic> itemIdList, bool mustBeAuthenticated);
   bool parseDeleteItemResponse(Response response);
 
   Future<Request?> prepareRefreshTokenRequest();
@@ -324,8 +327,7 @@ class DirectusAPI implements IDirectusAPI {
   }
 
   @override
-  Request prepareCreateNewItemRequest(
-      String itemName, Map<String, dynamic> objectData) {
+  Request prepareCreateNewItemRequest(String itemName, dynamic objectData) {
     Request request = Request("POST", Uri.parse(_baseURL + "/items/$itemName"));
     request.body = jsonEncode(objectData);
     request.addJsonHeaders();
@@ -334,9 +336,10 @@ class DirectusAPI implements IDirectusAPI {
 
   @override
   Request prepareUpdateItemRequest(
-      String itemName, String itemId, Map<String, dynamic> objectData) {
-    Request request =
-        Request("PATCH", Uri.parse(_baseURL + "/items/$itemName/$itemId"));
+      String itemName, String itemId, Map<String, dynamic> objectData,
+      {String fields = "*"}) {
+    Request request = Request("PATCH",
+        Uri.parse(_baseURL + "/items/$itemName/$itemId?fields=$fields"));
     request.body = jsonEncode(objectData);
     request.addJsonHeaders();
     return _authenticateRequest(request) as Request;
@@ -439,6 +442,20 @@ class DirectusAPI implements IDirectusAPI {
   }
 
   @override
+  BaseRequest prepareDeleteMultipleItemRequest(
+      String itemName, List<dynamic> itemIdList, bool mustBeAuthenticated) {
+    Request request = Request("DELETE", Uri.parse("$_baseURL/items/$itemName"));
+    request.body = jsonEncode(itemIdList);
+    request.addJsonHeaders();
+    log(request.body);
+    if (mustBeAuthenticated) {
+      return _authenticateRequest(request);
+    } else {
+      return request;
+    }
+  }
+
+  @override
   DirectusFile parseFileUploadResponse(Response response) {
     _throwIfServerDeniedRequest(response);
     return DirectusFile.fromJSON(jsonDecode(response.body)["data"]);
@@ -503,6 +520,9 @@ class DirectusAPI implements IDirectusAPI {
     buffer.write(path);
     return buffer.toString();
   }
+
+  @override
+  String? get currentAuthToken => _accessToken;
 }
 
 extension RequestJson on Request {

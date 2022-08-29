@@ -192,14 +192,34 @@ class DirectusApiManager {
             jsonConverter(_api.parseCreateNewItemResponse(response)));
   }
 
+  Future<List<Type>> createMultipleItems<Type>(
+      {required String typeName,
+      required Iterable<Map<String, dynamic>> objectListData,
+      required Type Function(dynamic) jsonConverter}) {
+    return _sendRequest(
+        prepareRequest: () =>
+            _api.prepareCreateNewItemRequest(typeName, objectListData),
+        parseResponse: (response) {
+          final List<Type> createdItemsList = [];
+          final listJson = _api.parseCreateNewItemResponse(response);
+          if (listJson is List) {
+            for (final itemJson in listJson) {
+              createdItemsList.add(jsonConverter(itemJson));
+            }
+          }
+          return createdItemsList;
+        });
+  }
+
   Future<Type> updateItem<Type>(
       {required String typeName,
       required String objectId,
       required Map<String, dynamic> objectData,
-      required Type Function(dynamic) jsonConverter}) {
+      required Type Function(dynamic) jsonConverter,
+      String fields = "*"}) {
     return _sendRequest(
-        prepareRequest: () =>
-            _api.prepareUpdateItemRequest(typeName, objectId, objectData),
+        prepareRequest: () => _api.prepareUpdateItemRequest(
+            typeName, objectId, objectData, fields: fields),
         parseResponse: (response) =>
             jsonConverter(_api.parseUpdateItemResponse(response)));
   }
@@ -211,6 +231,16 @@ class DirectusApiManager {
     return _sendRequest(
         prepareRequest: () => _api.prepareDeleteItemRequest(
             typeName, objectId, mustBeAuthenticated),
+        parseResponse: (response) => _api.parseDeleteItemResponse(response));
+  }
+
+  Future<bool> deleteMultipleItems(
+      {required String typeName,
+      required List<dynamic> objectIdList,
+      bool mustBeAuthenticated = true}) {
+    return _sendRequest(
+        prepareRequest: () => _api.prepareDeleteMultipleItemRequest(
+            typeName, objectIdList, mustBeAuthenticated),
         parseResponse: (response) => _api.parseDeleteItemResponse(response));
   }
 
