@@ -87,7 +87,7 @@ void main() {
       final sut = makeAuthenticatedDirectusAPI();
       final request = sut.prepareCreateNewItemRequest(
           "articles", {"title": "Let's dance", "pageCount": 10});
-      expect(request.url.toString(), "http://api.com/items/articles");
+      expect(request.url.toString(), "http://api.com/items/articles?fields=*");
       expect(request.method, "POST");
       expect(
           request.headers["Content-Type"], "application/json; charset=utf-8");

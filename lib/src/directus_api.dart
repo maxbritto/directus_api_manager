@@ -39,7 +39,8 @@ abstract class IDirectusAPI {
       {String fields = "*"});
   dynamic parseGetSpecificItemResponse(Response response);
 
-  Request prepareCreateNewItemRequest(String itemName, dynamic objectData);
+  Request prepareCreateNewItemRequest(String itemName, dynamic objectData,
+      {String fields = "*"});
   dynamic parseCreateNewItemResponse(Response response);
 
   Request prepareUpdateItemRequest(
@@ -338,8 +339,10 @@ class DirectusAPI implements IDirectusAPI {
   }
 
   @override
-  Request prepareCreateNewItemRequest(String itemName, dynamic objectData) {
-    Request request = Request("POST", Uri.parse(_baseURL + "/items/$itemName"));
+  Request prepareCreateNewItemRequest(String itemName, dynamic objectData,
+      {String fields = "*"}) {
+    Request request = Request(
+        "POST", Uri.parse(_baseURL + "/items/$itemName?fields=$fields"));
     request.body = jsonEncode(objectData);
     request.addJsonHeaders();
     return _authenticateRequest(request) as Request;

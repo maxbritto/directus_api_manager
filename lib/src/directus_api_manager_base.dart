@@ -216,11 +216,13 @@ class DirectusApiManager {
 
   Future<List<Type>> createMultipleItems<Type>(
       {required String typeName,
+      String fields = "*",
       required Iterable<Map<String, dynamic>> objectListData,
       required Type Function(dynamic) jsonConverter}) {
     return _sendRequest(
-        prepareRequest: () =>
-            _api.prepareCreateNewItemRequest(typeName, objectListData),
+        prepareRequest: () => _api.prepareCreateNewItemRequest(
+            typeName, objectListData,
+            fields: fields),
         parseResponse: (response) {
           final List<Type> createdItemsList = [];
           final listJson = _api.parseCreateNewItemResponse(response);
