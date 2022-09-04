@@ -52,7 +52,7 @@ abstract class IDirectusAPI {
       String itemName, String itemId, bool mustBeAuthenticated);
   BaseRequest prepareDeleteMultipleItemRequest(
       String itemName, List<dynamic> itemIdList, bool mustBeAuthenticated);
-  bool parseDeleteItemResponse(Response response);
+  bool parseGenericBoolResponse(Response response);
 
   Future<Request?> prepareRefreshTokenRequest();
   bool parseRefreshTokenResponse(Response response);
@@ -431,7 +431,7 @@ class DirectusAPI implements IDirectusAPI {
   }
 
   @override
-  bool parseDeleteItemResponse(Response response) {
+  bool parseGenericBoolResponse(Response response) {
     _throwIfServerDeniedRequest(response);
     return true;
   }

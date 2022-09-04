@@ -122,15 +122,15 @@ void main() {
     test('Delete Item ok responses', () {
       final sut = makeAuthenticatedDirectusAPI();
 
-      expect(sut.parseDeleteItemResponse(Response("", 200)), true);
-      expect(sut.parseDeleteItemResponse(Response("", 299)), true);
+      expect(sut.parseGenericBoolResponse(Response("", 200)), true);
+      expect(sut.parseGenericBoolResponse(Response("", 299)), true);
     });
     test('Delete Item denied responses', () {
       final sut = makeAuthenticatedDirectusAPI();
 
-      expect(() => sut.parseDeleteItemResponse(Response("", 300)),
+      expect(() => sut.parseGenericBoolResponse(Response("", 300)),
           throwsException);
-      expect(() => sut.parseDeleteItemResponse(Response("", 400)),
+      expect(() => sut.parseGenericBoolResponse(Response("", 400)),
           throwsException);
     });
   });

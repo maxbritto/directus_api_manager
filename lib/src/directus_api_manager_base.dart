@@ -255,7 +255,7 @@ class DirectusApiManager {
     return _sendRequest(
         prepareRequest: () => _api.prepareDeleteItemRequest(
             typeName, objectId, mustBeAuthenticated),
-        parseResponse: (response) => _api.parseDeleteItemResponse(response));
+        parseResponse: (response) => _api.parseGenericBoolResponse(response));
   }
 
   Future<bool> deleteMultipleItems(
@@ -265,7 +265,7 @@ class DirectusApiManager {
     return _sendRequest(
         prepareRequest: () => _api.prepareDeleteMultipleItemRequest(
             typeName, objectIdList, mustBeAuthenticated),
-        parseResponse: (response) => _api.parseDeleteItemResponse(response));
+        parseResponse: (response) => _api.parseGenericBoolResponse(response));
   }
 
   Future<DirectusFile> uploadFileFromUrl(
