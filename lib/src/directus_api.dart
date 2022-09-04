@@ -21,7 +21,7 @@ abstract class IDirectusAPI {
   DirectusUser parseUserResponse(Response response);
 
   BaseRequest prepareUpdateUserRequest(DirectusUser updatedUser);
-  BaseRequest prepareGetUserListRequest({Filter? filter});
+  BaseRequest prepareGetUserListRequest({Filter? filter, required int limit});
   Iterable<DirectusUser> parseUserListResponse(Response response);
   BaseRequest prepareCreateUserRequest(
       {required String email,
@@ -290,10 +290,16 @@ class DirectusAPI implements IDirectusAPI {
   }
 
   BaseRequest _prepareGetRequest(String path,
-      {String fields = "*", Filter? filter, List<SortProperty>? sortBy}) {
+      {String fields = "*",
+      Filter? filter,
+      List<SortProperty>? sortBy,
+      int? limit}) {
     final urlBuilder = StringBuffer(_baseURL + "$path?fields=$fields");
     if (filter != null) {
       urlBuilder.write("&filter=${filter.asJSON}");
+    }
+    if (limit != null) {
+      urlBuilder.write("&limit=$limit");
     }
     if (sortBy != null && sortBy.isNotEmpty) {
       urlBuilder.write("&sort=" + sortBy.join(","));
@@ -378,8 +384,8 @@ class DirectusAPI implements IDirectusAPI {
   }
 
   @override
-  BaseRequest prepareGetUserListRequest({Filter? filter}) {
-    return _prepareGetRequest("/users", filter: filter);
+  BaseRequest prepareGetUserListRequest({Filter? filter, required int limit}) {
+    return _prepareGetRequest("/users", filter: filter, limit: limit);
   }
 
   @override

@@ -410,8 +410,8 @@ void main() {
 
     test('Get list of users request', () {
       final sut = makeAuthenticatedDirectusAPI();
-      final request = sut.prepareGetUserListRequest();
-      expect(request.url.toString(), "http://api.com/users?fields=*");
+      final request = sut.prepareGetUserListRequest(limit: 10);
+      expect(request.url.toString(), "http://api.com/users?fields=*&limit=10");
       expect(request.method, "GET");
       expect(request.headers["Authorization"], "Bearer $defaultAccessToken");
     });

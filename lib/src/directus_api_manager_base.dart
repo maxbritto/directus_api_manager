@@ -74,6 +74,7 @@ class DirectusApiManager {
 
   Future<DirectusLoginResult> loginDirectusUser(
       String username, String password) {
+    discardCurrentUserCache();
     return _sendRequest(
         prepareRequest: () {
           return _api.prepareLoginRequest(username, password);
@@ -82,21 +83,13 @@ class DirectusApiManager {
         parseResponse: (response) => _api.parseLoginResponse(response));
   }
 
-  Future? _lock;
   Future<DirectusUser?> currentDirectusUser() async {
-    final lock = _lock;
-    if (lock != null) {
-      await lock;
-    }
-    final completer = Completer();
-    _lock = completer.future;
     if (_currentUser == null && await hasLoggedInUser()) {
       _currentUser = await _sendRequest(
           prepareRequest: () => _api.prepareGetCurrentUserRequest(),
           parseResponse: (response) => _api.parseUserResponse(response));
     }
-    completer.complete();
-    _lock = null;
+
     return _currentUser;
   }
 
@@ -111,9 +104,11 @@ class DirectusApiManager {
         parseResponse: (response) => _api.parseUserResponse(response));
   }
 
-  Future<Iterable<DirectusUser>> getDirectusUserList({Filter? filter}) {
+  Future<Iterable<DirectusUser>> getDirectusUserList(
+      {Filter? filter, int limit = -1}) {
     return _sendRequest(
-        prepareRequest: () => _api.prepareGetUserListRequest(filter: filter),
+        prepareRequest: () =>
+            _api.prepareGetUserListRequest(filter: filter, limit: limit),
         parseResponse: (response) => _api.parseUserListResponse(response));
   }
 
@@ -168,6 +163,7 @@ class DirectusApiManager {
   }
 
   Future<bool> logoutDirectusUser() async {
+    discardCurrentUserCache();
     var wasLoggedOut = false;
     try {
       wasLoggedOut = await _sendRequest(
