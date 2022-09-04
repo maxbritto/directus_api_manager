@@ -22,6 +22,7 @@ main() {
     final json = sut.asJSON;
     expect(json, '{ "title": { "_nnull": null }}');
   });
+
   test('PropertyFilter contains', () {
     final sut = PropertyFilter(
         field: "title", operator: FilterOperator.contains, value: "Hello");
@@ -77,5 +78,30 @@ main() {
             field: "id", operator: FilterOperator.equals, value: "23"));
     final json = sut.asJSON;
     expect(json, '{ "users": { "id": { "_eq": "23" }}}');
+  });
+
+  test('RelationFilter M2M _eq', () {
+    final m2mRelation = RelationFilter(
+        propertyName: "idWord",
+        linkedObjectFilter: PropertyFilter(
+            field: "word", operator: FilterOperator.equals, value: "zelda"));
+    final sut =
+        RelationFilter(propertyName: "words", linkedObjectFilter: m2mRelation);
+    final json = sut.asJSON;
+
+    expect(json, '{ "words": { "idWord": { "word": { "_eq": "zelda" }}}}');
+  });
+
+  test('RelationFilter M2M _contains', () {
+    final m2mRelation = RelationFilter(
+        propertyName: "idWord",
+        linkedObjectFilter: PropertyFilter(
+            field: "word", operator: FilterOperator.contains, value: "zelda"));
+    final sut =
+        RelationFilter(propertyName: "words", linkedObjectFilter: m2mRelation);
+    final json = sut.asJSON;
+
+    expect(
+        json, '{ "words": { "idWord": { "word": { "_contains": "zelda" }}}}');
   });
 }
