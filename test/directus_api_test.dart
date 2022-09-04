@@ -578,6 +578,43 @@ void main() {
       final jsonParsedBody = jsonDecode(request.body) as Map;
       expect(jsonParsedBody, isEmpty);
     });
+    test('Request user password reset', () {
+      final sut = makeAuthenticatedDirectusAPI();
+
+      final request = sut.preparePasswordResetRequest(email: "will@acn.com");
+      expect(request.url.toString(), "http://api.com/auth/password/request");
+      expect(request.method, "POST");
+      expect(
+          request.headers["Content-Type"], "application/json; charset=utf-8");
+      final jsonParsedBody = jsonDecode(request.body) as Map;
+      expect(jsonParsedBody["email"], "will@acn.com");
+    });
+    test('Request user password reset with reset url', () {
+      final sut = makeAuthenticatedDirectusAPI();
+
+      final request = sut.preparePasswordResetRequest(
+          email: "will@acn.com", resetUrl: "https://my-custom-reset-url.com");
+      expect(request.url.toString(), "http://api.com/auth/password/request");
+      expect(request.method, "POST");
+      expect(
+          request.headers["Content-Type"], "application/json; charset=utf-8");
+      final jsonParsedBody = jsonDecode(request.body) as Map;
+      expect(jsonParsedBody["email"], "will@acn.com");
+      expect(jsonParsedBody["reset_url"], "https://my-custom-reset-url.com");
+    });
+    test('Request user password change', () {
+      final sut = makeAuthenticatedDirectusAPI();
+
+      final request = sut.preparePasswordChangeRequest(
+          newPassword: "new-password", token: "token-abc");
+      expect(request.url.toString(), "http://api.com/auth/password/reset");
+      expect(request.method, "POST");
+      expect(
+          request.headers["Content-Type"], "application/json; charset=utf-8");
+      final jsonParsedBody = jsonDecode(request.body) as Map;
+      expect(jsonParsedBody["password"], "new-password");
+      expect(jsonParsedBody["token"], "token-abc");
+    });
   });
 
   group("DirectusAPI : Files", () {

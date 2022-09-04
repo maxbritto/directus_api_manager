@@ -80,6 +80,11 @@ abstract class IDirectusAPI {
   DirectusFile parseFileUploadResponse(Response response);
 
   String convertPathToFullURL({required String path});
+
+  Request preparePasswordResetRequest(
+      {required String email, String? resetUrl});
+  Request preparePasswordChangeRequest(
+      {required String token, required String newPassword});
 }
 
 class DirectusApiError {
@@ -523,6 +528,26 @@ class DirectusAPI implements IDirectusAPI {
 
   @override
   String? get currentAuthToken => _accessToken;
+
+  @override
+  Request preparePasswordResetRequest(
+      {required String email, String? resetUrl}) {
+    final request =
+        Request("POST", Uri.parse("$_baseURL/auth/password/request"));
+    request.body = jsonEncode(
+        {"email": email, if (resetUrl != null) "reset_url": resetUrl});
+    request.addJsonHeaders();
+    return request;
+  }
+
+  @override
+  Request preparePasswordChangeRequest(
+      {required String token, required String newPassword}) {
+    final request = Request("POST", Uri.parse("$_baseURL/auth/password/reset"));
+    request.body = jsonEncode({"token": token, "password": newPassword});
+    request.addJsonHeaders();
+    return request;
+  }
 }
 
 extension RequestJson on Request {

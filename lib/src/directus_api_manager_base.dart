@@ -123,6 +123,32 @@ class DirectusApiManager {
         parseResponse: (response) => _api.parseUserResponse(response));
   }
 
+  /// Sends a password request to the server for the provided [email].
+  /// Your server must have email sending configured. It will send an email (from the template located at `/extensions/templates/password-reset.liquid`) to the user with a link to page to finalize his password reset.
+  /// Your directus server already has a web page where the user will be sent to choose and save a new password.
+  ///
+  /// You can provide an optional [resetUrl] if you want to send the user to your own password reset web page.
+  /// If you do, you have to add the url the `PASSWORD_RESET_URL_ALLOW_LIST` environment variable for it to be accepted.
+  /// That page will receive the reset token by parameter so you can call the password change api from there.
+  Future<bool> requestPasswordReset({required String email, String? resetUrl}) {
+    return _sendRequest(
+        prepareRequest: () =>
+            _api.preparePasswordResetRequest(email: email, resetUrl: resetUrl),
+        parseResponse: _api.parseGenericBoolResponse);
+  }
+
+  /// Saves the new password chosen by the user after requesting a password reset using the [requestPasswordReset] function.
+  ///
+  /// Only use this API if you do not rely on directus standard password reset page.
+  /// If you have your own custom password reset page, it will receive the refresh [token] as a GET parameter on load and the user will have to chose a [password] himself.
+  Future<bool> confirmPasswordReset(
+      {required String token, required String password}) {
+    return _sendRequest(
+        prepareRequest: () => _api.preparePasswordChangeRequest(
+            token: token, newPassword: password),
+        parseResponse: _api.parseGenericBoolResponse);
+  }
+
   Future<DirectusUser> createNewDirectusUser(
       {required String email,
       required String password,
