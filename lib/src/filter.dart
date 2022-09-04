@@ -100,7 +100,7 @@ class LogicalOperatorFilter implements Filter {
 
 class RelationFilter implements Filter {
   final String propertyName;
-  final PropertyFilter linkedObjectFilter;
+  final Filter linkedObjectFilter;
 
   RelationFilter(
       {required this.propertyName, required this.linkedObjectFilter});
