@@ -44,6 +44,10 @@ abstract class IDirectusAPI {
       String itemName, String itemId, Map<String, dynamic> objectData);
   dynamic parseUpdateItemResponse(Response response);
 
+  BaseRequest prepareDeleteUserRequest(
+      DirectusUser user, bool mustBeAuthenticated);
+  bool parseDeleteUserResponse(Response response);
+
   BaseRequest prepareDeleteItemRequest(
       String itemName, String itemId, bool mustBeAuthenticated);
   bool parseDeleteItemResponse(Response response);
@@ -415,6 +419,24 @@ class DirectusAPI implements IDirectusAPI {
   bool parseDeleteItemResponse(Response response) {
     _throwIfServerDeniedRequest(response);
     return true;
+  }
+
+  @override
+  bool parseDeleteUserResponse(Response response) {
+    _throwIfServerDeniedRequest(response);
+    return true;
+  }
+
+  @override
+  BaseRequest prepareDeleteUserRequest(
+      DirectusUser user, bool mustBeAuthenticated) {
+    Request request =
+        Request("DELETE", Uri.parse("$_baseURL/users/${user.id}"));
+    if (mustBeAuthenticated) {
+      return _authenticateRequest(request);
+    }
+
+    return request;
   }
 
   void _throwIfServerDeniedRequest(Response response) {

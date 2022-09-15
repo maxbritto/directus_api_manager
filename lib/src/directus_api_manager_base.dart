@@ -195,6 +195,14 @@ class DirectusApiManager {
         parseResponse: (response) => _api.parseDeleteItemResponse(response));
   }
 
+  Future<bool> deleteUser(
+      {required DirectusUser user, bool mustBeAuthenticated = true}) {
+    return _sendRequest(
+        prepareRequest: () =>
+            _api.prepareDeleteUserRequest(user, mustBeAuthenticated),
+        parseResponse: (response) => _api.parseDeleteUserResponse(response));
+  }
+
   Future<DirectusFile> uploadFileFromUrl(
       {required String remoteUrl, String? title}) async {
     return _sendRequest(
