@@ -29,7 +29,10 @@ abstract class IDirectusAPI {
       Map<String, dynamic> otherProperties = const {}});
 
   BaseRequest prepareGetListOfItemsRequest(String itemName,
-      {String fields = "*", Filter? filter, List<SortProperty>? sortBy});
+      {String fields = "*",
+      Filter? filter,
+      List<SortProperty>? sortBy,
+      int? limit});
   Iterable<dynamic> parseGetListOfItemsResponse(Response response);
 
   BaseRequest prepareGetSpecificItemRequest(String itemName, String itemId,
@@ -273,9 +276,12 @@ class DirectusAPI implements IDirectusAPI {
 
   @override
   BaseRequest prepareGetListOfItemsRequest(String itemName,
-      {String fields = "*", Filter? filter, List<SortProperty>? sortBy}) {
+      {String fields = "*",
+      Filter? filter,
+      List<SortProperty>? sortBy,
+      int? limit}) {
     return _prepareGetRequest("/items/$itemName",
-        filter: filter, fields: fields, sortBy: sortBy);
+        filter: filter, fields: fields, sortBy: sortBy, limit: limit);
   }
 
   @override
@@ -284,13 +290,21 @@ class DirectusAPI implements IDirectusAPI {
   }
 
   BaseRequest _prepareGetRequest(String path,
-      {String fields = "*", Filter? filter, List<SortProperty>? sortBy}) {
+      {String fields = "*",
+      Filter? filter,
+      List<SortProperty>? sortBy,
+      int? limit}) {
     final urlBuilder = StringBuffer(_baseURL + "$path?fields=$fields");
     if (filter != null) {
       urlBuilder.write("&filter=${filter.asJSON}");
     }
+
     if (sortBy != null && sortBy.isNotEmpty) {
       urlBuilder.write("&sort=" + sortBy.join(","));
+    }
+
+    if (limit != null) {
+      urlBuilder.write("&limit=" + limit.toString());
     }
     Request request = Request("GET", Uri.parse(urlBuilder.toString()));
     return _authenticateRequest(request);

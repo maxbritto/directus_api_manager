@@ -141,10 +141,11 @@ class DirectusApiManager {
       Filter? filter,
       List<SortProperty>? sortBy,
       String fields = "*",
+      int? limit,
       required Type Function(dynamic) jsonConverter}) {
     return _sendRequest(
         prepareRequest: () => _api.prepareGetListOfItemsRequest(name,
-            filter: filter, sortBy: sortBy, fields: fields),
+            filter: filter, sortBy: sortBy, fields: fields, limit: limit),
         parseResponse: (response) => _api
             .parseGetListOfItemsResponse(response)
             .map((itemAsJsonObject) => jsonConverter(itemAsJsonObject)));
