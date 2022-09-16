@@ -58,17 +58,30 @@ class DirectusApiManager {
     return await _api.prepareRefreshTokenRequest() != null;
   }
 
+  Future? _refreshTokenLock;
   Future<bool> _tryAndRefreshToken() async {
     bool tokenRefreshed = false;
+    final completer = Completer();
+    final lock = _refreshTokenLock;
+    if (lock != null) {
+      await lock;
+    }
+    _refreshTokenLock = completer.future;
 
     try {
-      tokenRefreshed = await _sendRequest(
-          prepareRequest: () async => await _api.prepareRefreshTokenRequest(),
-          dependsOnToken: false,
-          parseResponse: (response) =>
-              _api.parseRefreshTokenResponse(response));
-    } catch (_) {}
+      try {
+        tokenRefreshed = await _sendRequest(
+            prepareRequest: () async => await _api.prepareRefreshTokenRequest(),
+            dependsOnToken: false,
+            parseResponse: (response) =>
+                _api.parseRefreshTokenResponse(response));
+      } catch (_) {}
+    } catch (error) {
+      print(error);
+    }
 
+    _refreshTokenLock = null;
+    completer.complete();
     return tokenRefreshed;
   }
 
@@ -83,13 +96,27 @@ class DirectusApiManager {
         parseResponse: (response) => _api.parseLoginResponse(response));
   }
 
+  Future? _currentUserLock;
   Future<DirectusUser?> currentDirectusUser() async {
-    if (_currentUser == null && await hasLoggedInUser()) {
-      _currentUser = await _sendRequest(
-          prepareRequest: () => _api.prepareGetCurrentUserRequest(),
-          parseResponse: (response) => _api.parseUserResponse(response));
+    final completer = Completer();
+    final lock = _currentUserLock;
+    if (lock != null) {
+      await lock;
+    }
+    _currentUserLock = completer.future;
+
+    try {
+      if (_currentUser == null && await hasLoggedInUser()) {
+        _currentUser = await _sendRequest(
+            prepareRequest: () => _api.prepareGetCurrentUserRequest(),
+            parseResponse: (response) => _api.parseUserResponse(response));
+      }
+    } catch (error) {
+      print(error);
     }
 
+    _currentUserLock = null;
+    completer.complete();
     return _currentUser;
   }
 
