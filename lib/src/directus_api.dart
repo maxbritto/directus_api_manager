@@ -31,8 +31,15 @@ abstract class IDirectusAPI {
       String? roleUUID,
       Map<String, dynamic> otherProperties = const {}});
 
+  BaseRequest prepareDeleteUserRequest(
+      DirectusUser user, bool mustBeAuthenticated);
+  bool parseDeleteUserResponse(Response response);
+
   BaseRequest prepareGetListOfItemsRequest(String itemName,
-      {String fields = "*", Filter? filter, List<SortProperty>? sortBy});
+      {String fields = "*",
+      Filter? filter,
+      List<SortProperty>? sortBy,
+      int? limit});
   Iterable<dynamic> parseGetListOfItemsResponse(Response response);
 
   BaseRequest prepareGetSpecificItemRequest(String itemName, String itemId,
@@ -280,9 +287,12 @@ class DirectusAPI implements IDirectusAPI {
 
   @override
   BaseRequest prepareGetListOfItemsRequest(String itemName,
-      {String fields = "*", Filter? filter, List<SortProperty>? sortBy}) {
+      {String fields = "*",
+      Filter? filter,
+      List<SortProperty>? sortBy,
+      int? limit}) {
     return _prepareGetRequest("/items/$itemName",
-        filter: filter, fields: fields, sortBy: sortBy);
+        filter: filter, fields: fields, sortBy: sortBy, limit: limit);
   }
 
   @override
@@ -428,6 +438,24 @@ class DirectusAPI implements IDirectusAPI {
     request.body = jsonEncode(updatedUser.updatedProperties);
     request.addJsonHeaders();
     return _authenticateRequest(request) as Request;
+  }
+
+  @override
+  bool parseDeleteUserResponse(Response response) {
+    _throwIfServerDeniedRequest(response);
+    return true;
+  }
+
+  @override
+  BaseRequest prepareDeleteUserRequest(
+      DirectusUser user, bool mustBeAuthenticated) {
+    Request request =
+        Request("DELETE", Uri.parse("$_baseURL/users/${user.id}"));
+    if (mustBeAuthenticated) {
+      return _authenticateRequest(request);
+    }
+
+    return request;
   }
 
   @override

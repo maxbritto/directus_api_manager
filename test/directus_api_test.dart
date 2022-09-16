@@ -96,7 +96,7 @@ void main() {
           ],
           limit: 10);
       expect(request.url.toString(),
-          'http://api.com/items/article?fields=*&filter=%7B%20%22title%22:%20%7B%20%22_eq%22:%20%22A%22%20%7D%7D&sort=-score,level&limit=10');
+          'http://api.com/items/article?fields=*&filter=%7B%20%22title%22:%20%7B%20%22_eq%22:%20%22A%22%20%7D%7D&limit=10&sort=-score,level');
       expect(request.method, "GET");
       expect(request.headers["Authorization"], "Bearer $defaultAccessToken");
     });
