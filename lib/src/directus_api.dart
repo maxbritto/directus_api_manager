@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 
 import 'package:directus_api_manager/src/filter.dart';
 import 'package:directus_api_manager/src/model/directus_file.dart';
@@ -12,13 +13,15 @@ abstract class IDirectusAPI {
   bool get hasLoggedInUser;
   bool get shouldRefreshToken;
 
+  String? get currentAuthToken;
+
   BaseRequest prepareGetSpecificUserRequest(String userId,
       {String fields = "*"});
   BaseRequest prepareGetCurrentUserRequest();
   DirectusUser parseUserResponse(Response response);
 
   BaseRequest prepareUpdateUserRequest(DirectusUser updatedUser);
-  BaseRequest prepareGetUserListRequest({Filter? filter});
+  BaseRequest prepareGetUserListRequest({Filter? filter, required int limit});
   Iterable<DirectusUser> parseUserListResponse(Response response);
   BaseRequest prepareCreateUserRequest(
       {required String email,
@@ -29,31 +32,27 @@ abstract class IDirectusAPI {
       Map<String, dynamic> otherProperties = const {}});
 
   BaseRequest prepareGetListOfItemsRequest(String itemName,
-      {String fields = "*",
-      Filter? filter,
-      List<SortProperty>? sortBy,
-      int? limit});
+      {String fields = "*", Filter? filter, List<SortProperty>? sortBy});
   Iterable<dynamic> parseGetListOfItemsResponse(Response response);
 
   BaseRequest prepareGetSpecificItemRequest(String itemName, String itemId,
       {String fields = "*"});
   dynamic parseGetSpecificItemResponse(Response response);
 
-  Request prepareCreateNewItemRequest(
-      String itemName, Map<String, dynamic> objectData);
+  Request prepareCreateNewItemRequest(String itemName, dynamic objectData,
+      {String fields = "*"});
   dynamic parseCreateNewItemResponse(Response response);
 
   Request prepareUpdateItemRequest(
-      String itemName, String itemId, Map<String, dynamic> objectData);
+      String itemName, String itemId, Map<String, dynamic> objectData,
+      {String fields = "*"});
   dynamic parseUpdateItemResponse(Response response);
-
-  BaseRequest prepareDeleteUserRequest(
-      DirectusUser user, bool mustBeAuthenticated);
-  bool parseDeleteUserResponse(Response response);
 
   BaseRequest prepareDeleteItemRequest(
       String itemName, String itemId, bool mustBeAuthenticated);
-  bool parseDeleteItemResponse(Response response);
+  BaseRequest prepareDeleteMultipleItemRequest(
+      String itemName, List<dynamic> itemIdList, bool mustBeAuthenticated);
+  bool parseGenericBoolResponse(Response response);
 
   Future<Request?> prepareRefreshTokenRequest();
   bool parseRefreshTokenResponse(Response response);
@@ -82,6 +81,11 @@ abstract class IDirectusAPI {
   DirectusFile parseFileUploadResponse(Response response);
 
   String convertPathToFullURL({required String path});
+
+  Request preparePasswordResetRequest(
+      {required String email, String? resetUrl});
+  Request preparePasswordChangeRequest(
+      {required String token, required String newPassword});
 }
 
 class DirectusApiError {
@@ -276,12 +280,9 @@ class DirectusAPI implements IDirectusAPI {
 
   @override
   BaseRequest prepareGetListOfItemsRequest(String itemName,
-      {String fields = "*",
-      Filter? filter,
-      List<SortProperty>? sortBy,
-      int? limit}) {
+      {String fields = "*", Filter? filter, List<SortProperty>? sortBy}) {
     return _prepareGetRequest("/items/$itemName",
-        filter: filter, fields: fields, sortBy: sortBy, limit: limit);
+        filter: filter, fields: fields, sortBy: sortBy);
   }
 
   @override
@@ -298,13 +299,11 @@ class DirectusAPI implements IDirectusAPI {
     if (filter != null) {
       urlBuilder.write("&filter=${filter.asJSON}");
     }
-
+    if (limit != null) {
+      urlBuilder.write("&limit=$limit");
+    }
     if (sortBy != null && sortBy.isNotEmpty) {
       urlBuilder.write("&sort=" + sortBy.join(","));
-    }
-
-    if (limit != null) {
-      urlBuilder.write("&limit=" + limit.toString());
     }
     Request request = Request("GET", Uri.parse(urlBuilder.toString()));
     return _authenticateRequest(request);
@@ -340,9 +339,10 @@ class DirectusAPI implements IDirectusAPI {
   }
 
   @override
-  Request prepareCreateNewItemRequest(
-      String itemName, Map<String, dynamic> objectData) {
-    Request request = Request("POST", Uri.parse(_baseURL + "/items/$itemName"));
+  Request prepareCreateNewItemRequest(String itemName, dynamic objectData,
+      {String fields = "*"}) {
+    Request request = Request(
+        "POST", Uri.parse(_baseURL + "/items/$itemName?fields=$fields"));
     request.body = jsonEncode(objectData);
     request.addJsonHeaders();
     return _authenticateRequest(request) as Request;
@@ -350,9 +350,10 @@ class DirectusAPI implements IDirectusAPI {
 
   @override
   Request prepareUpdateItemRequest(
-      String itemName, String itemId, Map<String, dynamic> objectData) {
-    Request request =
-        Request("PATCH", Uri.parse(_baseURL + "/items/$itemName/$itemId"));
+      String itemName, String itemId, Map<String, dynamic> objectData,
+      {String fields = "*"}) {
+    Request request = Request("PATCH",
+        Uri.parse(_baseURL + "/items/$itemName/$itemId?fields=$fields"));
     request.body = jsonEncode(objectData);
     request.addJsonHeaders();
     return _authenticateRequest(request) as Request;
@@ -386,8 +387,8 @@ class DirectusAPI implements IDirectusAPI {
   }
 
   @override
-  BaseRequest prepareGetUserListRequest({Filter? filter}) {
-    return _prepareGetRequest("/users", filter: filter);
+  BaseRequest prepareGetUserListRequest({Filter? filter, required int limit}) {
+    return _prepareGetRequest("/users", filter: filter, limit: limit);
   }
 
   @override
@@ -424,33 +425,15 @@ class DirectusAPI implements IDirectusAPI {
   Request prepareUpdateUserRequest(DirectusUser updatedUser) {
     Request request =
         Request("PATCH", Uri.parse(_baseURL + "/users/" + updatedUser.id));
-    request.body = jsonEncode(updatedUser.allProperties..remove("id"));
+    request.body = jsonEncode(updatedUser.updatedProperties);
     request.addJsonHeaders();
     return _authenticateRequest(request) as Request;
   }
 
   @override
-  bool parseDeleteItemResponse(Response response) {
+  bool parseGenericBoolResponse(Response response) {
     _throwIfServerDeniedRequest(response);
     return true;
-  }
-
-  @override
-  bool parseDeleteUserResponse(Response response) {
-    _throwIfServerDeniedRequest(response);
-    return true;
-  }
-
-  @override
-  BaseRequest prepareDeleteUserRequest(
-      DirectusUser user, bool mustBeAuthenticated) {
-    Request request =
-        Request("DELETE", Uri.parse("$_baseURL/users/${user.id}"));
-    if (mustBeAuthenticated) {
-      return _authenticateRequest(request);
-    }
-
-    return request;
   }
 
   void _throwIfServerDeniedRequest(Response response) {
@@ -470,6 +453,20 @@ class DirectusAPI implements IDirectusAPI {
     }
 
     return request;
+  }
+
+  @override
+  BaseRequest prepareDeleteMultipleItemRequest(
+      String itemName, List<dynamic> itemIdList, bool mustBeAuthenticated) {
+    Request request = Request("DELETE", Uri.parse("$_baseURL/items/$itemName"));
+    request.body = jsonEncode(itemIdList);
+    request.addJsonHeaders();
+    log(request.body);
+    if (mustBeAuthenticated) {
+      return _authenticateRequest(request);
+    } else {
+      return request;
+    }
   }
 
   @override
@@ -536,6 +533,29 @@ class DirectusAPI implements IDirectusAPI {
     }
     buffer.write(path);
     return buffer.toString();
+  }
+
+  @override
+  String? get currentAuthToken => _accessToken;
+
+  @override
+  Request preparePasswordResetRequest(
+      {required String email, String? resetUrl}) {
+    final request =
+        Request("POST", Uri.parse("$_baseURL/auth/password/request"));
+    request.body = jsonEncode(
+        {"email": email, if (resetUrl != null) "reset_url": resetUrl});
+    request.addJsonHeaders();
+    return request;
+  }
+
+  @override
+  Request preparePasswordChangeRequest(
+      {required String token, required String newPassword}) {
+    final request = Request("POST", Uri.parse("$_baseURL/auth/password/reset"));
+    request.body = jsonEncode({"token": token, "password": newPassword});
+    request.addJsonHeaders();
+    return request;
   }
 }
 

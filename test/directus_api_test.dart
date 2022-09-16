@@ -124,7 +124,7 @@ void main() {
       final sut = makeAuthenticatedDirectusAPI();
       final request = sut.prepareCreateNewItemRequest(
           "articles", {"title": "Let's dance", "pageCount": 10});
-      expect(request.url.toString(), "http://api.com/items/articles");
+      expect(request.url.toString(), "http://api.com/items/articles?fields=*");
       expect(request.method, "POST");
       expect(
           request.headers["Content-Type"], "application/json; charset=utf-8");
@@ -138,7 +138,8 @@ void main() {
       final sut = makeAuthenticatedDirectusAPI();
       final request = sut.prepareUpdateItemRequest(
           "articles", "abc-123", {"title": "Let's dance", "pageCount": 9});
-      expect(request.url.toString(), "http://api.com/items/articles/abc-123");
+      expect(request.url.toString(),
+          "http://api.com/items/articles/abc-123?fields=*");
       expect(request.method, "PATCH");
       expect(
           request.headers["Content-Type"], "application/json; charset=utf-8");
@@ -158,15 +159,15 @@ void main() {
     test('Delete Item ok responses', () {
       final sut = makeAuthenticatedDirectusAPI();
 
-      expect(sut.parseDeleteItemResponse(Response("", 200)), true);
-      expect(sut.parseDeleteItemResponse(Response("", 299)), true);
+      expect(sut.parseGenericBoolResponse(Response("", 200)), true);
+      expect(sut.parseGenericBoolResponse(Response("", 299)), true);
     });
     test('Delete Item denied responses', () {
       final sut = makeAuthenticatedDirectusAPI();
 
-      expect(() => sut.parseDeleteItemResponse(Response("", 300)),
+      expect(() => sut.parseGenericBoolResponse(Response("", 300)),
           throwsException);
-      expect(() => sut.parseDeleteItemResponse(Response("", 400)),
+      expect(() => sut.parseGenericBoolResponse(Response("", 400)),
           throwsException);
     });
   });
@@ -441,13 +442,13 @@ void main() {
       expect(parsedUser.email, "admin@example.com");
       expect(parsedUser.firstname, "Admin");
       expect(parsedUser.lastname, "User");
-      expect(parsedUser.allProperties["title"], "CTO");
+      expect(parsedUser.getValue(forKey: "title"), "CTO");
     });
 
     test('Get list of users request', () {
       final sut = makeAuthenticatedDirectusAPI();
-      final request = sut.prepareGetUserListRequest();
-      expect(request.url.toString(), "http://api.com/users?fields=*");
+      final request = sut.prepareGetUserListRequest(limit: 10);
+      expect(request.url.toString(), "http://api.com/users?fields=*&limit=10");
       expect(request.method, "GET");
       expect(request.headers["Authorization"], "Bearer $defaultAccessToken");
     });
@@ -577,22 +578,79 @@ void main() {
       expect(jsonParsedBody["score"], 23);
     });
 
-    test('Update User request', () {
+    test('Update User request with no modification', () {
       final sut = makeAuthenticatedDirectusAPI();
-      final request = sut.prepareUpdateUserRequest(DirectusUser({
+      final user = DirectusUser({
         "id": "123-abc-456",
         "email": "will@acn.com",
         "first_name": "Will",
         "score": 23
-      }));
+      });
+      user.firstname = "Will 2";
+      final request = sut.prepareUpdateUserRequest(user);
       expect(request.url.toString(), "http://api.com/users/123-abc-456");
       expect(request.method, "PATCH");
       expect(request.headers["Authorization"], "Bearer $defaultAccessToken");
       final jsonParsedBody = jsonDecode(request.body) as Map;
-      expect(jsonParsedBody.containsKey("id"), false);
+      expect(jsonParsedBody["first_name"], "Will 2");
+      expect(jsonParsedBody.containsKey("email"), false,
+          reason: "Only modified properties should be sent");
+      expect(jsonParsedBody.containsKey("id"), false,
+          reason: "Only modified properties should be sent");
+      expect(jsonParsedBody.containsKey("score"), false,
+          reason: "Only modified properties should be sent");
+    });
+    test('Update User request with no modification', () {
+      final sut = makeAuthenticatedDirectusAPI();
+      final user = DirectusUser({
+        "id": "123-abc-456",
+        "email": "will@acn.com",
+        "first_name": "Will",
+        "score": 23
+      });
+      final request = sut.prepareUpdateUserRequest(user);
+      expect(request.url.toString(), "http://api.com/users/123-abc-456");
+      expect(request.method, "PATCH");
+      expect(request.headers["Authorization"], "Bearer $defaultAccessToken");
+      final jsonParsedBody = jsonDecode(request.body) as Map;
+      expect(jsonParsedBody, isEmpty);
+    });
+    test('Request user password reset', () {
+      final sut = makeAuthenticatedDirectusAPI();
+
+      final request = sut.preparePasswordResetRequest(email: "will@acn.com");
+      expect(request.url.toString(), "http://api.com/auth/password/request");
+      expect(request.method, "POST");
+      expect(
+          request.headers["Content-Type"], "application/json; charset=utf-8");
+      final jsonParsedBody = jsonDecode(request.body) as Map;
       expect(jsonParsedBody["email"], "will@acn.com");
-      expect(jsonParsedBody["first_name"], "Will");
-      expect(jsonParsedBody["score"], 23);
+    });
+    test('Request user password reset with reset url', () {
+      final sut = makeAuthenticatedDirectusAPI();
+
+      final request = sut.preparePasswordResetRequest(
+          email: "will@acn.com", resetUrl: "https://my-custom-reset-url.com");
+      expect(request.url.toString(), "http://api.com/auth/password/request");
+      expect(request.method, "POST");
+      expect(
+          request.headers["Content-Type"], "application/json; charset=utf-8");
+      final jsonParsedBody = jsonDecode(request.body) as Map;
+      expect(jsonParsedBody["email"], "will@acn.com");
+      expect(jsonParsedBody["reset_url"], "https://my-custom-reset-url.com");
+    });
+    test('Request user password change', () {
+      final sut = makeAuthenticatedDirectusAPI();
+
+      final request = sut.preparePasswordChangeRequest(
+          newPassword: "new-password", token: "token-abc");
+      expect(request.url.toString(), "http://api.com/auth/password/reset");
+      expect(request.method, "POST");
+      expect(
+          request.headers["Content-Type"], "application/json; charset=utf-8");
+      final jsonParsedBody = jsonDecode(request.body) as Map;
+      expect(jsonParsedBody["password"], "new-password");
+      expect(jsonParsedBody["token"], "token-abc");
     });
 
     test('Delete User request', () {

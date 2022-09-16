@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:directus_api_manager/directus_api_manager.dart';
 import 'package:directus_api_manager/src/directus_api.dart';
 import 'package:http/http.dart';
@@ -5,6 +7,8 @@ import 'package:http/http.dart';
 class DirectusApiManager {
   final Client _client;
   final IDirectusAPI _api;
+
+  DirectusUser? _currentUser;
 
   DirectusApiManager(
       {required String baseURL,
@@ -54,22 +58,36 @@ class DirectusApiManager {
     return await _api.prepareRefreshTokenRequest() != null;
   }
 
+  Future? _refreshTokenLock;
   Future<bool> _tryAndRefreshToken() async {
     bool tokenRefreshed = false;
+    final completer = Completer();
+    final lock = _refreshTokenLock;
+    if (lock != null) {
+      await lock;
+    }
+    _refreshTokenLock = completer.future;
 
     try {
-      tokenRefreshed = await _sendRequest(
-          prepareRequest: () async => await _api.prepareRefreshTokenRequest(),
-          dependsOnToken: false,
-          parseResponse: (response) =>
-              _api.parseRefreshTokenResponse(response));
-    } catch (_) {}
+      try {
+        tokenRefreshed = await _sendRequest(
+            prepareRequest: () async => await _api.prepareRefreshTokenRequest(),
+            dependsOnToken: false,
+            parseResponse: (response) =>
+                _api.parseRefreshTokenResponse(response));
+      } catch (_) {}
+    } catch (error) {
+      print(error);
+    }
 
+    _refreshTokenLock = null;
+    completer.complete();
     return tokenRefreshed;
   }
 
   Future<DirectusLoginResult> loginDirectusUser(
       String username, String password) {
+    discardCurrentUserCache();
     return _sendRequest(
         prepareRequest: () {
           return _api.prepareLoginRequest(username, password);
@@ -78,14 +96,32 @@ class DirectusApiManager {
         parseResponse: (response) => _api.parseLoginResponse(response));
   }
 
+  Future? _currentUserLock;
   Future<DirectusUser?> currentDirectusUser() async {
-    if (await hasLoggedInUser()) {
-      return _sendRequest(
-          prepareRequest: () => _api.prepareGetCurrentUserRequest(),
-          parseResponse: (response) => _api.parseUserResponse(response));
-    } else {
-      return Future.value(null);
+    final completer = Completer();
+    final lock = _currentUserLock;
+    if (lock != null) {
+      await lock;
     }
+    _currentUserLock = completer.future;
+
+    try {
+      if (_currentUser == null && await hasLoggedInUser()) {
+        _currentUser = await _sendRequest(
+            prepareRequest: () => _api.prepareGetCurrentUserRequest(),
+            parseResponse: (response) => _api.parseUserResponse(response));
+      }
+    } catch (error) {
+      print(error);
+    }
+
+    _currentUserLock = null;
+    completer.complete();
+    return _currentUser;
+  }
+
+  void discardCurrentUserCache() {
+    _currentUser = null;
   }
 
   Future<DirectusUser?> getDirectusUser(String userId, {String fields = "*"}) {
@@ -95,9 +131,11 @@ class DirectusApiManager {
         parseResponse: (response) => _api.parseUserResponse(response));
   }
 
-  Future<Iterable<DirectusUser>> getDirectusUserList({Filter? filter}) {
+  Future<Iterable<DirectusUser>> getDirectusUserList(
+      {Filter? filter, int limit = -1}) {
     return _sendRequest(
-        prepareRequest: () => _api.prepareGetUserListRequest(filter: filter),
+        prepareRequest: () =>
+            _api.prepareGetUserListRequest(filter: filter, limit: limit),
         parseResponse: (response) => _api.parseUserListResponse(response));
   }
 
@@ -105,6 +143,32 @@ class DirectusApiManager {
     return _sendRequest(
         prepareRequest: () => _api.prepareUpdateUserRequest(updatedUser),
         parseResponse: (response) => _api.parseUserResponse(response));
+  }
+
+  /// Sends a password request to the server for the provided [email].
+  /// Your server must have email sending configured. It will send an email (from the template located at `/extensions/templates/password-reset.liquid`) to the user with a link to page to finalize his password reset.
+  /// Your directus server already has a web page where the user will be sent to choose and save a new password.
+  ///
+  /// You can provide an optional [resetUrl] if you want to send the user to your own password reset web page.
+  /// If you do, you have to add the url the `PASSWORD_RESET_URL_ALLOW_LIST` environment variable for it to be accepted.
+  /// That page will receive the reset token by parameter so you can call the password change api from there.
+  Future<bool> requestPasswordReset({required String email, String? resetUrl}) {
+    return _sendRequest(
+        prepareRequest: () =>
+            _api.preparePasswordResetRequest(email: email, resetUrl: resetUrl),
+        parseResponse: _api.parseGenericBoolResponse);
+  }
+
+  /// Saves the new password chosen by the user after requesting a password reset using the [requestPasswordReset] function.
+  ///
+  /// Only use this API if you do not rely on directus standard password reset page.
+  /// If you have your own custom password reset page, it will receive the refresh [token] as a GET parameter on load and the user will have to chose a [password] himself.
+  Future<bool> confirmPasswordReset(
+      {required String token, required String password}) {
+    return _sendRequest(
+        prepareRequest: () => _api.preparePasswordChangeRequest(
+            token: token, newPassword: password),
+        parseResponse: _api.parseGenericBoolResponse);
   }
 
   Future<DirectusUser> createNewDirectusUser(
@@ -125,15 +189,19 @@ class DirectusApiManager {
         parseResponse: (response) => _api.parseUserResponse(response));
   }
 
-  Future<bool> logoutDirectusUser() {
+  Future<bool> logoutDirectusUser() async {
+    discardCurrentUserCache();
+    var wasLoggedOut = false;
     try {
-      return _sendRequest(
+      wasLoggedOut = await _sendRequest(
           prepareRequest: () => _api.prepareLogoutRequest(),
           dependsOnToken: false,
           parseResponse: (response) => _api.parseLogoutResponse(response));
-    } catch (_) {
-      return Future.value(false);
+    } catch (_) {}
+    if (wasLoggedOut) {
+      _currentUser = null;
     }
+    return wasLoggedOut;
   }
 
   Future<Iterable<Type>> findListOfItems<Type>(
@@ -174,14 +242,36 @@ class DirectusApiManager {
             jsonConverter(_api.parseCreateNewItemResponse(response)));
   }
 
+  Future<List<Type>> createMultipleItems<Type>(
+      {required String typeName,
+      String fields = "*",
+      required Iterable<Map<String, dynamic>> objectListData,
+      required Type Function(dynamic) jsonConverter}) {
+    return _sendRequest(
+        prepareRequest: () => _api.prepareCreateNewItemRequest(
+            typeName, objectListData,
+            fields: fields),
+        parseResponse: (response) {
+          final List<Type> createdItemsList = [];
+          final listJson = _api.parseCreateNewItemResponse(response);
+          if (listJson is List) {
+            for (final itemJson in listJson) {
+              createdItemsList.add(jsonConverter(itemJson));
+            }
+          }
+          return createdItemsList;
+        });
+  }
+
   Future<Type> updateItem<Type>(
       {required String typeName,
       required String objectId,
       required Map<String, dynamic> objectData,
-      required Type Function(dynamic) jsonConverter}) {
+      required Type Function(dynamic) jsonConverter,
+      String fields = "*"}) {
     return _sendRequest(
-        prepareRequest: () =>
-            _api.prepareUpdateItemRequest(typeName, objectId, objectData),
+        prepareRequest: () => _api.prepareUpdateItemRequest(
+            typeName, objectId, objectData, fields: fields),
         parseResponse: (response) =>
             jsonConverter(_api.parseUpdateItemResponse(response)));
   }
@@ -193,7 +283,17 @@ class DirectusApiManager {
     return _sendRequest(
         prepareRequest: () => _api.prepareDeleteItemRequest(
             typeName, objectId, mustBeAuthenticated),
-        parseResponse: (response) => _api.parseDeleteItemResponse(response));
+        parseResponse: (response) => _api.parseGenericBoolResponse(response));
+  }
+
+  Future<bool> deleteMultipleItems(
+      {required String typeName,
+      required List<dynamic> objectIdList,
+      bool mustBeAuthenticated = true}) {
+    return _sendRequest(
+        prepareRequest: () => _api.prepareDeleteMultipleItemRequest(
+            typeName, objectIdList, mustBeAuthenticated),
+        parseResponse: (response) => _api.parseGenericBoolResponse(response));
   }
 
   Future<bool> deleteUser(
@@ -243,4 +343,6 @@ class DirectusApiManager {
   String convertPathToFullURL({required String path}) {
     return _api.convertPathToFullURL(path: path);
   }
+
+  String? get currentAuthToken => _api.currentAuthToken;
 }
