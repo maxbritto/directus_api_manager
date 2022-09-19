@@ -454,33 +454,7 @@ class DirectusAPI implements IDirectusAPI {
 
   Object? _toEncodable(Object? nonEncodable) {
     if (nonEncodable is DateTime) {
-      final String month = (nonEncodable.month < 10
-          ? "0" + nonEncodable.month.toString()
-          : nonEncodable.month.toString());
-      final String day = (nonEncodable.day < 10
-          ? "0" + nonEncodable.day.toString()
-          : nonEncodable.day.toString());
-      final String hour = (nonEncodable.hour < 10
-          ? "0" + nonEncodable.hour.toString()
-          : nonEncodable.hour.toString());
-      final String minute = (nonEncodable.minute < 10
-          ? "0" + nonEncodable.minute.toString()
-          : nonEncodable.minute.toString());
-      final String second = (nonEncodable.second < 10
-          ? "0" + nonEncodable.second.toString()
-          : nonEncodable.second.toString());
-
-      return nonEncodable.year.toString() +
-          "-" +
-          month +
-          "-" +
-          day +
-          " " +
-          hour +
-          ":" +
-          minute +
-          ":" +
-          second;
+      return nonEncodable.toIso8601String();
     }
 
     return null;

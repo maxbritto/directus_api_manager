@@ -135,7 +135,7 @@ void main() {
       final jsonParsedBody = jsonDecode(request.body);
       expect(jsonParsedBody["title"], "Let's dance");
       expect(jsonParsedBody["pageCount"], 10);
-      expect(jsonParsedBody["creationDate"], "2022-01-02 03:04:05");
+      expect(jsonParsedBody["creationDate"], "2022-01-02T03:04:05.000");
     });
 
     test('Update Item request', () {
@@ -154,7 +154,7 @@ void main() {
       final jsonParsedBody = jsonDecode(request.body);
       expect(jsonParsedBody["title"], "Let's dance");
       expect(jsonParsedBody["pageCount"], 9);
-      expect(jsonParsedBody["creationDate"], "2022-01-02 03:04:05");
+      expect(jsonParsedBody["creationDate"], "2022-01-02T03:04:05.000");
     });
 
     test('Delete Item request', () {
@@ -585,7 +585,7 @@ void main() {
       expect(jsonParsedBody["description"], "Main achor");
       expect(jsonParsedBody["custom_property"], "custom_value");
       expect(jsonParsedBody["score"], 23);
-      expect(jsonParsedBody["birthDate"], "2022-01-02 03:04:05");
+      expect(jsonParsedBody["birthDate"], "2022-01-02T03:04:05.000");
     });
 
     test('Update User request with modification', () {
@@ -604,7 +604,7 @@ void main() {
       expect(request.headers["Authorization"], "Bearer $defaultAccessToken");
       final jsonParsedBody = jsonDecode(request.body) as Map;
       expect(jsonParsedBody["first_name"], "Will 2");
-      expect(jsonParsedBody["birthDate"], "2022-01-02 03:04:05");
+      expect(jsonParsedBody["birthDate"], "2022-01-02T03:04:05.000");
       expect(jsonParsedBody.containsKey("email"), false,
           reason: "Only modified properties should be sent");
       expect(jsonParsedBody.containsKey("id"), false,
