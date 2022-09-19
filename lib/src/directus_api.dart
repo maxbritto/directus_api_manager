@@ -353,7 +353,10 @@ class DirectusAPI implements IDirectusAPI {
       {String fields = "*"}) {
     Request request = Request(
         "POST", Uri.parse(_baseURL + "/items/$itemName?fields=$fields"));
-    request.body = jsonEncode(objectData);
+    request.body = jsonEncode(
+      objectData,
+      toEncodable: (nonEncodable) => _toEncodable(nonEncodable),
+    );
     request.addJsonHeaders();
     return _authenticateRequest(request) as Request;
   }
@@ -364,7 +367,10 @@ class DirectusAPI implements IDirectusAPI {
       {String fields = "*"}) {
     Request request = Request("PATCH",
         Uri.parse(_baseURL + "/items/$itemName/$itemId?fields=$fields"));
-    request.body = jsonEncode(objectData);
+    request.body = jsonEncode(
+      objectData,
+      toEncodable: (nonEncodable) => _toEncodable(nonEncodable),
+    );
     request.addJsonHeaders();
     return _authenticateRequest(request) as Request;
   }
@@ -426,7 +432,10 @@ class DirectusAPI implements IDirectusAPI {
     for (final propertyKey in otherProperties.keys) {
       userProperties[propertyKey] = otherProperties[propertyKey];
     }
-    request.body = jsonEncode(userProperties);
+    request.body = jsonEncode(
+      userProperties,
+      toEncodable: (nonEncodable) => _toEncodable(nonEncodable),
+    );
     request.addJsonHeaders();
     return _authenticateRequest(request) as Request;
   }
@@ -435,9 +444,46 @@ class DirectusAPI implements IDirectusAPI {
   Request prepareUpdateUserRequest(DirectusUser updatedUser) {
     Request request =
         Request("PATCH", Uri.parse(_baseURL + "/users/" + updatedUser.id));
-    request.body = jsonEncode(updatedUser.updatedProperties);
+    request.body = jsonEncode(
+      updatedUser.updatedProperties,
+      toEncodable: (nonEncodable) => _toEncodable(nonEncodable),
+    );
     request.addJsonHeaders();
     return _authenticateRequest(request) as Request;
+  }
+
+  Object? _toEncodable(Object? nonEncodable) {
+    if (nonEncodable is DateTime) {
+      final String month = (nonEncodable.month < 10
+          ? "0" + nonEncodable.month.toString()
+          : nonEncodable.month.toString());
+      final String day = (nonEncodable.day < 10
+          ? "0" + nonEncodable.day.toString()
+          : nonEncodable.day.toString());
+      final String hour = (nonEncodable.hour < 10
+          ? "0" + nonEncodable.hour.toString()
+          : nonEncodable.hour.toString());
+      final String minute = (nonEncodable.minute < 10
+          ? "0" + nonEncodable.minute.toString()
+          : nonEncodable.minute.toString());
+      final String second = (nonEncodable.second < 10
+          ? "0" + nonEncodable.second.toString()
+          : nonEncodable.second.toString());
+
+      return nonEncodable.year.toString() +
+          "-" +
+          month +
+          "-" +
+          day +
+          " " +
+          hour +
+          ":" +
+          minute +
+          ":" +
+          second;
+    }
+
+    return null;
   }
 
   @override

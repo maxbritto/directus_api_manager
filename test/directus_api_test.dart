@@ -122,8 +122,11 @@ void main() {
 
     test('New Item request', () {
       final sut = makeAuthenticatedDirectusAPI();
-      final request = sut.prepareCreateNewItemRequest(
-          "articles", {"title": "Let's dance", "pageCount": 10});
+      final request = sut.prepareCreateNewItemRequest("articles", {
+        "title": "Let's dance",
+        "pageCount": 10,
+        "creationDate": DateTime(2022, 1, 2, 3, 4, 5)
+      });
       expect(request.url.toString(), "http://api.com/items/articles?fields=*");
       expect(request.method, "POST");
       expect(
@@ -132,12 +135,16 @@ void main() {
       final jsonParsedBody = jsonDecode(request.body);
       expect(jsonParsedBody["title"], "Let's dance");
       expect(jsonParsedBody["pageCount"], 10);
+      expect(jsonParsedBody["creationDate"], "2022-01-02 03:04:05");
     });
 
     test('Update Item request', () {
       final sut = makeAuthenticatedDirectusAPI();
-      final request = sut.prepareUpdateItemRequest(
-          "articles", "abc-123", {"title": "Let's dance", "pageCount": 9});
+      final request = sut.prepareUpdateItemRequest("articles", "abc-123", {
+        "title": "Let's dance",
+        "pageCount": 9,
+        "creationDate": DateTime(2022, 1, 2, 3, 4, 5)
+      });
       expect(request.url.toString(),
           "http://api.com/items/articles/abc-123?fields=*");
       expect(request.method, "PATCH");
@@ -147,6 +154,7 @@ void main() {
       final jsonParsedBody = jsonDecode(request.body);
       expect(jsonParsedBody["title"], "Let's dance");
       expect(jsonParsedBody["pageCount"], 9);
+      expect(jsonParsedBody["creationDate"], "2022-01-02 03:04:05");
     });
 
     test('Delete Item request', () {
@@ -560,7 +568,8 @@ void main() {
           otherProperties: {
             "description": "Main achor",
             "custom_property": "custom_value",
-            "score": 23
+            "score": 23,
+            "birthDate": DateTime(2022, 1, 2, 3, 4, 5)
           });
       expect(request.url.toString(), "http://api.com/users");
       expect(request.method, "POST");
@@ -576,9 +585,10 @@ void main() {
       expect(jsonParsedBody["description"], "Main achor");
       expect(jsonParsedBody["custom_property"], "custom_value");
       expect(jsonParsedBody["score"], 23);
+      expect(jsonParsedBody["birthDate"], "2022-01-02 03:04:05");
     });
 
-    test('Update User request with no modification', () {
+    test('Update User request with modification', () {
       final sut = makeAuthenticatedDirectusAPI();
       final user = DirectusUser({
         "id": "123-abc-456",
@@ -587,12 +597,14 @@ void main() {
         "score": 23
       });
       user.firstname = "Will 2";
+      user.setValue(DateTime(2022, 1, 2, 3, 4, 5), forKey: "birthDate");
       final request = sut.prepareUpdateUserRequest(user);
       expect(request.url.toString(), "http://api.com/users/123-abc-456");
       expect(request.method, "PATCH");
       expect(request.headers["Authorization"], "Bearer $defaultAccessToken");
       final jsonParsedBody = jsonDecode(request.body) as Map;
       expect(jsonParsedBody["first_name"], "Will 2");
+      expect(jsonParsedBody["birthDate"], "2022-01-02 03:04:05");
       expect(jsonParsedBody.containsKey("email"), false,
           reason: "Only modified properties should be sent");
       expect(jsonParsedBody.containsKey("id"), false,
