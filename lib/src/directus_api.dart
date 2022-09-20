@@ -17,7 +17,7 @@ abstract class IDirectusAPI {
 
   BaseRequest prepareGetSpecificUserRequest(String userId,
       {String fields = "*"});
-  BaseRequest prepareGetCurrentUserRequest();
+  BaseRequest prepareGetCurrentUserRequest({String fields = "*"});
   DirectusUser parseUserResponse(Response response);
 
   BaseRequest prepareUpdateUserRequest(DirectusUser updatedUser);
@@ -386,8 +386,8 @@ class DirectusAPI implements IDirectusAPI {
   }
 
   @override
-  BaseRequest prepareGetCurrentUserRequest() {
-    return prepareGetSpecificUserRequest("me");
+  BaseRequest prepareGetCurrentUserRequest({String fields = "*"}) {
+    return prepareGetSpecificUserRequest("me", fields: fields);
   }
 
   @override

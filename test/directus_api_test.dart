@@ -421,6 +421,16 @@ void main() {
       expect(request.headers["Authorization"], "Bearer $defaultAccessToken");
     });
 
+    test('Get current user request with fields', () {
+      final sut = makeAuthenticatedDirectusAPI();
+      final request =
+          sut.prepareGetCurrentUserRequest(fields: "*,field1.*,field2.*");
+      expect(request.url.toString(),
+          "http://api.com/users/me?fields=*,field1.*,field2.*");
+      expect(request.method, "GET");
+      expect(request.headers["Authorization"], "Bearer $defaultAccessToken");
+    });
+
     test('Parse user response', () {
       final responseBody = """
       {"data":{
