@@ -97,7 +97,7 @@ class DirectusApiManager {
   }
 
   Future? _currentUserLock;
-  Future<DirectusUser?> currentDirectusUser() async {
+  Future<DirectusUser?> currentDirectusUser({String fields = "*"}) async {
     final completer = Completer();
     final lock = _currentUserLock;
     if (lock != null) {
@@ -108,7 +108,8 @@ class DirectusApiManager {
     try {
       if (_currentUser == null && await hasLoggedInUser()) {
         _currentUser = await _sendRequest(
-            prepareRequest: () => _api.prepareGetCurrentUserRequest(),
+            prepareRequest: () =>
+                _api.prepareGetCurrentUserRequest(fields: fields),
             parseResponse: (response) => _api.parseUserResponse(response));
       }
     } catch (error) {
