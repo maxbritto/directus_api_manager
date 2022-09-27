@@ -17,7 +17,7 @@ abstract class IDirectusAPI {
 
   BaseRequest prepareGetSpecificUserRequest(String userId,
       {String fields = "*"});
-  BaseRequest prepareGetCurrentUserRequest();
+  BaseRequest prepareGetCurrentUserRequest({String fields = "*"});
   DirectusUser parseUserResponse(Response response);
 
   BaseRequest prepareUpdateUserRequest(DirectusUser updatedUser);
@@ -353,7 +353,10 @@ class DirectusAPI implements IDirectusAPI {
       {String fields = "*"}) {
     Request request = Request(
         "POST", Uri.parse(_baseURL + "/items/$itemName?fields=$fields"));
-    request.body = jsonEncode(objectData);
+    request.body = jsonEncode(
+      objectData,
+      toEncodable: (nonEncodable) => _toEncodable(nonEncodable),
+    );
     request.addJsonHeaders();
     return _authenticateRequest(request) as Request;
   }
@@ -364,7 +367,10 @@ class DirectusAPI implements IDirectusAPI {
       {String fields = "*"}) {
     Request request = Request("PATCH",
         Uri.parse(_baseURL + "/items/$itemName/$itemId?fields=$fields"));
-    request.body = jsonEncode(objectData);
+    request.body = jsonEncode(
+      objectData,
+      toEncodable: (nonEncodable) => _toEncodable(nonEncodable),
+    );
     request.addJsonHeaders();
     return _authenticateRequest(request) as Request;
   }
@@ -380,8 +386,8 @@ class DirectusAPI implements IDirectusAPI {
   }
 
   @override
-  BaseRequest prepareGetCurrentUserRequest() {
-    return prepareGetSpecificUserRequest("me");
+  BaseRequest prepareGetCurrentUserRequest({String fields = "*"}) {
+    return prepareGetSpecificUserRequest("me", fields: fields);
   }
 
   @override
@@ -426,7 +432,10 @@ class DirectusAPI implements IDirectusAPI {
     for (final propertyKey in otherProperties.keys) {
       userProperties[propertyKey] = otherProperties[propertyKey];
     }
-    request.body = jsonEncode(userProperties);
+    request.body = jsonEncode(
+      userProperties,
+      toEncodable: (nonEncodable) => _toEncodable(nonEncodable),
+    );
     request.addJsonHeaders();
     return _authenticateRequest(request) as Request;
   }
@@ -435,9 +444,20 @@ class DirectusAPI implements IDirectusAPI {
   Request prepareUpdateUserRequest(DirectusUser updatedUser) {
     Request request =
         Request("PATCH", Uri.parse(_baseURL + "/users/" + updatedUser.id));
-    request.body = jsonEncode(updatedUser.updatedProperties);
+    request.body = jsonEncode(
+      updatedUser.updatedProperties,
+      toEncodable: (nonEncodable) => _toEncodable(nonEncodable),
+    );
     request.addJsonHeaders();
     return _authenticateRequest(request) as Request;
+  }
+
+  Object? _toEncodable(Object? nonEncodable) {
+    if (nonEncodable is DateTime) {
+      return nonEncodable.toIso8601String();
+    }
+
+    return null;
   }
 
   @override
