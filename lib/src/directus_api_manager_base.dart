@@ -172,7 +172,7 @@ class DirectusApiManager {
         parseResponse: _api.parseGenericBoolResponse);
   }
 
-  Future<DirectusUser> createNewDirectusUser(
+  Future<bool> createNewDirectusUser(
       {required String email,
       required String password,
       String? firstname,
@@ -187,7 +187,7 @@ class DirectusApiManager {
             lastname: lastname,
             roleUUID: roleUUID,
             otherProperties: otherProperties),
-        parseResponse: (response) => _api.parseUserResponse(response));
+        parseResponse: (response) => _api.parseCreateUserResponse(response));
   }
 
   Future<bool> logoutDirectusUser() async {

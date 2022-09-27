@@ -463,6 +463,24 @@ void main() {
       expect(parsedUser.getValue(forKey: "title"), "CTO");
     });
 
+    test("Parse user creation response 200", () {
+      final sut = DirectusAPI("http://api.com");
+      final parsedUser = sut.parseCreateUserResponse(Response("", 200));
+      expect(parsedUser, true);
+    });
+
+    test("Parse user creation response 204", () {
+      final sut = DirectusAPI("http://api.com");
+      final parsedUser = sut.parseCreateUserResponse(Response("", 204));
+      expect(parsedUser, true);
+    });
+
+    test("Parse user creation response different than 200 and 204", () {
+      final sut = DirectusAPI("http://api.com");
+      final parsedUser = sut.parseCreateUserResponse(Response("", 403));
+      expect(parsedUser, false);
+    });
+
     test('Get list of users request', () {
       final sut = makeAuthenticatedDirectusAPI();
       final request = sut.prepareGetUserListRequest(limit: 10);

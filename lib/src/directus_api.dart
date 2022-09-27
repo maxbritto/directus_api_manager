@@ -19,6 +19,7 @@ abstract class IDirectusAPI {
       {String fields = "*"});
   BaseRequest prepareGetCurrentUserRequest({String fields = "*"});
   DirectusUser parseUserResponse(Response response);
+  bool parseCreateUserResponse(Response response);
 
   BaseRequest prepareUpdateUserRequest(DirectusUser updatedUser);
   BaseRequest prepareGetUserListRequest({Filter? filter, required int limit});
@@ -383,6 +384,11 @@ class DirectusAPI implements IDirectusAPI {
     } else {
       throw "Invalid user response format";
     }
+  }
+
+  @override
+  bool parseCreateUserResponse(Response response) {
+    return response.statusCode == 200 || response.statusCode == 204;
   }
 
   @override
