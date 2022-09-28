@@ -97,7 +97,7 @@ class DirectusApiManager {
   }
 
   Future? _currentUserLock;
-  Future<DirectusUser?> currentDirectusUser() async {
+  Future<DirectusUser?> currentDirectusUser({String fields = "*"}) async {
     final completer = Completer();
     final lock = _currentUserLock;
     if (lock != null) {
@@ -108,7 +108,8 @@ class DirectusApiManager {
     try {
       if (_currentUser == null && await hasLoggedInUser()) {
         _currentUser = await _sendRequest(
-            prepareRequest: () => _api.prepareGetCurrentUserRequest(),
+            prepareRequest: () =>
+                _api.prepareGetCurrentUserRequest(fields: fields),
             parseResponse: (response) => _api.parseUserResponse(response));
       }
     } catch (error) {
@@ -209,10 +210,11 @@ class DirectusApiManager {
       Filter? filter,
       List<SortProperty>? sortBy,
       String fields = "*",
+      int? limit,
       required Type Function(dynamic) jsonConverter}) {
     return _sendRequest(
         prepareRequest: () => _api.prepareGetListOfItemsRequest(name,
-            filter: filter, sortBy: sortBy, fields: fields),
+            filter: filter, sortBy: sortBy, fields: fields, limit: limit),
         parseResponse: (response) => _api
             .parseGetListOfItemsResponse(response)
             .map((itemAsJsonObject) => jsonConverter(itemAsJsonObject)));
@@ -293,6 +295,14 @@ class DirectusApiManager {
         prepareRequest: () => _api.prepareDeleteMultipleItemRequest(
             typeName, objectIdList, mustBeAuthenticated),
         parseResponse: (response) => _api.parseGenericBoolResponse(response));
+  }
+
+  Future<bool> deleteUser(
+      {required DirectusUser user, bool mustBeAuthenticated = true}) {
+    return _sendRequest(
+        prepareRequest: () =>
+            _api.prepareDeleteUserRequest(user, mustBeAuthenticated),
+        parseResponse: (response) => _api.parseDeleteUserResponse(response));
   }
 
   Future<DirectusFile> uploadFileFromUrl(
