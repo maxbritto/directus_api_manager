@@ -18,6 +18,7 @@ abstract class IDirectusAPI {
   BaseRequest prepareGetSpecificUserRequest(String userId,
       {String fields = "*"});
   BaseRequest prepareGetCurrentUserRequest();
+  BaseRequest authenticateRequest(BaseRequest request);
   DirectusUser parseUserResponse(Response response);
 
   BaseRequest prepareUpdateUserRequest(DirectusUser updatedUser);
@@ -229,7 +230,7 @@ class DirectusAPI implements IDirectusAPI {
     return request;
   }
 
-  BaseRequest _authenticateRequest(BaseRequest request) {
+  BaseRequest authenticateRequest(BaseRequest request) {
     final accessToken = _accessToken;
     if (accessToken != null) {
       request.headers["Authorization"] = "Bearer $accessToken";
@@ -306,7 +307,7 @@ class DirectusAPI implements IDirectusAPI {
       urlBuilder.write("&sort=" + sortBy.join(","));
     }
     Request request = Request("GET", Uri.parse(urlBuilder.toString()));
-    return _authenticateRequest(request);
+    return authenticateRequest(request);
   }
 
   @override
@@ -345,7 +346,7 @@ class DirectusAPI implements IDirectusAPI {
         "POST", Uri.parse(_baseURL + "/items/$itemName?fields=$fields"));
     request.body = jsonEncode(objectData);
     request.addJsonHeaders();
-    return _authenticateRequest(request) as Request;
+    return authenticateRequest(request) as Request;
   }
 
   @override
@@ -356,7 +357,7 @@ class DirectusAPI implements IDirectusAPI {
         Uri.parse(_baseURL + "/items/$itemName/$itemId?fields=$fields"));
     request.body = jsonEncode(objectData);
     request.addJsonHeaders();
-    return _authenticateRequest(request) as Request;
+    return authenticateRequest(request) as Request;
   }
 
   @override
@@ -418,7 +419,7 @@ class DirectusAPI implements IDirectusAPI {
     }
     request.body = jsonEncode(userProperties);
     request.addJsonHeaders();
-    return _authenticateRequest(request) as Request;
+    return authenticateRequest(request) as Request;
   }
 
   @override
@@ -427,7 +428,7 @@ class DirectusAPI implements IDirectusAPI {
         Request("PATCH", Uri.parse(_baseURL + "/users/" + updatedUser.id));
     request.body = jsonEncode(updatedUser.updatedProperties);
     request.addJsonHeaders();
-    return _authenticateRequest(request) as Request;
+    return authenticateRequest(request) as Request;
   }
 
   @override
@@ -449,7 +450,7 @@ class DirectusAPI implements IDirectusAPI {
     Request request =
         Request("DELETE", Uri.parse("$_baseURL/items/$itemName/$itemId"));
     if (mustBeAuthenticated) {
-      return _authenticateRequest(request);
+      return authenticateRequest(request);
     }
 
     return request;
@@ -463,7 +464,7 @@ class DirectusAPI implements IDirectusAPI {
     request.addJsonHeaders();
     log(request.body);
     if (mustBeAuthenticated) {
-      return _authenticateRequest(request);
+      return authenticateRequest(request);
     } else {
       return request;
     }
@@ -499,7 +500,7 @@ class DirectusAPI implements IDirectusAPI {
           contentType:
               contentType != null ? MediaType.parse(contentType) : null));
     }
-    return _authenticateRequest(request) as MultipartRequest;
+    return authenticateRequest(request) as MultipartRequest;
   }
 
   @override
