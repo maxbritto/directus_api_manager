@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:directus_api_manager/directus_api_manager.dart';
 import 'package:directus_api_manager/src/directus_api.dart';
+import 'package:directus_api_manager/src/model/directus_create_user_result.dart';
 import 'package:http/http.dart';
 
 class DirectusApiManager {
@@ -172,7 +173,7 @@ class DirectusApiManager {
         parseResponse: _api.parseGenericBoolResponse);
   }
 
-  Future<bool> createNewDirectusUser(
+  Future<DirectusCreateUserResult> createNewDirectusUser(
       {required String email,
       required String password,
       String? firstname,

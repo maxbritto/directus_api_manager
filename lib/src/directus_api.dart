@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:developer';
 
 import 'package:directus_api_manager/src/filter.dart';
+import 'package:directus_api_manager/src/model/directus_create_user_result.dart';
 import 'package:directus_api_manager/src/model/directus_file.dart';
 import 'package:directus_api_manager/src/model/directus_login_result.dart';
 import 'package:directus_api_manager/src/model/directus_user.dart';
@@ -20,7 +21,7 @@ abstract class IDirectusAPI {
   BaseRequest authenticateRequest(BaseRequest request);
   BaseRequest prepareGetCurrentUserRequest({String fields = "*"});
   DirectusUser parseUserResponse(Response response);
-  bool parseCreateUserResponse(Response response);
+  DirectusCreateUserResult parseCreateUserResponse(Response response);
 
   BaseRequest prepareUpdateUserRequest(DirectusUser updatedUser);
   BaseRequest prepareGetUserListRequest({Filter? filter, required int limit});
@@ -389,8 +390,16 @@ class DirectusAPI implements IDirectusAPI {
   }
 
   @override
-  bool parseCreateUserResponse(Response response) {
-    return response.statusCode == 200 || response.statusCode == 204;
+  DirectusCreateUserResult parseCreateUserResponse(Response response) {
+    if (response.statusCode == 200) {
+      final DirectusUser userCreated = parseUserResponse(response);
+      return DirectusCreateUserResult(
+          isSuccess: true, userCreated: userCreated);
+    } else if (response.statusCode == 204) {
+      return DirectusCreateUserResult(isSuccess: true);
+    } else {
+      return DirectusCreateUserResult(isSuccess: false);
+    }
   }
 
   @override

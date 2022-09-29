@@ -464,21 +464,49 @@ void main() {
     });
 
     test("Parse user creation response 200", () {
+      final responseBody = """
+      {"data":{
+      	"id": "0bc7b36a-9ba9-4ce0-83f0-0a526f354e07",
+        "first_name": "Admin",
+        "last_name": "User",
+        "email": "admin@example.com",
+        "password": "**********",
+        "location": "New York City",
+        "title": "CTO",
+        "description": null,
+        "tags": null,
+        "avatar": null,
+        "language": "en-US",
+        "theme": "auto",
+        "tfa_secret": null,
+        "status": "active",
+        "role": "653925a9-970e-487a-bfc0-ab6c96affcdc",
+        "token": null,
+        "last_access": "2021-02-05T10:18:13-05:00",
+        "last_page": "/settings/roles/653925a9-970e-487a-bfc0-ab6c96affcdc"
+      }}
+      """;
       final sut = DirectusAPI("http://api.com");
-      final parsedUser = sut.parseCreateUserResponse(Response("", 200));
-      expect(parsedUser, true);
+      final createUserResult =
+          sut.parseCreateUserResponse(Response(responseBody, 200));
+      expect(createUserResult.isSuccess, true);
+      expect(createUserResult.userCreated?.id,
+          "0bc7b36a-9ba9-4ce0-83f0-0a526f354e07");
+      expect(createUserResult.userCreated?.email, "admin@example.com");
     });
 
     test("Parse user creation response 204", () {
       final sut = DirectusAPI("http://api.com");
-      final parsedUser = sut.parseCreateUserResponse(Response("", 204));
-      expect(parsedUser, true);
+      final createUserResult = sut.parseCreateUserResponse(Response("", 204));
+      expect(createUserResult.isSuccess, true);
+      expect(createUserResult.userCreated, null);
     });
 
     test("Parse user creation response different than 200 and 204", () {
       final sut = DirectusAPI("http://api.com");
-      final parsedUser = sut.parseCreateUserResponse(Response("", 403));
-      expect(parsedUser, false);
+      final createUserResult = sut.parseCreateUserResponse(Response("", 403));
+      expect(createUserResult.isSuccess, false);
+      expect(createUserResult.userCreated, null);
     });
 
     test('Get list of users request', () {
