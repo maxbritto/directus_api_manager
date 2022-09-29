@@ -341,6 +341,17 @@ class DirectusApiManager {
         parseResponse: (response) => _api.parseFileUploadResponse(response));
   }
 
+  Future<T> sendRequestToEndpoint<T>(
+      {required BaseRequest Function() prepareRequest,
+      required T Function(Response) jsonConverter}) {
+    return _sendRequest(
+        prepareRequest: () {
+          final request = prepareRequest();
+          return _api.authenticateRequest(request);
+        },
+        parseResponse: (response) => jsonConverter(response));
+  }
+
   String convertPathToFullURL({required String path}) {
     return _api.convertPathToFullURL(path: path);
   }
