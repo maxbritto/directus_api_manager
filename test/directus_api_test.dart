@@ -5,6 +5,24 @@ import 'package:directus_api_manager/src/directus_api.dart';
 import 'package:http/http.dart';
 import 'package:test/test.dart';
 
+class TestDirectusItem implements DirectusItem {
+  String? id;
+  String? name;
+  int? number;
+  bool? boolean;
+
+  @override
+  fromMap(Map<String, dynamic> data) {
+    id = data["id"];
+    name = data["name"];
+    number = data["number"];
+    boolean = data["boolean"];
+  }
+
+  @override
+  TestDirectusItem copy() => TestDirectusItem();
+}
+
 void main() {
   const defaultAccessToken = "ABCD.1234.ABCD";
   const defaultRefreshToken = "DEFAULT.REFRESH.TOKEN";
@@ -136,6 +154,88 @@ void main() {
       expect(jsonParsedBody["title"], "Let's dance");
       expect(jsonParsedBody["pageCount"], 10);
       expect(jsonParsedBody["creationDate"], "2022-01-02T03:04:05.000");
+    });
+
+    test("Parse item creation response 200", () {
+      final responseBody = """
+      {"data":{
+      	"id": "0bc7b36a-9ba9-4ce0-83f0-0a526f354e07",
+        "name": "Admin",
+        "number": 2,
+        "boolean": true
+      }}
+      """;
+      final sut = DirectusAPI("http://api.com");
+      final createItemResult = sut.parseCreateNewItemResponse(
+          Response(responseBody, 200), TestDirectusItem());
+      expect(createItemResult.isSuccess, true);
+      expect(createItemResult.createdItem?.id,
+          "0bc7b36a-9ba9-4ce0-83f0-0a526f354e07");
+      expect(createItemResult.createdItem?.name, "Admin");
+      expect(createItemResult.createdItem?.number, 2);
+      expect(createItemResult.createdItem?.boolean, true);
+    });
+
+    test("Parse item creation response 204", () {
+      final sut = DirectusAPI("http://api.com");
+      final createUserResult =
+          sut.parseCreateNewItemResponse(Response("", 204), TestDirectusItem());
+      expect(createUserResult.isSuccess, true);
+      expect(createUserResult.createdItem, null);
+    });
+
+    test("Parse item creation response different than 200 and 204", () {
+      final sut = DirectusAPI("http://api.com");
+      final createUserResult =
+          sut.parseCreateNewItemResponse(Response("", 403), TestDirectusItem());
+      expect(createUserResult.isSuccess, false);
+      expect(createUserResult.createdItem, null);
+    });
+
+    test("Parse multi item creation response 200", () {
+      final responseBody = """
+      {"data":[{
+      	"id": "0bc7b36a-9ba9-4ce0-83f0-0a526f354e07",
+        "name": "Admin",
+        "number": 2,
+        "boolean": true
+      },{
+      	"id": "0bc7b36a-9ba9-4ce0-83f0-0a526f354e08",
+        "name": "Bob",
+        "number": 3,
+        "boolean": false
+      }]}
+      """;
+      final sut = DirectusAPI("http://api.com");
+      final createItemResult = sut.parseCreateMultiItemResponse(
+          Response(responseBody, 200), TestDirectusItem());
+      expect(createItemResult.isSuccess, true);
+      expect(createItemResult.createdItemsList[0].id,
+          "0bc7b36a-9ba9-4ce0-83f0-0a526f354e07");
+      expect(createItemResult.createdItemsList[0].name, "Admin");
+      expect(createItemResult.createdItemsList[0].number, 2);
+      expect(createItemResult.createdItemsList[0].boolean, true);
+      expect(createItemResult.createdItemsList[1].id,
+          "0bc7b36a-9ba9-4ce0-83f0-0a526f354e08");
+      expect(createItemResult.createdItemsList[1].name, "Bob");
+      expect(createItemResult.createdItemsList[1].number, 3);
+      expect(createItemResult.createdItemsList[1].boolean, false);
+    });
+
+    test("Parse multi item creation response 204", () {
+      final sut = DirectusAPI("http://api.com");
+      final createUserResult =
+          sut.parseCreateNewItemResponse(Response("", 204), TestDirectusItem());
+      expect(createUserResult.isSuccess, true);
+      expect(createUserResult.createdItem, null);
+    });
+
+    test("Parse multi item creation response different than 200 and 204", () {
+      final sut = DirectusAPI("http://api.com");
+      final createUserResult =
+          sut.parseCreateNewItemResponse(Response("", 403), TestDirectusItem());
+      expect(createUserResult.isSuccess, false);
+      expect(createUserResult.createdItem, null);
     });
 
     test('Update Item request', () {
@@ -490,23 +590,23 @@ void main() {
       final createUserResult =
           sut.parseCreateUserResponse(Response(responseBody, 200));
       expect(createUserResult.isSuccess, true);
-      expect(createUserResult.userCreated?.id,
+      expect(createUserResult.createdItem?.id,
           "0bc7b36a-9ba9-4ce0-83f0-0a526f354e07");
-      expect(createUserResult.userCreated?.email, "admin@example.com");
+      expect(createUserResult.createdItem?.email, "admin@example.com");
     });
 
     test("Parse user creation response 204", () {
       final sut = DirectusAPI("http://api.com");
       final createUserResult = sut.parseCreateUserResponse(Response("", 204));
       expect(createUserResult.isSuccess, true);
-      expect(createUserResult.userCreated, null);
+      expect(createUserResult.createdItem, null);
     });
 
     test("Parse user creation response different than 200 and 204", () {
       final sut = DirectusAPI("http://api.com");
       final createUserResult = sut.parseCreateUserResponse(Response("", 403));
       expect(createUserResult.isSuccess, false);
-      expect(createUserResult.userCreated, null);
+      expect(createUserResult.createdItem, null);
     });
 
     test('Get list of users request', () {

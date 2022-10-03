@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:directus_api_manager/directus_api_manager.dart';
 import 'package:directus_api_manager/src/directus_api.dart';
-import 'package:directus_api_manager/src/model/directus_create_user_result.dart';
 import 'package:http/http.dart';
 
 class DirectusApiManager {
@@ -173,7 +172,7 @@ class DirectusApiManager {
         parseResponse: _api.parseGenericBoolResponse);
   }
 
-  Future<DirectusCreateUserResult> createNewDirectusUser(
+  Future<DirectusWriteItemResult> createNewDirectusUser(
       {required String email,
       required String password,
       String? firstname,
@@ -233,49 +232,42 @@ class DirectusApiManager {
             jsonConverter(_api.parseGetSpecificItemResponse(response)));
   }
 
-  Future<Type> createNewItem<Type>(
+  Future<DirectusWriteItemResult> createNewItem(
       {required String typeName,
       required Map<String, dynamic> objectData,
-      required Type Function(dynamic) jsonConverter}) {
+      required DirectusItem object}) {
     return _sendRequest(
         prepareRequest: () =>
             _api.prepareCreateNewItemRequest(typeName, objectData),
         parseResponse: (response) =>
-            jsonConverter(_api.parseCreateNewItemResponse(response)));
+            _api.parseCreateNewItemResponse(response, object));
   }
 
-  Future<List<Type>> createMultipleItems<Type>(
+  Future<DirectusMultiWriteItemResult> createMultipleItems<Type>(
       {required String typeName,
       String fields = "*",
       required Iterable<Map<String, dynamic>> objectListData,
-      required Type Function(dynamic) jsonConverter}) {
+      required DirectusItem object}) {
     return _sendRequest(
         prepareRequest: () => _api.prepareCreateNewItemRequest(
             typeName, objectListData,
             fields: fields),
         parseResponse: (response) {
-          final List<Type> createdItemsList = [];
-          final listJson = _api.parseCreateNewItemResponse(response);
-          if (listJson is List) {
-            for (final itemJson in listJson) {
-              createdItemsList.add(jsonConverter(itemJson));
-            }
-          }
-          return createdItemsList;
+          return _api.parseCreateMultiItemResponse(response, object);
         });
   }
 
-  Future<Type> updateItem<Type>(
+  Future<DirectusWriteItemResult> updateItem<Type>(
       {required String typeName,
       required String objectId,
       required Map<String, dynamic> objectData,
-      required Type Function(dynamic) jsonConverter,
+      required DirectusItem object,
       String fields = "*"}) {
     return _sendRequest(
         prepareRequest: () => _api.prepareUpdateItemRequest(
             typeName, objectId, objectData, fields: fields),
         parseResponse: (response) =>
-            jsonConverter(_api.parseUpdateItemResponse(response)));
+            _api.parseUpdateItemResponse(response, object));
   }
 
   Future<bool> deleteItem(

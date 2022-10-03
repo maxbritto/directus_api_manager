@@ -1,12 +1,8 @@
 import 'dart:convert';
 import 'dart:developer';
 
-import 'package:directus_api_manager/src/filter.dart';
-import 'package:directus_api_manager/src/model/directus_create_user_result.dart';
-import 'package:directus_api_manager/src/model/directus_file.dart';
-import 'package:directus_api_manager/src/model/directus_login_result.dart';
-import 'package:directus_api_manager/src/model/directus_user.dart';
-import 'package:directus_api_manager/src/sort_property.dart';
+import 'package:directus_api_manager/directus_api_manager.dart';
+
 import 'package:http/http.dart';
 import 'package:http_parser/http_parser.dart';
 
@@ -21,7 +17,7 @@ abstract class IDirectusAPI {
   BaseRequest authenticateRequest(BaseRequest request);
   BaseRequest prepareGetCurrentUserRequest({String fields = "*"});
   DirectusUser parseUserResponse(Response response);
-  DirectusCreateUserResult parseCreateUserResponse(Response response);
+  DirectusWriteItemResult parseCreateUserResponse(Response response);
 
   BaseRequest prepareUpdateUserRequest(DirectusUser updatedUser);
   BaseRequest prepareGetUserListRequest({Filter? filter, required int limit});
@@ -51,12 +47,17 @@ abstract class IDirectusAPI {
 
   Request prepareCreateNewItemRequest(String itemName, dynamic objectData,
       {String fields = "*"});
-  dynamic parseCreateNewItemResponse(Response response);
+  DirectusWriteItemResult parseCreateNewItemResponse(
+      Response response, DirectusItem object);
 
   Request prepareUpdateItemRequest(
       String itemName, String itemId, Map<String, dynamic> objectData,
       {String fields = "*"});
-  dynamic parseUpdateItemResponse(Response response);
+  DirectusWriteItemResult parseUpdateItemResponse(
+      Response response, DirectusItem object);
+
+  DirectusMultiWriteItemResult parseCreateMultiItemResponse(
+      Response response, DirectusItem object);
 
   BaseRequest prepareDeleteItemRequest(
       String itemName, String itemId, bool mustBeAuthenticated);
@@ -343,13 +344,64 @@ class DirectusAPI implements IDirectusAPI {
   }
 
   @override
-  dynamic parseCreateNewItemResponse(Response response) {
-    return parseGetSpecificItemResponse(response);
+  DirectusWriteItemResult parseCreateNewItemResponse(
+      Response response, DirectusItem object) {
+    return _parseWriteItemResponse(response, object);
   }
 
   @override
-  dynamic parseUpdateItemResponse(Response response) {
-    return parseGetSpecificItemResponse(response);
+  DirectusWriteItemResult parseUpdateItemResponse(
+      Response response, DirectusItem object) {
+    return _parseWriteItemResponse(response, object);
+  }
+
+  DirectusWriteItemResult _parseWriteItemResponse(
+      Response response, DirectusItem object) {
+    if (response.statusCode == 200) {
+      final itemData = _parseGenericResponse(response);
+      if (itemData is Map<String, dynamic>) {
+        final resultObject = object;
+        resultObject.fromMap(itemData);
+        return DirectusWriteItemResult(
+            isSuccess: true, createdItem: resultObject);
+      } else {
+        return DirectusWriteItemResult(isSuccess: true);
+      }
+    } else if (response.statusCode == 204) {
+      return DirectusWriteItemResult(isSuccess: true);
+    } else {
+      return DirectusWriteItemResult(isSuccess: false);
+    }
+  }
+
+  @override
+  DirectusMultiWriteItemResult parseCreateMultiItemResponse(
+      Response response, DirectusItem object) {
+    List<DirectusItem> itemList = [];
+
+    if (response.statusCode == 200) {
+      final itemListData = _parseGenericResponse(response);
+      if (itemListData is List) {
+        List<DirectusItem> itemList = [];
+        for (Map<String, dynamic> itemData in itemListData) {
+          final resultObject = object.copy();
+          resultObject.fromMap(itemData);
+          itemList.add(resultObject);
+        }
+
+        return DirectusMultiWriteItemResult(
+            isSuccess: true, createdItemsList: itemList);
+      } else {
+        return DirectusMultiWriteItemResult(
+            isSuccess: true, createdItemsList: itemList);
+      }
+    } else if (response.statusCode == 204) {
+      return DirectusMultiWriteItemResult(
+          isSuccess: true, createdItemsList: itemList);
+    } else {
+      return DirectusMultiWriteItemResult(
+          isSuccess: false, createdItemsList: itemList);
+    }
   }
 
   @override
@@ -390,15 +442,14 @@ class DirectusAPI implements IDirectusAPI {
   }
 
   @override
-  DirectusCreateUserResult parseCreateUserResponse(Response response) {
+  DirectusWriteItemResult parseCreateUserResponse(Response response) {
     if (response.statusCode == 200) {
       final DirectusUser userCreated = parseUserResponse(response);
-      return DirectusCreateUserResult(
-          isSuccess: true, userCreated: userCreated);
+      return DirectusWriteItemResult(isSuccess: true, createdItem: userCreated);
     } else if (response.statusCode == 204) {
-      return DirectusCreateUserResult(isSuccess: true);
+      return DirectusWriteItemResult(isSuccess: true);
     } else {
-      return DirectusCreateUserResult(isSuccess: false);
+      return DirectusWriteItemResult(isSuccess: false);
     }
   }
 
