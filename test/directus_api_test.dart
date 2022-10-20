@@ -32,7 +32,7 @@ void main() {
           filter: PropertyFilter(
               field: "title", operator: FilterOperator.equals, value: "A"));
       expect(request.url.toString(),
-          'http://api.com/items/article?fields=*&filter=%7B%20%22title%22:%20%7B%20%22_eq%22:%20%22A%22%20%7D%7D');
+          'http://api.com/items/article?fields=*&filter=%7B+%22title%22%3A+%7B+%22_eq%22%3A+%22A%22+%7D%7D');
       expect(request.method, "GET");
       expect(request.headers["Authorization"], "Bearer $defaultAccessToken");
     });
@@ -47,7 +47,7 @@ void main() {
           filter: PropertyFilter(
               field: "title", operator: FilterOperator.equals, value: "A"));
       expect(request.url.toString(),
-          'http://api.com/items/article?fields=*&filter=%7B%20%22title%22:%20%7B%20%22_eq%22:%20%22A%22%20%7D%7D&sort=-score,level');
+          'http://api.com/items/article?fields=*&filter=%7B+%22title%22%3A+%7B+%22_eq%22%3A+%22A%22+%7D%7D&sort=-score,level');
       expect(request.method, "GET");
       expect(request.headers["Authorization"], "Bearer $defaultAccessToken");
     });
@@ -80,7 +80,7 @@ void main() {
               field: "title", operator: FilterOperator.equals, value: "A"),
           limit: 10);
       expect(request.url.toString(),
-          'http://api.com/items/article?fields=*&filter=%7B%20%22title%22:%20%7B%20%22_eq%22:%20%22A%22%20%7D%7D&limit=10');
+          'http://api.com/items/article?fields=*&filter=%7B+%22title%22%3A+%7B+%22_eq%22%3A+%22A%22+%7D%7D&limit=10');
       expect(request.method, "GET");
       expect(request.headers["Authorization"], "Bearer $defaultAccessToken");
     });
@@ -96,7 +96,19 @@ void main() {
           ],
           limit: 10);
       expect(request.url.toString(),
-          'http://api.com/items/article?fields=*&filter=%7B%20%22title%22:%20%7B%20%22_eq%22:%20%22A%22%20%7D%7D&limit=10&sort=-score,level');
+          'http://api.com/items/article?fields=*&filter=%7B+%22title%22%3A+%7B+%22_eq%22%3A+%22A%22+%7D%7D&limit=10&sort=-score,level');
+      expect(request.method, "GET");
+      expect(request.headers["Authorization"], "Bearer $defaultAccessToken");
+    });
+    test('Get list of items with filter that includes special characters', () {
+      final sut = makeAuthenticatedDirectusAPI();
+      final request = sut.prepareGetListOfItemsRequest("article",
+          filter: PropertyFilter(
+              field: "date",
+              operator: FilterOperator.between,
+              value: [r"$NOW", r"$NOW(+2 weeks)"]));
+      expect(request.url.toString(),
+          r'http://api.com/items/article?fields=*&filter=%7B+%22date%22%3A+%7B+%22_between%22%3A+%5B%22%24NOW%22%2C+%22%24NOW%28%2B2+weeks%29%22%5D+%7D%7D');
       expect(request.method, "GET");
       expect(request.headers["Authorization"], "Bearer $defaultAccessToken");
     });

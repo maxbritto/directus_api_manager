@@ -309,7 +309,7 @@ class DirectusAPI implements IDirectusAPI {
       int? limit}) {
     final urlBuilder = StringBuffer(_baseURL + "$path?fields=$fields");
     if (filter != null) {
-      urlBuilder.write("&filter=${filter.asJSON}");
+      urlBuilder.write("&filter=${Uri.encodeQueryComponent(filter.asJSON)}");
     }
     if (limit != null) {
       urlBuilder.write("&limit=$limit");
