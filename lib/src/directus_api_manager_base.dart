@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:directus_api_manager/directus_api_manager.dart';
 import 'package:directus_api_manager/src/directus_api.dart';
+import 'package:directus_api_manager/src/model/directus_item.dart';
 import 'package:http/http.dart';
 
 class DirectusApiManager {
@@ -205,76 +206,94 @@ class DirectusApiManager {
     return wasLoggedOut;
   }
 
-  Future<Iterable<Type>> findListOfItems<Type>(
+  Future<Iterable<Type>> findListOfItems<Type extends DirectusItem>(
       {required String name,
       Filter? filter,
       List<SortProperty>? sortBy,
       String fields = "*",
       int? limit,
-      required Type Function(dynamic) jsonConverter}) {
+      required Type Function(dynamic json) createItemFunction}) {
     return _sendRequest(
         prepareRequest: () => _api.prepareGetListOfItemsRequest(name,
             filter: filter, sortBy: sortBy, fields: fields, limit: limit),
-        parseResponse: (response) => _api
-            .parseGetListOfItemsResponse(response)
-            .map((itemAsJsonObject) => jsonConverter(itemAsJsonObject)));
+        parseResponse: (response) =>
+            _api.parseGetListOfItemsResponse(response).map(createItemFunction));
   }
 
-  Future<Type> getSpecificItem<Type>(
+  Future<Type> getSpecificItem<Type extends DirectusItem>(
       {required String name,
       required String id,
       String fields = "*",
-      required Type Function(dynamic) jsonConverter}) {
+      required Type Function(dynamic json) createItemFunction}) {
     return _sendRequest(
         prepareRequest: () =>
             _api.prepareGetSpecificItemRequest(name, id, fields: fields),
         parseResponse: (response) =>
-            jsonConverter(_api.parseGetSpecificItemResponse(response)));
+            createItemFunction(_api.parseGetSpecificItemResponse(response)));
   }
 
-  Future<Type> createNewItem<Type>(
-      {required String typeName,
-      required Map<String, dynamic> objectData,
-      required Type Function(dynamic) jsonConverter}) {
+  Future<DirectusItemCreationResult<Type>>
+      createNewItem<Type extends DirectusItem>(
+          {required String typeName,
+          required Map<String, dynamic> objectData,
+          required Type Function(dynamic json) createItemFunction}) {
     return _sendRequest(
         prepareRequest: () =>
             _api.prepareCreateNewItemRequest(typeName, objectData),
-        parseResponse: (response) =>
-            jsonConverter(_api.parseCreateNewItemResponse(response)));
+        parseResponse: (response) {
+          final DirectusItemCreationResult<Type> creationResult =
+              DirectusItemCreationResult(
+                  isSuccess:
+                      response.statusCode == 200 || response.statusCode == 204);
+
+          if (response.statusCode == 200) {
+            creationResult.createdItemList.add(
+                createItemFunction(_api.parseCreateNewItemResponse(response)));
+          }
+          return creationResult;
+        });
   }
 
-  Future<List<Type>> createMultipleItems<Type>(
-      {required String typeName,
-      String fields = "*",
-      required Iterable<Map<String, dynamic>> objectListData,
-      required Type Function(dynamic) jsonConverter}) {
+  Future<DirectusItemCreationResult<Type>>
+      createMultipleItems<Type extends DirectusItem>(
+          {required String typeName,
+          String fields = "*",
+          required Iterable<Map<String, dynamic>> objectListData,
+          required Type Function(dynamic json) createItemFunction}) {
     return _sendRequest(
         prepareRequest: () => _api.prepareCreateNewItemRequest(
             typeName, objectListData,
             fields: fields),
         parseResponse: (response) {
-          final List<Type> createdItemsList = [];
-          final listJson = _api.parseCreateNewItemResponse(response);
-          if (listJson is List) {
-            for (final itemJson in listJson) {
-              createdItemsList.add(jsonConverter(itemJson));
+          final DirectusItemCreationResult<Type> creationResult =
+              DirectusItemCreationResult(
+                  isSuccess:
+                      response.statusCode == 200 || response.statusCode == 204);
+          if (response.statusCode == 200) {
+            final listJson = _api.parseCreateNewItemResponse(response);
+            if (listJson is List) {
+              for (final itemJson in listJson) {
+                creationResult.createdItemList
+                    .add(createItemFunction(itemJson));
+              }
             }
           }
-          return createdItemsList;
+
+          return creationResult;
         });
   }
 
-  Future<Type> updateItem<Type>(
+  Future<Type> updateItem<Type extends DirectusItem>(
       {required String typeName,
       required String objectId,
       required Map<String, dynamic> objectData,
-      required Type Function(dynamic) jsonConverter,
+      required Type Function(dynamic json) updateItemFunction,
       String fields = "*"}) {
     return _sendRequest(
         prepareRequest: () => _api.prepareUpdateItemRequest(
             typeName, objectId, objectData, fields: fields),
         parseResponse: (response) =>
-            jsonConverter(_api.parseUpdateItemResponse(response)));
+            updateItemFunction(_api.parseUpdateItemResponse(response)));
   }
 
   Future<bool> deleteItem(

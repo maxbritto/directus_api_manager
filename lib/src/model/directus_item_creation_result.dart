@@ -1,6 +1,6 @@
 class DirectusItemCreationResult<T> {
   final bool isSuccess;
-  final T? createdItem;
+  List<T> createdItemList = [];
 
-  const DirectusItemCreationResult({required this.isSuccess, this.createdItem});
+  DirectusItemCreationResult({required this.isSuccess});
 }
