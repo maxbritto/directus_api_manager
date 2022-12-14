@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:directus_api_manager/directus_api_manager.dart';
 import 'package:directus_api_manager/src/directus_api.dart';
-import 'package:directus_api_manager/src/model/directus_item.dart';
 import 'package:http/http.dart';
 
 class DirectusApiManager {
