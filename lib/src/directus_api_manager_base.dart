@@ -172,13 +172,15 @@ class DirectusApiManager {
         parseResponse: _api.parseGenericBoolResponse);
   }
 
-  Future<DirectusUser> createNewDirectusUser(
-      {required String email,
-      required String password,
-      String? firstname,
-      String? lastname,
-      String? roleUUID,
-      Map<String, dynamic> otherProperties = const {}}) {
+  Future<DirectusItemCreationResult<Type>>
+      createNewDirectusUser<Type extends DirectusUser>(
+          {required String email,
+          required String password,
+          String? firstname,
+          String? lastname,
+          String? roleUUID,
+          Map<String, dynamic> otherProperties = const {},
+          required Type Function(dynamic json) createItemFunction}) {
     return _sendRequest(
         prepareRequest: () => _api.prepareCreateUserRequest(
             email: email,
@@ -187,7 +189,17 @@ class DirectusApiManager {
             lastname: lastname,
             roleUUID: roleUUID,
             otherProperties: otherProperties),
-        parseResponse: (response) => _api.parseUserResponse(response));
+        parseResponse: (response) {
+          final DirectusItemCreationResult<Type> creationResult =
+              DirectusItemCreationResult(
+                  isSuccess:
+                      response.statusCode == 200 || response.statusCode == 204);
+          if (response.statusCode != 204) {
+            creationResult.createdItemList
+                .add(createItemFunction(_api.parseUserResponse(response)));
+          }
+          return creationResult;
+        });
   }
 
   Future<bool> logoutDirectusUser() async {
