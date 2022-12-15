@@ -41,7 +41,8 @@ abstract class IDirectusAPI {
       {String fields = "*",
       Filter? filter,
       List<SortProperty>? sortBy,
-      int? limit});
+      int? limit,
+      int? offset});
   Iterable<dynamic> parseGetListOfItemsResponse(Response response);
 
   BaseRequest prepareGetSpecificItemRequest(String itemName, String itemId,
@@ -281,9 +282,14 @@ class DirectusAPI implements IDirectusAPI {
       {String fields = "*",
       Filter? filter,
       List<SortProperty>? sortBy,
-      int? limit}) {
+      int? limit,
+      int? offset}) {
     return _prepareGetRequest("/items/$itemName",
-        filter: filter, fields: fields, sortBy: sortBy, limit: limit);
+        filter: filter,
+        fields: fields,
+        sortBy: sortBy,
+        limit: limit,
+        offset: offset);
   }
 
   @override
@@ -295,7 +301,8 @@ class DirectusAPI implements IDirectusAPI {
       {String fields = "*",
       Filter? filter,
       List<SortProperty>? sortBy,
-      int? limit}) {
+      int? limit,
+      int? offset}) {
     final urlBuilder = StringBuffer(_baseURL + "$path?fields=$fields");
     if (filter != null) {
       urlBuilder.write("&filter=${Uri.encodeQueryComponent(filter.asJSON)}");
@@ -305,6 +312,10 @@ class DirectusAPI implements IDirectusAPI {
     }
     if (sortBy != null && sortBy.isNotEmpty) {
       urlBuilder.write("&sort=" + sortBy.join(","));
+    }
+
+    if (offset != null) {
+      urlBuilder.write("&offset=$offset");
     }
     Request request = Request("GET", Uri.parse(urlBuilder.toString()));
     return authenticateRequest(request);

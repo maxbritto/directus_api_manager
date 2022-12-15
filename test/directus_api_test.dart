@@ -85,6 +85,15 @@ void main() {
       expect(request.headers["Authorization"], "Bearer $defaultAccessToken");
     });
 
+    test('Get list of items with offset request', () {
+      final sut = makeAuthenticatedDirectusAPI();
+      final request = sut.prepareGetListOfItemsRequest("article", offset: 10);
+      expect(request.url.toString(),
+          'http://api.com/items/article?fields=*&offset=10');
+      expect(request.method, "GET");
+      expect(request.headers["Authorization"], "Bearer $defaultAccessToken");
+    });
+
     test('Get list of items with filter, sort and limit request', () {
       final sut = makeAuthenticatedDirectusAPI();
       final request = sut.prepareGetListOfItemsRequest("article",

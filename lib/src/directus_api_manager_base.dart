@@ -223,10 +223,15 @@ class DirectusApiManager {
       List<SortProperty>? sortBy,
       String fields = "*",
       int? limit,
+      int? offset,
       required Type Function(dynamic json) createItemFunction}) {
     return _sendRequest(
         prepareRequest: () => _api.prepareGetListOfItemsRequest(name,
-            filter: filter, sortBy: sortBy, fields: fields, limit: limit),
+            filter: filter,
+            sortBy: sortBy,
+            fields: fields,
+            limit: limit,
+            offset: offset),
         parseResponse: (response) =>
             _api.parseGetListOfItemsResponse(response).map(createItemFunction));
   }
