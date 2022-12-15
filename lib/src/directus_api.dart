@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:developer';
 
 import 'package:directus_api_manager/src/filter.dart';
+import 'package:directus_api_manager/src/model/directus_api_error.dart';
 import 'package:directus_api_manager/src/model/directus_file.dart';
 import 'package:directus_api_manager/src/model/directus_login_result.dart';
 import 'package:directus_api_manager/src/model/directus_user.dart';
@@ -94,18 +95,6 @@ abstract class IDirectusAPI {
       {required String email, String? resetUrl});
   Request preparePasswordChangeRequest(
       {required String token, required String newPassword});
-}
-
-class DirectusApiError {
-  final Response? response;
-  final String? customMessage;
-
-  DirectusApiError({this.response, this.customMessage});
-
-  @override
-  String toString() {
-    return "DirectusApiError : $customMessage : ${response?.statusCode} ${response?.body} ${response?.headers}";
-  }
 }
 
 class DirectusAPI implements IDirectusAPI {
