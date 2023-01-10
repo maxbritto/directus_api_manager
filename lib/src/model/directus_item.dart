@@ -1,4 +1,5 @@
 class DirectusItem {
+  final String id;
   final Map<String, dynamic> _rawReceivedData;
   Map<String, dynamic> getRawData() => _rawReceivedData;
   final Map<String, dynamic> updatedProperties = {};
@@ -13,5 +14,8 @@ class DirectusItem {
   }
 
   /// Creates a new [DirectusItem]
-  DirectusItem(this._rawReceivedData);
+  DirectusItem(this._rawReceivedData)
+      : id = _rawReceivedData.containsKey("id")
+            ? _rawReceivedData["id"]
+            : throw Exception("id is required");
 }

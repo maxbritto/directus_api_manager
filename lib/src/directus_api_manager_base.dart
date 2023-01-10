@@ -301,13 +301,13 @@ class DirectusApiManager {
 
   Future<Type> updateItem<Type extends DirectusItem>(
       {required String typeName,
-      required String objectId,
-      required Map<String, dynamic> objectData,
+      required Type object,
       required Type Function(dynamic json) updateItemFunction,
       String fields = "*"}) {
     return _sendRequest(
         prepareRequest: () => _api.prepareUpdateItemRequest(
-            typeName, objectId, objectData, fields: fields),
+            typeName, object.getValue(forKey: "id"), object.updatedProperties,
+            fields: fields),
         parseResponse: (response) =>
             updateItemFunction(_api.parseUpdateItemResponse(response)));
   }
