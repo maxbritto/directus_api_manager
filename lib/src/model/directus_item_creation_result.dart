@@ -5,5 +5,13 @@ class DirectusItemCreationResult<T> {
   List<T> createdItemList = [];
   DirectusApiError? error;
 
-  DirectusItemCreationResult({required this.isSuccess, this.error});
+  DirectusItemCreationResult({required this.isSuccess, this.error}) {
+    if (!isSuccess && error == null) {
+      throw Exception("error must be initialized");
+    }
+  }
+
+  T? get createdItem {
+    return createdItemList.isEmpty ? null : createdItemList.first;
+  }
 }
