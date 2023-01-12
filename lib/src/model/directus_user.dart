@@ -1,10 +1,6 @@
-class DirectusUser {
-  final String id;
-  final Map<String, dynamic> _rawReceivedData;
-  Map<String, dynamic> getRawData() => _rawReceivedData;
-  final Map<String, dynamic> updatedProperties = {};
-  bool get needsSaving => updatedProperties.isNotEmpty;
+import 'package:directus_api_manager/src/model/directus_data.dart';
 
+class DirectusUser extends DirectusData {
   String get email => getValue(forKey: "email");
   set email(String value) => setValue(value, forKey: "email");
 
@@ -22,14 +18,6 @@ class DirectusUser {
   String? get roleUUID => getValue(forKey: "role");
   set roleUUID(String? value) => setValue(value, forKey: "role");
 
-  setValue(dynamic value, {required String forKey}) {
-    updatedProperties[forKey] = value;
-  }
-
-  dynamic getValue({required String forKey}) {
-    return updatedProperties[forKey] ?? _rawReceivedData[forKey];
-  }
-
   /// Creates a new [DirectusUser]
   ///
   /// [_rawReceivedData] must contain at least an `"id"` and an `"email"` properties. Throws [Exception] if they are missing.
@@ -37,17 +25,11 @@ class DirectusUser {
   /// Can support official properties listed here : https://docs.directus.io/reference/system/users/#the-user-object
   ///
   /// You can add any other custom property that you have added to your *directus_user* model on your server.
-  DirectusUser(this._rawReceivedData)
-      : id = _rawReceivedData.containsKey("id")
-            ? _rawReceivedData["id"]
-            : throw Exception("id is required") {
-    if (_rawReceivedData.containsKey("email") == false) {
+  DirectusUser(Map<String, dynamic> rawReceivedData) : super(rawReceivedData) {
+    if (rawReceivedData.containsKey("email") == false) {
       throw Exception("email is required");
     }
   }
-
-  DirectusUser.from({required this.id, required String email})
-      : _rawReceivedData = {"id": id, "email": email};
 
   String get fullName {
     String result = "";
@@ -64,14 +46,5 @@ class DirectusUser {
     result = result + currentLastName;
 
     return result;
-  }
-
-  Map<String, dynamic> toMap() {
-    return {
-      'id': id,
-      'email': email,
-      'first_name': firstname,
-      'last_name': lastname
-    };
   }
 }
