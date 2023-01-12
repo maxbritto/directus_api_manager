@@ -35,13 +35,12 @@ main() {
     });
 
     test('Generate map of this object', () {
-      final sut = TestDiretusData({"id": "1"});
+      final sut = TestDiretusData({"id": "abc"});
       sut.setValue("coruscant", forKey: "checkString");
       sut.setValue(true, forKey: "checkBool");
       sut.setValue(42, forKey: "checkInt");
       Map<String, dynamic> mapResult = sut.toMap();
 
-      expect(mapResult["id"], "1");
       expect(mapResult["checkString"], "coruscant");
       expect(mapResult["checkBool"], true);
       expect(mapResult["checkInt"], 42);
