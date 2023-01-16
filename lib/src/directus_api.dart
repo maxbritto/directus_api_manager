@@ -22,7 +22,7 @@ abstract class IDirectusAPI {
   BaseRequest prepareGetCurrentUserRequest({String fields = "*"});
   DirectusUser parseUserResponse(Response response);
 
-  BaseRequest prepareUpdateUserRequest(DirectusUser updatedUser);
+  BaseRequest? prepareUpdateUserRequest(DirectusUser updatedUser);
   BaseRequest prepareGetUserListRequest({Filter? filter, required int limit});
   Iterable<DirectusUser> parseUserListResponse(Response response);
   BaseRequest prepareCreateUserRequest(
@@ -33,7 +33,7 @@ abstract class IDirectusAPI {
       String? roleUUID,
       Map<String, dynamic> otherProperties = const {}});
 
-  BaseRequest prepareDeleteUserRequest(
+  BaseRequest? prepareDeleteUserRequest(
       DirectusUser user, bool mustBeAuthenticated);
   bool parseDeleteUserResponse(Response response);
 
@@ -443,15 +443,23 @@ class DirectusAPI implements IDirectusAPI {
   }
 
   @override
-  Request prepareUpdateUserRequest(DirectusUser updatedUser) {
-    Request request =
-        Request("PATCH", Uri.parse(_baseURL + "/users/" + updatedUser.id));
-    request.body = jsonEncode(
-      updatedUser.updatedProperties,
-      toEncodable: (nonEncodable) => _toEncodable(nonEncodable),
-    );
-    request.addJsonHeaders();
-    return authenticateRequest(request) as Request;
+  Request? prepareUpdateUserRequest(DirectusUser updatedUser) {
+    try {
+      Request request =
+          Request("PATCH", Uri.parse(_baseURL + "/users/" + updatedUser.id!));
+      request.body = jsonEncode(
+        updatedUser.updatedProperties,
+        toEncodable: (nonEncodable) => _toEncodable(nonEncodable),
+      );
+      request.addJsonHeaders();
+      return authenticateRequest(request) as Request;
+    } catch (error) {
+      if (updatedUser.id == null) {
+        throw Exception("The user id can not be null.");
+      }
+    }
+
+    return null;
   }
 
   Object? _toEncodable(Object? nonEncodable) {
@@ -469,15 +477,23 @@ class DirectusAPI implements IDirectusAPI {
   }
 
   @override
-  BaseRequest prepareDeleteUserRequest(
+  BaseRequest? prepareDeleteUserRequest(
       DirectusUser user, bool mustBeAuthenticated) {
-    Request request =
-        Request("DELETE", Uri.parse("$_baseURL/users/${user.id}"));
-    if (mustBeAuthenticated) {
-      return authenticateRequest(request);
+    try {
+      Request request =
+          Request("DELETE", Uri.parse("$_baseURL/users/${user.id}"));
+      if (mustBeAuthenticated) {
+        return authenticateRequest(request);
+      }
+
+      return request;
+    } catch (error) {
+      if (user.id == null) {
+        throw Exception("The user id can not be null");
+      }
     }
 
-    return request;
+    return null;
   }
 
   @override

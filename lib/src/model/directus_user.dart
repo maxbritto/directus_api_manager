@@ -31,6 +31,8 @@ class DirectusUser extends DirectusData {
     }
   }
 
+  DirectusUser.newDirectusUser() : super.newDirectusData();
+
   String get fullName {
     String result = "";
 

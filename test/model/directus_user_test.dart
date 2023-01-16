@@ -11,6 +11,11 @@ main() {
       expect(() => DirectusUser({"id": "123-abc", "email": "will@acn.com"}),
           returnsNormally);
     });
+
+    test('New User', () {
+      expect(() => DirectusUser.newDirectusUser(), returnsNormally);
+    });
+
     test('User essential properties are retrieved from property list', () {
       final sut = DirectusUser({
         "id": "abc-123",

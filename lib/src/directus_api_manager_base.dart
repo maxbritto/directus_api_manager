@@ -254,7 +254,7 @@ class DirectusApiManager {
           required Type Function(dynamic json) createItemFunction}) {
     return _sendRequest(
         prepareRequest: () => _api.prepareCreateNewItemRequest(
-            objectToCreate.endpointName, objectToCreate.getRawData()),
+            objectToCreate.endpointName, objectToCreate.toMap()),
         parseResponse: (response) {
           final DirectusItemCreationResult<Type> creationResult =
               DirectusItemCreationResult(
@@ -311,15 +311,21 @@ class DirectusApiManager {
       {required Type objectToUpdate,
       required Type Function(dynamic json) updateItemFunction,
       String fields = "*"}) {
-    if (objectToUpdate.needsSaving) {
-      return _sendRequest(
-          prepareRequest: () => _api.prepareUpdateItemRequest(
-              objectToUpdate.endpointName,
-              objectToUpdate.id,
-              objectToUpdate.updatedProperties,
-              fields: fields),
-          parseResponse: (response) =>
-              updateItemFunction(_api.parseUpdateItemResponse(response)));
+    try {
+      if (objectToUpdate.needsSaving) {
+        return _sendRequest(
+            prepareRequest: () => _api.prepareUpdateItemRequest(
+                objectToUpdate.endpointName,
+                objectToUpdate.id!,
+                objectToUpdate.updatedProperties,
+                fields: fields),
+            parseResponse: (response) =>
+                updateItemFunction(_api.parseUpdateItemResponse(response)));
+      }
+    } catch (error) {
+      if (objectToUpdate.id == null) {
+        throw (Exception("Item ID can not be null"));
+      }
     }
 
     return Future.value(objectToUpdate);
@@ -327,12 +333,19 @@ class DirectusApiManager {
 
   Future<bool> deleteItem<Type extends DirectusItem>(
       {required Type objectToDelete, bool mustBeAuthenticated = true}) {
-    return _sendRequest(
-        prepareRequest: () => _api.prepareDeleteItemRequest(
-            objectToDelete.endpointName,
-            objectToDelete.id,
-            mustBeAuthenticated),
-        parseResponse: (response) => _api.parseGenericBoolResponse(response));
+    try {
+      return _sendRequest(
+          prepareRequest: () => _api.prepareDeleteItemRequest(
+              objectToDelete.endpointName,
+              objectToDelete.id!,
+              mustBeAuthenticated),
+          parseResponse: (response) => _api.parseGenericBoolResponse(response));
+    } catch (error) {
+      if (objectToDelete.id == null) {
+        throw Exception("The item ID can not be null");
+      }
+      return Future.value(false);
+    }
   }
 
   Future<bool> deleteMultipleItems<Type extends DirectusItem>(
@@ -342,11 +355,13 @@ class DirectusApiManager {
       throw Exception("objectListToDelete can not be empty");
     }
     final String endPoint = objectListToDelete.first.endpointName;
-    final List<dynamic> objectIdList = objectListToDelete
-        .map(
-          (object) => object.id,
-        )
-        .toList();
+    final List<dynamic> objectIdList = objectListToDelete.map(
+      ((object) {
+        if (object.id != null) {
+          return object.id;
+        }
+      }),
+    ).toList();
     return _sendRequest(
         prepareRequest: () => _api.prepareDeleteMultipleItemRequest(
             endPoint, objectIdList, mustBeAuthenticated),
