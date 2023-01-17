@@ -85,6 +85,15 @@ void main() {
       expect(request.headers["Authorization"], "Bearer $defaultAccessToken");
     });
 
+    test('Get list of items with offset request', () {
+      final sut = makeAuthenticatedDirectusAPI();
+      final request = sut.prepareGetListOfItemsRequest("article", offset: 10);
+      expect(request.url.toString(),
+          'http://api.com/items/article?fields=*&offset=10');
+      expect(request.method, "GET");
+      expect(request.headers["Authorization"], "Bearer $defaultAccessToken");
+    });
+
     test('Get list of items with filter, sort and limit request', () {
       final sut = makeAuthenticatedDirectusAPI();
       final request = sut.prepareGetListOfItemsRequest("article",
@@ -621,18 +630,22 @@ void main() {
       user.firstname = "Will 2";
       user.setValue(DateTime(2022, 1, 2, 3, 4, 5), forKey: "birthDate");
       final request = sut.prepareUpdateUserRequest(user);
-      expect(request.url.toString(), "http://api.com/users/123-abc-456");
-      expect(request.method, "PATCH");
-      expect(request.headers["Authorization"], "Bearer $defaultAccessToken");
-      final jsonParsedBody = jsonDecode(request.body) as Map;
-      expect(jsonParsedBody["first_name"], "Will 2");
-      expect(jsonParsedBody["birthDate"], "2022-01-02T03:04:05.000");
-      expect(jsonParsedBody.containsKey("email"), false,
-          reason: "Only modified properties should be sent");
-      expect(jsonParsedBody.containsKey("id"), false,
-          reason: "Only modified properties should be sent");
-      expect(jsonParsedBody.containsKey("score"), false,
-          reason: "Only modified properties should be sent");
+      if (request != null) {
+        expect(request.url.toString(), "http://api.com/users/123-abc-456");
+        expect(request.method, "PATCH");
+        expect(request.headers["Authorization"], "Bearer $defaultAccessToken");
+        final jsonParsedBody = jsonDecode(request.body) as Map;
+        expect(jsonParsedBody["first_name"], "Will 2");
+        expect(jsonParsedBody["birthDate"], "2022-01-02T03:04:05.000");
+        expect(jsonParsedBody.containsKey("email"), false,
+            reason: "Only modified properties should be sent");
+        expect(jsonParsedBody.containsKey("id"), false,
+            reason: "Only modified properties should be sent");
+        expect(jsonParsedBody.containsKey("score"), false,
+            reason: "Only modified properties should be sent");
+      } else {
+        expect(request, request is Request, reason: "Request must not be null");
+      }
     });
     test('Update User request with no modification', () {
       final sut = makeAuthenticatedDirectusAPI();
@@ -643,11 +656,15 @@ void main() {
         "score": 23
       });
       final request = sut.prepareUpdateUserRequest(user);
-      expect(request.url.toString(), "http://api.com/users/123-abc-456");
-      expect(request.method, "PATCH");
-      expect(request.headers["Authorization"], "Bearer $defaultAccessToken");
-      final jsonParsedBody = jsonDecode(request.body) as Map;
-      expect(jsonParsedBody, isEmpty);
+      if (request != null) {
+        expect(request.url.toString(), "http://api.com/users/123-abc-456");
+        expect(request.method, "PATCH");
+        expect(request.headers["Authorization"], "Bearer $defaultAccessToken");
+        final jsonParsedBody = jsonDecode(request.body) as Map;
+        expect(jsonParsedBody, isEmpty);
+      } else {
+        expect(request, request is Request, reason: "Request must not be null");
+      }
     });
     test('Request user password reset', () {
       final sut = makeAuthenticatedDirectusAPI();
@@ -697,9 +714,13 @@ void main() {
             "score": 23
           }),
           true);
-      expect(request.url.toString(), "http://api.com/users/123-abc-456");
-      expect(request.method, "DELETE");
-      expect(request.headers["Authorization"], "Bearer $defaultAccessToken");
+      if (request != null) {
+        expect(request.url.toString(), "http://api.com/users/123-abc-456");
+        expect(request.method, "DELETE");
+        expect(request.headers["Authorization"], "Bearer $defaultAccessToken");
+      } else {
+        expect(request, request is Request);
+      }
     });
 
     test('Delete User ok responses', () {

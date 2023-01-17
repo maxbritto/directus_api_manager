@@ -1,6 +1,17 @@
+import 'package:directus_api_manager/src/model/directus_api_error.dart';
+
 class DirectusItemCreationResult<T> {
   final bool isSuccess;
-  final T? createdItem;
+  List<T> createdItemList = [];
+  DirectusApiError? error;
 
-  const DirectusItemCreationResult({required this.isSuccess, this.createdItem});
+  DirectusItemCreationResult({required this.isSuccess, this.error}) {
+    if (!isSuccess && error == null) {
+      throw Exception("error must be initialized");
+    }
+  }
+
+  T? get createdItem {
+    return createdItemList.isEmpty ? null : createdItemList.first;
+  }
 }

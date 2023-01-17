@@ -1,17 +1,9 @@
-class DirectusItem {
-  final Map<String, dynamic> _rawReceivedData;
-  Map<String, dynamic> getRawData() => _rawReceivedData;
-  final Map<String, dynamic> updatedProperties = {};
-  bool get needsSaving => updatedProperties.isNotEmpty;
+import 'package:directus_api_manager/src/model/directus_data.dart';
 
-  setValue(dynamic value, {required String forKey}) {
-    updatedProperties[forKey] = value;
-  }
+abstract class DirectusItem extends DirectusData {
+  // Creates a new [DirectusItem]
+  DirectusItem(Map<String, dynamic> rawReceivedData) : super(rawReceivedData);
+  DirectusItem.newItem() : super.newDirectusData();
+  String get endpointName; // Collection name
 
-  dynamic getValue({required String forKey}) {
-    return updatedProperties[forKey] ?? _rawReceivedData[forKey];
-  }
-
-  /// Creates a new [DirectusItem]
-  DirectusItem(this._rawReceivedData);
 }

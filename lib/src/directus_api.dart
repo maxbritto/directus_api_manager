@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:developer';
 
 import 'package:directus_api_manager/src/filter.dart';
+import 'package:directus_api_manager/src/model/directus_api_error.dart';
 import 'package:directus_api_manager/src/model/directus_file.dart';
 import 'package:directus_api_manager/src/model/directus_login_result.dart';
 import 'package:directus_api_manager/src/model/directus_user.dart';
@@ -21,7 +22,7 @@ abstract class IDirectusAPI {
   BaseRequest prepareGetCurrentUserRequest({String fields = "*"});
   DirectusUser parseUserResponse(Response response);
 
-  BaseRequest prepareUpdateUserRequest(DirectusUser updatedUser);
+  BaseRequest? prepareUpdateUserRequest(DirectusUser updatedUser);
   BaseRequest prepareGetUserListRequest({Filter? filter, required int limit});
   Iterable<DirectusUser> parseUserListResponse(Response response);
   BaseRequest prepareCreateUserRequest(
@@ -32,7 +33,7 @@ abstract class IDirectusAPI {
       String? roleUUID,
       Map<String, dynamic> otherProperties = const {}});
 
-  BaseRequest prepareDeleteUserRequest(
+  BaseRequest? prepareDeleteUserRequest(
       DirectusUser user, bool mustBeAuthenticated);
   bool parseDeleteUserResponse(Response response);
 
@@ -40,7 +41,8 @@ abstract class IDirectusAPI {
       {String fields = "*",
       Filter? filter,
       List<SortProperty>? sortBy,
-      int? limit});
+      int? limit,
+      int? offset});
   Iterable<dynamic> parseGetListOfItemsResponse(Response response);
 
   BaseRequest prepareGetSpecificItemRequest(String itemName, String itemId,
@@ -94,18 +96,6 @@ abstract class IDirectusAPI {
       {required String email, String? resetUrl});
   Request preparePasswordChangeRequest(
       {required String token, required String newPassword});
-}
-
-class DirectusApiError {
-  final Response? response;
-  final String? customMessage;
-
-  DirectusApiError({this.response, this.customMessage});
-
-  @override
-  String toString() {
-    return "DirectusApiError : $customMessage : ${response?.statusCode} ${response?.body} ${response?.headers}";
-  }
 }
 
 class DirectusAPI implements IDirectusAPI {
@@ -292,9 +282,14 @@ class DirectusAPI implements IDirectusAPI {
       {String fields = "*",
       Filter? filter,
       List<SortProperty>? sortBy,
-      int? limit}) {
+      int? limit,
+      int? offset}) {
     return _prepareGetRequest("/items/$itemName",
-        filter: filter, fields: fields, sortBy: sortBy, limit: limit);
+        filter: filter,
+        fields: fields,
+        sortBy: sortBy,
+        limit: limit,
+        offset: offset);
   }
 
   @override
@@ -306,7 +301,8 @@ class DirectusAPI implements IDirectusAPI {
       {String fields = "*",
       Filter? filter,
       List<SortProperty>? sortBy,
-      int? limit}) {
+      int? limit,
+      int? offset}) {
     final urlBuilder = StringBuffer(_baseURL + "$path?fields=$fields");
     if (filter != null) {
       urlBuilder.write("&filter=${Uri.encodeQueryComponent(filter.asJSON)}");
@@ -316,6 +312,10 @@ class DirectusAPI implements IDirectusAPI {
     }
     if (sortBy != null && sortBy.isNotEmpty) {
       urlBuilder.write("&sort=" + sortBy.join(","));
+    }
+
+    if (offset != null) {
+      urlBuilder.write("&offset=$offset");
     }
     Request request = Request("GET", Uri.parse(urlBuilder.toString()));
     return authenticateRequest(request);
@@ -443,15 +443,23 @@ class DirectusAPI implements IDirectusAPI {
   }
 
   @override
-  Request prepareUpdateUserRequest(DirectusUser updatedUser) {
-    Request request =
-        Request("PATCH", Uri.parse(_baseURL + "/users/" + updatedUser.id));
-    request.body = jsonEncode(
-      updatedUser.updatedProperties,
-      toEncodable: (nonEncodable) => _toEncodable(nonEncodable),
-    );
-    request.addJsonHeaders();
-    return authenticateRequest(request) as Request;
+  Request? prepareUpdateUserRequest(DirectusUser updatedUser) {
+    try {
+      Request request =
+          Request("PATCH", Uri.parse(_baseURL + "/users/" + updatedUser.id!));
+      request.body = jsonEncode(
+        updatedUser.updatedProperties,
+        toEncodable: (nonEncodable) => _toEncodable(nonEncodable),
+      );
+      request.addJsonHeaders();
+      return authenticateRequest(request) as Request;
+    } catch (error) {
+      if (updatedUser.id == null) {
+        throw Exception("The user id can not be null.");
+      }
+    }
+
+    return null;
   }
 
   Object? _toEncodable(Object? nonEncodable) {
@@ -469,15 +477,23 @@ class DirectusAPI implements IDirectusAPI {
   }
 
   @override
-  BaseRequest prepareDeleteUserRequest(
+  BaseRequest? prepareDeleteUserRequest(
       DirectusUser user, bool mustBeAuthenticated) {
-    Request request =
-        Request("DELETE", Uri.parse("$_baseURL/users/${user.id}"));
-    if (mustBeAuthenticated) {
-      return authenticateRequest(request);
+    try {
+      Request request =
+          Request("DELETE", Uri.parse("$_baseURL/users/${user.id}"));
+      if (mustBeAuthenticated) {
+        return authenticateRequest(request);
+      }
+
+      return request;
+    } catch (error) {
+      if (user.id == null) {
+        throw Exception("The user id can not be null");
+      }
     }
 
-    return request;
+    return null;
   }
 
   @override

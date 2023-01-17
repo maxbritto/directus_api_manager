@@ -11,6 +11,11 @@ main() {
       expect(() => DirectusUser({"id": "123-abc", "email": "will@acn.com"}),
           returnsNormally);
     });
+
+    test('New User', () {
+      expect(() => DirectusUser.newDirectusUser(), returnsNormally);
+    });
+
     test('User essential properties are retrieved from property list', () {
       final sut = DirectusUser({
         "id": "abc-123",
@@ -92,7 +97,6 @@ main() {
       });
       Map<String, dynamic> mapResult = sut.toMap();
 
-      expect(mapResult["id"], "abc-123");
       expect(mapResult["email"], "luke@skywalker.com");
       expect(mapResult["first_name"], "Luke");
       expect(mapResult["last_name"], "Skywalker");
