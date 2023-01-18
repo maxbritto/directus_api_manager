@@ -76,12 +76,14 @@ abstract class IDirectusAPI {
   Request prepareUserInviteRequest(String email, String roleId);
   bool parseUserInviteResponse(Response response);
 
-  Request prepareFileImportRequest({required String url, String? title});
+  Request prepareFileImportRequest(
+      {required String url, String? title, String? folder});
   BaseRequest prepareNewFileUploadRequest(
       {required List<int> fileBytes,
       String? title,
       String? contentType,
-      required String filename});
+      required String filename,
+      String? folder});
   BaseRequest prepareUpdateFileRequest(
       {required fileId,
       List<int>? fileBytes,
@@ -546,19 +548,25 @@ class DirectusAPI implements IDirectusAPI {
       {required List<int> fileBytes,
       String? title,
       String? contentType,
-      required String filename}) {
+      required String filename,
+      String? folder}) {
     return _prepareMultipartFileRequest(
         "POST", "$_baseURL/files", fileBytes, title,
-        contentType: contentType, filename: filename);
+        contentType: contentType, filename: filename, folder: folder);
   }
 
   MultipartRequest _prepareMultipartFileRequest(
       String method, String url, List<int>? fileBytes, String? title,
-      {String? contentType, required String filename}) {
+      {String? contentType, required String filename, String? folder}) {
     final request = MultipartRequest(method, Uri.parse(url));
     if (title != null) {
       request.fields["title"] = title;
     }
+
+    if (folder != null) {
+      request.fields["folder"] = folder;
+    }
+
     if (fileBytes != null) {
       request.files.add(MultipartFile.fromBytes("file", fileBytes,
           filename: filename,
@@ -581,11 +589,12 @@ class DirectusAPI implements IDirectusAPI {
   }
 
   @override
-  Request prepareFileImportRequest({required String url, String? title}) {
+  Request prepareFileImportRequest(
+      {required String url, String? title, String? folder}) {
     final request = Request("POST", Uri.parse("$_baseURL/files/import"));
     request.body = jsonEncode({
       "url": url,
-      "data": {"title": title}
+      "data": {"title": title, "folder": folder}
     });
     request.addJsonHeaders();
     return request;

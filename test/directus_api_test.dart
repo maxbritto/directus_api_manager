@@ -774,6 +774,14 @@ void main() {
       final multipartRequest = request as MultipartRequest;
       expect(multipartRequest.fields["title"], "File title");
     });
+    test("Folder", () {
+      final sut = makeAuthenticatedDirectusAPI();
+      final request = sut.prepareNewFileUploadRequest(
+          fileBytes: [1, 2, 3], folder: "Folder", filename: "file.txt");
+      expect(request, isA<MultipartRequest>());
+      final multipartRequest = request as MultipartRequest;
+      expect(multipartRequest.fields["folder"], "Folder");
+    });
     test("File import from URL", () {
       final sut = makeAuthenticatedDirectusAPI();
       final request = sut.prepareFileImportRequest(
@@ -786,6 +794,23 @@ void main() {
       final json = jsonDecode(request.body);
       expect(json["url"], "https://www.purplegiraffe.fr/image.png");
       expect(json["data"]["title"], "File title");
+    });
+
+    test("File import from URL with folder", () {
+      final sut = makeAuthenticatedDirectusAPI();
+      final request = sut.prepareFileImportRequest(
+          url: "https://www.purplegiraffe.fr/image.png",
+          title: "File title",
+          folder: "Folder");
+
+      expect(request.url.toString(), "http://api.com/files/import");
+      expect(request.method, "POST");
+      expect(
+          request.headers["Content-Type"], "application/json; charset=utf-8");
+      final json = jsonDecode(request.body);
+      expect(json["url"], "https://www.purplegiraffe.fr/image.png");
+      expect(json["data"]["title"], "File title");
+      expect(json["data"]["folder"], "Folder");
     });
   });
 }
