@@ -20,8 +20,9 @@ void main() {
   group("DirectusAPI Data Management", () {
     test('Get list of items request', () {
       final sut = makeAuthenticatedDirectusAPI();
-      final request = sut.prepareGetListOfItemsRequest("article");
-      expect(request.url.toString(), "http://api.com/items/article?fields=*");
+      final request =
+          sut.prepareGetListOfItemsRequest("article", fields: "*.*");
+      expect(request.url.toString(), "http://api.com/items/article?fields=*.*");
       expect(request.method, "GET");
       expect(request.headers["Authorization"], "Bearer $defaultAccessToken");
     });
@@ -143,12 +144,16 @@ void main() {
 
     test('New Item request', () {
       final sut = makeAuthenticatedDirectusAPI();
-      final request = sut.prepareCreateNewItemRequest("articles", {
-        "title": "Let's dance",
-        "pageCount": 10,
-        "creationDate": DateTime(2022, 1, 2, 3, 4, 5)
-      });
-      expect(request.url.toString(), "http://api.com/items/articles?fields=*");
+      final request = sut.prepareCreateNewItemRequest(
+          "articles",
+          {
+            "title": "Let's dance",
+            "pageCount": 10,
+            "creationDate": DateTime(2022, 1, 2, 3, 4, 5)
+          },
+          fields: "*.*");
+      expect(
+          request.url.toString(), "http://api.com/items/articles?fields=*.*");
       expect(request.method, "POST");
       expect(
           request.headers["Content-Type"], "application/json; charset=utf-8");
@@ -161,13 +166,17 @@ void main() {
 
     test('Update Item request', () {
       final sut = makeAuthenticatedDirectusAPI();
-      final request = sut.prepareUpdateItemRequest("articles", "abc-123", {
-        "title": "Let's dance",
-        "pageCount": 9,
-        "creationDate": DateTime(2022, 1, 2, 3, 4, 5)
-      });
+      final request = sut.prepareUpdateItemRequest(
+          "articles",
+          "abc-123",
+          {
+            "title": "Let's dance",
+            "pageCount": 9,
+            "creationDate": DateTime(2022, 1, 2, 3, 4, 5)
+          },
+          fields: "*.*");
       expect(request.url.toString(),
-          "http://api.com/items/articles/abc-123?fields=*");
+          "http://api.com/items/articles/abc-123?fields=*.*");
       expect(request.method, "PATCH");
       expect(
           request.headers["Content-Type"], "application/json; charset=utf-8");
@@ -418,8 +427,9 @@ void main() {
 
     test('Get specific user request', () {
       final sut = makeAuthenticatedDirectusAPI();
-      final request = sut.prepareGetSpecificUserRequest("abc-123");
-      expect(request.url.toString(), "http://api.com/users/abc-123?fields=*");
+      final request =
+          sut.prepareGetSpecificUserRequest("abc-123", fields: "*.*");
+      expect(request.url.toString(), "http://api.com/users/abc-123?fields=*.*");
       expect(request.method, "GET");
       expect(request.headers["Authorization"], "Bearer $defaultAccessToken");
     });
@@ -486,8 +496,9 @@ void main() {
 
     test('Get list of users request', () {
       final sut = makeAuthenticatedDirectusAPI();
-      final request = sut.prepareGetUserListRequest(limit: 10);
-      expect(request.url.toString(), "http://api.com/users?fields=*&limit=10");
+      final request = sut.prepareGetUserListRequest(limit: 10, fields: "*.*");
+      expect(
+          request.url.toString(), "http://api.com/users?fields=*.*&limit=10");
       expect(request.method, "GET");
       expect(request.headers["Authorization"], "Bearer $defaultAccessToken");
     });
@@ -811,6 +822,14 @@ void main() {
       expect(json["url"], "https://www.purplegiraffe.fr/image.png");
       expect(json["data"]["title"], "File title");
       expect(json["data"]["folder"], "Folder");
+    });
+
+    test("File delete request", () {
+      final sut = makeAuthenticatedDirectusAPI();
+      final request = sut.prepareFileDeleteRequest(fileId: "a");
+
+      expect(request.url.toString(), "http://api.com/files/a");
+      expect(request.method, "DELETE");
     });
   });
 }

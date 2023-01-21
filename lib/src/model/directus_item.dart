@@ -5,5 +5,4 @@ abstract class DirectusItem extends DirectusData {
   DirectusItem(Map<String, dynamic> rawReceivedData) : super(rawReceivedData);
   DirectusItem.newItem() : super.newDirectusData();
   String get endpointName; // Collection name
-
 }

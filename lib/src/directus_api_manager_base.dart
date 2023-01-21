@@ -251,10 +251,12 @@ class DirectusApiManager {
   Future<DirectusItemCreationResult<Type>>
       createNewItem<Type extends DirectusItem>(
           {required Type objectToCreate,
+          String fields = "*",
           required Type Function(dynamic json) createItemFunction}) {
     return _sendRequest(
         prepareRequest: () => _api.prepareCreateNewItemRequest(
-            objectToCreate.endpointName, objectToCreate.toMap()),
+            objectToCreate.endpointName, objectToCreate.toMap(),
+            fields: fields),
         parseResponse: (response) {
           final DirectusItemCreationResult<Type> creationResult =
               DirectusItemCreationResult(
@@ -412,6 +414,12 @@ class DirectusApiManager {
             fileBytes: fileBytes,
             contentType: contentType),
         parseResponse: (response) => _api.parseFileUploadResponse(response));
+  }
+
+  Future<bool> deleteFile({required String fileId}) {
+    return _sendRequest(
+        prepareRequest: () => _api.prepareFileDeleteRequest(fileId: fileId),
+        parseResponse: (response) => _api.parseGenericBoolResponse(response));
   }
 
   Future<T> sendRequestToEndpoint<T>(
