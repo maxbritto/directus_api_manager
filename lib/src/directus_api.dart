@@ -23,7 +23,8 @@ abstract class IDirectusAPI {
   DirectusUser parseUserResponse(Response response);
 
   BaseRequest? prepareUpdateUserRequest(DirectusUser updatedUser);
-  BaseRequest prepareGetUserListRequest({Filter? filter, required int limit});
+  BaseRequest prepareGetUserListRequest(
+      {Filter? filter, required int limit, String fields = "*"});
   Iterable<DirectusUser> parseUserListResponse(Response response);
   BaseRequest prepareCreateUserRequest(
       {required String email,
@@ -76,12 +77,15 @@ abstract class IDirectusAPI {
   Request prepareUserInviteRequest(String email, String roleId);
   bool parseUserInviteResponse(Response response);
 
-  Request prepareFileImportRequest({required String url, String? title});
+  Request prepareFileImportRequest(
+      {required String url, String? title, String? folder});
+  BaseRequest prepareFileDeleteRequest({required String fileId});
   BaseRequest prepareNewFileUploadRequest(
       {required List<int> fileBytes,
       String? title,
       String? contentType,
-      required String filename});
+      required String filename,
+      String? folder});
   BaseRequest prepareUpdateFileRequest(
       {required fileId,
       List<int>? fileBytes,
@@ -405,8 +409,10 @@ class DirectusAPI implements IDirectusAPI {
   }
 
   @override
-  BaseRequest prepareGetUserListRequest({Filter? filter, required int limit}) {
-    return _prepareGetRequest("/users", filter: filter, limit: limit);
+  BaseRequest prepareGetUserListRequest(
+      {Filter? filter, required int limit, String fields = "*"}) {
+    return _prepareGetRequest("/users",
+        filter: filter, limit: limit, fields: fields);
   }
 
   @override
@@ -546,19 +552,25 @@ class DirectusAPI implements IDirectusAPI {
       {required List<int> fileBytes,
       String? title,
       String? contentType,
-      required String filename}) {
+      required String filename,
+      String? folder}) {
     return _prepareMultipartFileRequest(
         "POST", "$_baseURL/files", fileBytes, title,
-        contentType: contentType, filename: filename);
+        contentType: contentType, filename: filename, folder: folder);
   }
 
   MultipartRequest _prepareMultipartFileRequest(
       String method, String url, List<int>? fileBytes, String? title,
-      {String? contentType, required String filename}) {
+      {String? contentType, required String filename, String? folder}) {
     final request = MultipartRequest(method, Uri.parse(url));
     if (title != null) {
       request.fields["title"] = title;
     }
+
+    if (folder != null) {
+      request.fields["folder"] = folder;
+    }
+
     if (fileBytes != null) {
       request.files.add(MultipartFile.fromBytes("file", fileBytes,
           filename: filename,
@@ -581,14 +593,22 @@ class DirectusAPI implements IDirectusAPI {
   }
 
   @override
-  Request prepareFileImportRequest({required String url, String? title}) {
+  Request prepareFileImportRequest(
+      {required String url, String? title, String? folder}) {
     final request = Request("POST", Uri.parse("$_baseURL/files/import"));
     request.body = jsonEncode({
       "url": url,
-      "data": {"title": title}
+      "data": {"title": title, "folder": folder}
     });
     request.addJsonHeaders();
     return request;
+  }
+
+  @override
+  BaseRequest prepareFileDeleteRequest({required String fileId}) {
+    final request = Request("DELETE", Uri.parse("$_baseURL/files/$fileId"));
+
+    return authenticateRequest(request);
   }
 
   @override

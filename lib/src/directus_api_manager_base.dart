@@ -251,10 +251,12 @@ class DirectusApiManager {
   Future<DirectusItemCreationResult<Type>>
       createNewItem<Type extends DirectusItem>(
           {required Type objectToCreate,
+          String fields = "*",
           required Type Function(dynamic json) createItemFunction}) {
     return _sendRequest(
         prepareRequest: () => _api.prepareCreateNewItemRequest(
-            objectToCreate.endpointName, objectToCreate.toMap()),
+            objectToCreate.endpointName, objectToCreate.toMap(),
+            fields: fields),
         parseResponse: (response) {
           final DirectusItemCreationResult<Type> creationResult =
               DirectusItemCreationResult(
@@ -377,10 +379,10 @@ class DirectusApiManager {
   }
 
   Future<DirectusFile> uploadFileFromUrl(
-      {required String remoteUrl, String? title}) async {
+      {required String remoteUrl, String? title, String? folder}) async {
     return _sendRequest(
-        prepareRequest: () =>
-            _api.prepareFileImportRequest(url: remoteUrl, title: title),
+        prepareRequest: () => _api.prepareFileImportRequest(
+            url: remoteUrl, title: title, folder: folder),
         parseResponse: (response) => _api.parseFileUploadResponse(response));
   }
 
@@ -388,13 +390,15 @@ class DirectusApiManager {
       {required List<int> fileBytes,
       required String filename,
       String? title,
-      String? contentType}) {
+      String? contentType,
+      String? folder}) {
     return _sendRequest(
         prepareRequest: () => _api.prepareNewFileUploadRequest(
             fileBytes: fileBytes,
             filename: filename,
             title: title,
-            contentType: contentType),
+            contentType: contentType,
+            folder: folder),
         parseResponse: (response) => _api.parseFileUploadResponse(response));
   }
 
@@ -410,6 +414,12 @@ class DirectusApiManager {
             fileBytes: fileBytes,
             contentType: contentType),
         parseResponse: (response) => _api.parseFileUploadResponse(response));
+  }
+
+  Future<bool> deleteFile({required String fileId}) {
+    return _sendRequest(
+        prepareRequest: () => _api.prepareFileDeleteRequest(fileId: fileId),
+        parseResponse: (response) => _api.parseGenericBoolResponse(response));
   }
 
   Future<T> sendRequestToEndpoint<T>(
