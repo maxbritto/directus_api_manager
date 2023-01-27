@@ -18,6 +18,9 @@ class DirectusUser extends DirectusData {
   String? get roleUUID => getValue(forKey: "role");
   set roleUUID(String? value) => setValue(value, forKey: "role");
 
+  String? get avatar => getValue(forKey: "avatar");
+  set avatar(String? value) => setValue(value, forKey: "avatar");
+
   /// Creates a new [DirectusUser]
   ///
   /// [_rawReceivedData] must contain at least an `"id"` and an `"email"` properties. Throws [Exception] if they are missing.
