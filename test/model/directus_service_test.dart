@@ -19,8 +19,10 @@ class DirectusItemUseCase extends DirectusItem {
 
 class DirectusServiceTest extends DirectusService<DirectusItemUseCase> {
   DirectusServiceTest(
-      DirectusApiManager apiManager, String typeName, String fields)
-      : super(apiManager, typeName, fields);
+      {required DirectusApiManager apiManager,
+      required String typeName,
+      String fields = "*"})
+      : super(apiManager: apiManager, typeName: typeName, fields: fields);
 
   @override
   DirectusItemUseCase fromDirectus(rawData) {
@@ -32,17 +34,20 @@ main() {
   group('DirectusData', () {
     test('TypeName', () {
       final sut = DirectusServiceTest(
-          DirectusApiManager(baseURL: 'htttp://toto.com', httpClient: Client()),
-          "itemCollection",
-          "*");
+        apiManager: DirectusApiManager(
+            baseURL: 'htttp://toto.com', httpClient: Client()),
+        typeName: "itemCollection",
+      );
       expect(sut.typeName, "itemCollection");
+      expect(sut.fields, "*");
     });
 
     test('Fields', () {
       final sut = DirectusServiceTest(
-          DirectusApiManager(baseURL: 'htttp://toto.com', httpClient: Client()),
-          "itemCollection",
-          "*.*");
+          apiManager: DirectusApiManager(
+              baseURL: 'htttp://toto.com', httpClient: Client()),
+          typeName: "itemCollection",
+          fields: "*.*");
       expect(sut.fields, "*.*");
     });
   });

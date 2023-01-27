@@ -6,7 +6,8 @@ abstract class DirectusService<Type extends DirectusItem> {
   final String fields;
   Type fromDirectus(dynamic rawData);
 
-  DirectusService(this.apiManager, this.typeName, this.fields);
+  DirectusService(
+      {required this.apiManager, required this.typeName, this.fields = "*"});
 
   Future<Type> getSpecificItem({required String id}) {
     return apiManager.getSpecificItem(
