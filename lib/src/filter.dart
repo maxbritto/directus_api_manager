@@ -1,4 +1,25 @@
-enum FilterOperator { equals, contains, between, isNull, isNotNull }
+enum FilterOperator {
+  equals,
+  notEqual,
+  lessThan,
+  lessThanOrEqual,
+  greaterThan,
+  greaterThanOrEqual,
+  oneOf,
+  notOneOf,
+  isNull,
+  isNotNull,
+  contains,
+  notContains,
+  startWith,
+  notStartWith,
+  endWith,
+  notEndWith,
+  between,
+  notBetween,
+  isEmpty,
+  isNotEmpty
+}
 
 /// This class is astract and should not be used directly
 ///
@@ -21,17 +42,65 @@ class PropertyFilter implements Filter {
       case FilterOperator.equals:
         value = "_eq";
         break;
-      case FilterOperator.contains:
-        value = "_contains";
+      case FilterOperator.notEqual:
+        value = "_neq";
         break;
-      case FilterOperator.between:
-        value = "_between";
+
+      case FilterOperator.lessThan:
+        value = "_lt";
+        break;
+
+      case FilterOperator.lessThanOrEqual:
+        value = "_lte";
+        break;
+      case FilterOperator.greaterThan:
+        value = "_gt";
+        break;
+      case FilterOperator.greaterThanOrEqual:
+        value = "_gte";
+        break;
+      case FilterOperator.oneOf:
+        value = "_in";
+        break;
+      case FilterOperator.notOneOf:
+        value = "_nin";
         break;
       case FilterOperator.isNull:
         value = "_null";
         break;
       case FilterOperator.isNotNull:
         value = "_nnull";
+        break;
+      case FilterOperator.contains:
+        value = "_contains";
+        break;
+      case FilterOperator.notContains:
+        value = "_ncontains";
+        break;
+
+      case FilterOperator.startWith:
+        value = "_starts_with";
+        break;
+      case FilterOperator.notStartWith:
+        value = "_nstarts_with";
+        break;
+      case FilterOperator.endWith:
+        value = "_ends_with";
+        break;
+      case FilterOperator.notEndWith:
+        value = "_nends_with";
+        break;
+      case FilterOperator.between:
+        value = "_between";
+        break;
+      case FilterOperator.notBetween:
+        value = "_nbetween";
+        break;
+      case FilterOperator.isEmpty:
+        value = "_empty";
+        break;
+      case FilterOperator.isNotEmpty:
+        value = "_nempty";
         break;
     }
     return value;
