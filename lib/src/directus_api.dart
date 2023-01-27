@@ -23,7 +23,8 @@ abstract class IDirectusAPI {
   DirectusUser parseUserResponse(Response response);
 
   BaseRequest? prepareUpdateUserRequest(DirectusUser updatedUser);
-  BaseRequest prepareGetUserListRequest({Filter? filter, required int limit});
+  BaseRequest prepareGetUserListRequest(
+      {Filter? filter, required int limit, String fields = "*"});
   Iterable<DirectusUser> parseUserListResponse(Response response);
   BaseRequest prepareCreateUserRequest(
       {required String email,
@@ -78,6 +79,7 @@ abstract class IDirectusAPI {
 
   Request prepareFileImportRequest(
       {required String url, String? title, String? folder});
+  BaseRequest prepareFileDeleteRequest({required String fileId});
   BaseRequest prepareNewFileUploadRequest(
       {required List<int> fileBytes,
       String? title,
@@ -407,8 +409,10 @@ class DirectusAPI implements IDirectusAPI {
   }
 
   @override
-  BaseRequest prepareGetUserListRequest({Filter? filter, required int limit}) {
-    return _prepareGetRequest("/users", filter: filter, limit: limit);
+  BaseRequest prepareGetUserListRequest(
+      {Filter? filter, required int limit, String fields = "*"}) {
+    return _prepareGetRequest("/users",
+        filter: filter, limit: limit, fields: fields);
   }
 
   @override
@@ -598,6 +602,13 @@ class DirectusAPI implements IDirectusAPI {
     });
     request.addJsonHeaders();
     return request;
+  }
+
+  @override
+  BaseRequest prepareFileDeleteRequest({required String fileId}) {
+    final request = Request("DELETE", Uri.parse("$_baseURL/files/$fileId"));
+
+    return authenticateRequest(request);
   }
 
   @override
