@@ -133,10 +133,18 @@ class DirectusApiManager {
   }
 
   Future<Iterable<DirectusUser>> getDirectusUserList(
-      {Filter? filter, int limit = -1}) {
+      {Filter? filter,
+      int limit = -1,
+      String? fields,
+      List<SortProperty>? sortBy,
+      int? offset}) {
     return _sendRequest(
-        prepareRequest: () =>
-            _api.prepareGetUserListRequest(filter: filter, limit: limit),
+        prepareRequest: () => _api.prepareGetUserListRequest(
+            filter: filter,
+            limit: limit,
+            fields: fields,
+            sortBy: sortBy,
+            offset: offset),
         parseResponse: (response) => _api.parseUserListResponse(response));
   }
 
