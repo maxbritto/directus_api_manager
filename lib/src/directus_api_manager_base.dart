@@ -148,9 +148,11 @@ class DirectusApiManager {
         parseResponse: (response) => _api.parseUserListResponse(response));
   }
 
-  Future<DirectusUser> updateDirectusUser({required DirectusUser updatedUser}) {
+  Future<DirectusUser> updateDirectusUser(
+      {required DirectusUser updatedUser, String fields = "*"}) {
     return _sendRequest(
-        prepareRequest: () => _api.prepareUpdateUserRequest(updatedUser),
+        prepareRequest: () =>
+            _api.prepareUpdateUserRequest(updatedUser, fields: fields),
         parseResponse: (response) => _api.parseUserResponse(response));
   }
 

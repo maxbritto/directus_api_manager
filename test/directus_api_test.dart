@@ -648,9 +648,10 @@ void main() {
       });
       user.firstname = "Will 2";
       user.setValue(DateTime(2022, 1, 2, 3, 4, 5), forKey: "birthDate");
-      final request = sut.prepareUpdateUserRequest(user);
+      final request = sut.prepareUpdateUserRequest(user, fields: "*.*");
       if (request != null) {
-        expect(request.url.toString(), "http://api.com/users/123-abc-456");
+        expect(request.url.toString(),
+            "http://api.com/users/123-abc-456?fields=*.*");
         expect(request.method, "PATCH");
         expect(request.headers["Authorization"], "Bearer $defaultAccessToken");
         final jsonParsedBody = jsonDecode(request.body) as Map;
@@ -676,7 +677,8 @@ void main() {
       });
       final request = sut.prepareUpdateUserRequest(user);
       if (request != null) {
-        expect(request.url.toString(), "http://api.com/users/123-abc-456");
+        expect(request.url.toString(),
+            "http://api.com/users/123-abc-456?fields=*");
         expect(request.method, "PATCH");
         expect(request.headers["Authorization"], "Bearer $defaultAccessToken");
         final jsonParsedBody = jsonDecode(request.body) as Map;

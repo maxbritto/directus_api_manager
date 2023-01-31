@@ -22,7 +22,8 @@ abstract class IDirectusAPI {
   BaseRequest prepareGetCurrentUserRequest({String fields = "*"});
   DirectusUser parseUserResponse(Response response);
 
-  BaseRequest? prepareUpdateUserRequest(DirectusUser updatedUser);
+  BaseRequest? prepareUpdateUserRequest(DirectusUser updatedUser,
+      {String fields = "*"});
   BaseRequest prepareGetUserListRequest(
       {Filter? filter,
       int limit = -1,
@@ -461,10 +462,13 @@ class DirectusAPI implements IDirectusAPI {
   }
 
   @override
-  Request? prepareUpdateUserRequest(DirectusUser updatedUser) {
+  Request? prepareUpdateUserRequest(DirectusUser updatedUser,
+      {String fields = "*"}) {
     try {
-      Request request =
-          Request("PATCH", Uri.parse(_baseURL + "/users/" + updatedUser.id!));
+      Request request = Request(
+          "PATCH",
+          Uri.parse(
+              _baseURL + "/users/" + updatedUser.id! + "?fields=" + fields));
       request.body = jsonEncode(
         updatedUser.updatedProperties,
         toEncodable: (nonEncodable) => _toEncodable(nonEncodable),
