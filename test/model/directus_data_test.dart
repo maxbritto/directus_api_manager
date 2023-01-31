@@ -12,6 +12,7 @@ main() {
     test('Creating an invalid item should throw', () {
       expect(() => TestDirectusData({}), throwsException);
       expect(() => TestDirectusData({"id": "123-abc"}), returnsNormally);
+      expect(() => TestDirectusData({"id": 1}), returnsNormally);
     });
 
     test('Extra properties can be added and read', () {
@@ -44,6 +45,14 @@ main() {
       expect(mapResult["checkString"], "coruscant");
       expect(mapResult["checkBool"], true);
       expect(mapResult["checkInt"], 42);
+    });
+
+    test('Call setValue with same value must not need saving', () {
+      final sut = TestDirectusData({"id": "abc", "checkString": "star wars"});
+      sut.setValue("star wars", forKey: "checkString");
+      expect(sut.needsSaving, false);
+      sut.setValue("lord of the ring", forKey: "checkString");
+      expect(sut.needsSaving, true);
     });
   });
 }
