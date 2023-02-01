@@ -29,7 +29,9 @@ abstract class DirectusData {
   }
 
   dynamic getValue({required String forKey}) {
-    return updatedProperties[forKey] ?? _rawReceivedData[forKey];
+    return updatedProperties.containsKey(forKey)
+        ? updatedProperties[forKey]
+        : _rawReceivedData[forKey];
   }
 
   Map<String, dynamic> toMap() {

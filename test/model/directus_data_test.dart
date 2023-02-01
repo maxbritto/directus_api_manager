@@ -54,5 +54,12 @@ main() {
       sut.setValue("lord of the ring", forKey: "checkString");
       expect(sut.needsSaving, true);
     });
+
+    test('null updated property must return null', () {
+      final sut = TestDirectusData({"id": "abc", "checkString": "star wars"});
+      sut.setValue(null, forKey: "checkString");
+
+      expect(sut.getValue(forKey: "checkString"), null);
+    });
   });
 }
