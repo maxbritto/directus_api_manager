@@ -200,14 +200,18 @@ class DirectusApiManager {
             roleUUID: roleUUID,
             otherProperties: otherProperties),
         parseResponse: (response) {
-          final DirectusItemCreationResult<Type> creationResult =
-              DirectusItemCreationResult(
-                  isSuccess:
-                      response.statusCode == 200 || response.statusCode == 204);
-          if (response.statusCode != 204) {
+          final DirectusItemCreationResult<Type> creationResult;
+          if (response.statusCode == 200) {
+            creationResult = DirectusItemCreationResult(isSuccess: true);
             creationResult.createdItemList
                 .add(createItemFunction(_api.parseUserResponse(response)));
+          } else if (response.statusCode == 204) {
+            creationResult = DirectusItemCreationResult(isSuccess: true);
+          } else {
+            creationResult = DirectusItemCreationResult(
+                isSuccess: false, error: DirectusApiError(response: response));
           }
+
           return creationResult;
         });
   }
@@ -268,15 +272,18 @@ class DirectusApiManager {
             objectToCreate.endpointName, objectToCreate.toMap(),
             fields: fields),
         parseResponse: (response) {
-          final DirectusItemCreationResult<Type> creationResult =
-              DirectusItemCreationResult(
-                  isSuccess:
-                      response.statusCode == 200 || response.statusCode == 204);
-
+          final DirectusItemCreationResult<Type> creationResult;
           if (response.statusCode == 200) {
+            creationResult = DirectusItemCreationResult(isSuccess: true);
             creationResult.createdItemList.add(
                 createItemFunction(_api.parseCreateNewItemResponse(response)));
+          } else if (response.statusCode == 204) {
+            creationResult = DirectusItemCreationResult(isSuccess: true);
+          } else {
+            creationResult = DirectusItemCreationResult(
+                isSuccess: false, error: DirectusApiError(response: response));
           }
+
           return creationResult;
         });
   }
