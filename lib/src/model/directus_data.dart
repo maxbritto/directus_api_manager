@@ -10,17 +10,28 @@ abstract class DirectusData {
 
   DirectusData.newDirectusData([this._rawReceivedData = const {}]);
 
-  String? get id => getValue(forKey: "id");
+  String? get id {
+    dynamic idData = getValue(forKey: "id");
+    if (idData is int) {
+      return idData.toString();
+    }
+
+    return idData;
+  }
 
   Map<String, dynamic> getRawData() => _rawReceivedData;
   bool get needsSaving => updatedProperties.isNotEmpty;
 
   setValue(dynamic value, {required String forKey}) {
-    updatedProperties[forKey] = value;
+    if (value != getValue(forKey: forKey)) {
+      updatedProperties[forKey] = value;
+    }
   }
 
   dynamic getValue({required String forKey}) {
-    return updatedProperties[forKey] ?? _rawReceivedData[forKey];
+    return updatedProperties.containsKey(forKey)
+        ? updatedProperties[forKey]
+        : _rawReceivedData[forKey];
   }
 
   Map<String, dynamic> toMap() {

@@ -21,12 +21,14 @@ main() {
         "id": "abc-123",
         "first_name": "Will",
         "last_name": "McAvoy",
-        "email": "will@acn.com"
+        "email": "will@acn.com",
+        "avatar": "1"
       });
       expect(sut.id, "abc-123");
       expect(sut.firstname, "Will");
       expect(sut.lastname, "McAvoy");
       expect(sut.email, "will@acn.com");
+      expect(sut.avatar, "1");
     });
 
     test('Extra properties can be added and read', () {
@@ -122,6 +124,12 @@ main() {
       expect(sut.needsSaving, false);
       sut.setValue("new value", forKey: "secretKey");
       expect(sut.needsSaving, true);
+    });
+
+    test('Writing default property', () {
+      final sut = DirectusUser({"id": "abc-123", "email": "will@acn.com"});
+      sut.avatar = "1";
+      expect(sut.avatar, "1");
     });
   });
 }

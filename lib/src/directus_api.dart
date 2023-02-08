@@ -22,9 +22,14 @@ abstract class IDirectusAPI {
   BaseRequest prepareGetCurrentUserRequest({String fields = "*"});
   DirectusUser parseUserResponse(Response response);
 
-  BaseRequest? prepareUpdateUserRequest(DirectusUser updatedUser);
+  BaseRequest? prepareUpdateUserRequest(DirectusUser updatedUser,
+      {String fields = "*"});
   BaseRequest prepareGetUserListRequest(
-      {Filter? filter, required int limit, String fields = "*"});
+      {Filter? filter,
+      int limit = -1,
+      String? fields,
+      List<SortProperty>? sortBy,
+      int? offset});
   Iterable<DirectusUser> parseUserListResponse(Response response);
   BaseRequest prepareCreateUserRequest(
       {required String email,
@@ -410,9 +415,17 @@ class DirectusAPI implements IDirectusAPI {
 
   @override
   BaseRequest prepareGetUserListRequest(
-      {Filter? filter, required int limit, String fields = "*"}) {
+      {Filter? filter,
+      int limit = -1,
+      String? fields,
+      List<SortProperty>? sortBy,
+      int? offset}) {
     return _prepareGetRequest("/users",
-        filter: filter, limit: limit, fields: fields);
+        filter: filter,
+        limit: limit,
+        fields: fields ?? "*",
+        sortBy: sortBy,
+        offset: offset);
   }
 
   @override
@@ -449,10 +462,13 @@ class DirectusAPI implements IDirectusAPI {
   }
 
   @override
-  Request? prepareUpdateUserRequest(DirectusUser updatedUser) {
+  Request? prepareUpdateUserRequest(DirectusUser updatedUser,
+      {String fields = "*"}) {
     try {
-      Request request =
-          Request("PATCH", Uri.parse(_baseURL + "/users/" + updatedUser.id!));
+      Request request = Request(
+          "PATCH",
+          Uri.parse(
+              _baseURL + "/users/" + updatedUser.id! + "?fields=" + fields));
       request.body = jsonEncode(
         updatedUser.updatedProperties,
         toEncodable: (nonEncodable) => _toEncodable(nonEncodable),

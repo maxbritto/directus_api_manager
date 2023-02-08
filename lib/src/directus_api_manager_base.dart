@@ -133,16 +133,26 @@ class DirectusApiManager {
   }
 
   Future<Iterable<DirectusUser>> getDirectusUserList(
-      {Filter? filter, int limit = -1}) {
+      {Filter? filter,
+      int limit = -1,
+      String? fields,
+      List<SortProperty>? sortBy,
+      int? offset}) {
     return _sendRequest(
-        prepareRequest: () =>
-            _api.prepareGetUserListRequest(filter: filter, limit: limit),
+        prepareRequest: () => _api.prepareGetUserListRequest(
+            filter: filter,
+            limit: limit,
+            fields: fields,
+            sortBy: sortBy,
+            offset: offset),
         parseResponse: (response) => _api.parseUserListResponse(response));
   }
 
-  Future<DirectusUser> updateDirectusUser({required DirectusUser updatedUser}) {
+  Future<DirectusUser> updateDirectusUser(
+      {required DirectusUser updatedUser, String fields = "*"}) {
     return _sendRequest(
-        prepareRequest: () => _api.prepareUpdateUserRequest(updatedUser),
+        prepareRequest: () =>
+            _api.prepareUpdateUserRequest(updatedUser, fields: fields),
         parseResponse: (response) => _api.parseUserResponse(response));
   }
 
@@ -190,15 +200,10 @@ class DirectusApiManager {
             roleUUID: roleUUID,
             otherProperties: otherProperties),
         parseResponse: (response) {
-          final DirectusItemCreationResult<Type> creationResult =
-              DirectusItemCreationResult(
-                  isSuccess:
-                      response.statusCode == 200 || response.statusCode == 204);
-          if (response.statusCode != 204) {
-            creationResult.createdItemList
-                .add(createItemFunction(_api.parseUserResponse(response)));
-          }
-          return creationResult;
+          return DirectusItemCreationResult.fromDirectus(
+              api: _api,
+              response: response,
+              createItemFunction: createItemFunction);
         });
   }
 
@@ -258,16 +263,10 @@ class DirectusApiManager {
             objectToCreate.endpointName, objectToCreate.toMap(),
             fields: fields),
         parseResponse: (response) {
-          final DirectusItemCreationResult<Type> creationResult =
-              DirectusItemCreationResult(
-                  isSuccess:
-                      response.statusCode == 200 || response.statusCode == 204);
-
-          if (response.statusCode == 200) {
-            creationResult.createdItemList.add(
-                createItemFunction(_api.parseCreateNewItemResponse(response)));
-          }
-          return creationResult;
+          return DirectusItemCreationResult.fromDirectus(
+              api: _api,
+              response: response,
+              createItemFunction: createItemFunction);
         });
   }
 
