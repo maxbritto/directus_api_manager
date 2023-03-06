@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:directus_api_manager/directus_api_manager.dart';
 import 'package:directus_api_manager/src/directus_api.dart';
+import 'package:directus_api_manager/src/model/directus_data.dart';
 import 'package:http/http.dart';
 
 class DirectusApiManager {
@@ -260,7 +261,7 @@ class DirectusApiManager {
           required Type Function(dynamic json) createItemFunction}) {
     return _sendRequest(
         prepareRequest: () => _api.prepareCreateNewItemRequest(
-            objectToCreate.endpointName, objectToCreate.toMap(),
+            objectToCreate.endpointName, objectToCreate.mapForObjectCreation(),
             fields: fields),
         parseResponse: (response) {
           return DirectusItemCreationResult.fromDirectus(
@@ -280,7 +281,7 @@ class DirectusApiManager {
     }
     final String endPoint = objectList.first.endpointName;
     final List<Map<String, dynamic>> objectListData =
-        objectList.map(((object) => object.toMap())).toList();
+        objectList.map(((object) => object.mapForObjectCreation())).toList();
     return _sendRequest(
         prepareRequest: () => _api.prepareCreateNewItemRequest(
             endPoint, objectListData,

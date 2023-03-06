@@ -40,7 +40,7 @@ main() {
       sut.setValue("coruscant", forKey: "checkString");
       sut.setValue(true, forKey: "checkBool");
       sut.setValue(42, forKey: "checkInt");
-      Map<String, dynamic> mapResult = sut.toMap();
+      Map<String, dynamic> mapResult = sut.mapForObjectCreation();
 
       expect(mapResult["checkString"], "coruscant");
       expect(mapResult["checkBool"], true);

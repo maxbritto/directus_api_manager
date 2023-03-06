@@ -33,8 +33,10 @@ abstract class DirectusData {
         ? updatedProperties[forKey]
         : _rawReceivedData[forKey];
   }
+}
 
-  Map<String, dynamic> toMap() {
+extension DirectusDataExtension on DirectusData {
+  Map<String, dynamic> mapForObjectCreation() {
     return Map<String, dynamic>.of(_rawReceivedData)
       ..addAll(updatedProperties)
       ..remove("id");

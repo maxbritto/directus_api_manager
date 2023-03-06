@@ -97,7 +97,7 @@ main() {
         "first_name": "Luke",
         "last_name": "Skywalker"
       });
-      Map<String, dynamic> mapResult = sut.toMap();
+      Map<String, dynamic> mapResult = sut.mapForObjectCreation();
 
       expect(mapResult["email"], "luke@skywalker.com");
       expect(mapResult["first_name"], "Luke");
