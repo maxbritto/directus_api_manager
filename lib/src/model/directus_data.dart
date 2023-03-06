@@ -33,12 +33,16 @@ abstract class DirectusData {
         ? updatedProperties[forKey]
         : _rawReceivedData[forKey];
   }
+
+  /// returns a map of all the properties of the item merged with the ones that have been updated
+  Map<String, dynamic> toMap() {
+    return Map<String, dynamic>.of(_rawReceivedData)..addAll(updatedProperties);
+  }
 }
 
 extension DirectusDataExtension on DirectusData {
+  /// Returns a map of all the properties of the item without the id that must not be sent to the server when creating a new item
   Map<String, dynamic> mapForObjectCreation() {
-    return Map<String, dynamic>.of(_rawReceivedData)
-      ..addAll(updatedProperties)
-      ..remove("id");
+    return toMap()..remove("id");
   }
 }
