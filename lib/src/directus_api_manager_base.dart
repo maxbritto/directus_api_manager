@@ -11,12 +11,17 @@ class DirectusApiManager {
 
   DirectusUser? _currentUser;
 
+  /// Creates a new DirectusApiManager instance.
+  /// [baseURL] : The base URL of the Directus instance
+  /// [httpClient] : The HTTP client to use. If not provided, a new [Client] will be created.
+  /// [saveRefreshTokenCallback] : A function that will be called when a new refresh token is received from the server. The function should save the token for later use.
+  /// [loadRefreshTokenCallback] : A function that will be called when a new refresh token is needed to be sent to the server. The function should return the saved token.
   DirectusApiManager(
       {required String baseURL,
-      required Client httpClient,
+      Client? httpClient,
       Future<void> Function(String)? saveRefreshTokenCallback,
       Future<String?> Function()? loadRefreshTokenCallback})
-      : _client = httpClient,
+      : _client = httpClient ?? Client(),
         _api = DirectusAPI(baseURL,
             saveRefreshTokenCallback: saveRefreshTokenCallback,
             loadRefreshTokenCallback: loadRefreshTokenCallback) {
@@ -86,6 +91,8 @@ class DirectusApiManager {
     return tokenRefreshed;
   }
 
+  /// Logs in a user with the given [username] and [password].
+  /// Returns a Future [DirectusLoginResult] object that contains the result of the login attempt.
   Future<DirectusLoginResult> loginDirectusUser(
       String username, String password) {
     discardCurrentUserCache();
@@ -98,6 +105,10 @@ class DirectusApiManager {
   }
 
   Future? _currentUserLock;
+
+  /// Returns all the information about the currently logged in user.
+  /// Returns null if no user is logged in.
+  /// [fields] : A comma separated list of fields to return. If not provided, all fields will be returned.
   Future<DirectusUser?> currentDirectusUser({String fields = "*"}) async {
     final completer = Completer();
     final lock = _currentUserLock;
@@ -126,6 +137,9 @@ class DirectusApiManager {
     _currentUser = null;
   }
 
+  /// Fetches the Directus user with the given [userId].
+  /// Returns null if no user with the given [userId] exists.
+  /// [fields] : A comma separated list of fields to return. If not provided, all fields will be returned.
   Future<DirectusUser?> getDirectusUser(String userId, {String fields = "*"}) {
     return _sendRequest(
         prepareRequest: () =>
