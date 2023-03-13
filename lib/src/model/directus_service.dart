@@ -9,6 +9,22 @@ abstract class DirectusService<Type extends DirectusItem> {
   DirectusService(
       {required this.apiManager, required this.typeName, this.fields = "*"});
 
+  Future<Iterable<Type>> findListOfItems(
+      {Filter? filter,
+      List<SortProperty>? sortBy,
+      String? fields,
+      int? limit,
+      int? offset}) {
+    return apiManager.findListOfItems(
+        name: typeName,
+        createItemFunction: fromDirectus,
+        fields: fields ?? this.fields,
+        filter: filter,
+        limit: limit,
+        offset: offset,
+        sortBy: sortBy);
+  }
+
   Future<Type> getSpecificItem({required String id}) {
     return apiManager.getSpecificItem(
         name: typeName,
