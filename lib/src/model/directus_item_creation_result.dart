@@ -1,6 +1,7 @@
 import 'package:directus_api_manager/src/directus_api.dart';
 import 'package:directus_api_manager/src/model/directus_api_error.dart';
 import 'package:http/http.dart';
+import 'package:reflectable/mirrors.dart';
 
 class DirectusItemCreationResult<T> {
   final bool isSuccess;
@@ -20,12 +21,13 @@ class DirectusItemCreationResult<T> {
   factory DirectusItemCreationResult.fromDirectus(
       {required IDirectusAPI api,
       required Response response,
-      required T Function(dynamic json) createItemFunction}) {
+      required ClassMirror classMirror}) {
     final DirectusItemCreationResult<T> creationResult;
     if (response.statusCode == 200) {
       creationResult = DirectusItemCreationResult(isSuccess: true);
+      final objectData = api.parseCreateNewItemResponse(response);
       creationResult.createdItemList
-          .add(createItemFunction(api.parseCreateNewItemResponse(response)));
+          .add(classMirror.newInstance('', [objectData]) as T);
     } else if (response.statusCode == 204) {
       creationResult = DirectusItemCreationResult(isSuccess: true);
     } else {

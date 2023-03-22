@@ -1,5 +1,7 @@
+import 'package:directus_api_manager/src/annotations.dart';
 import 'package:directus_api_manager/src/model/directus_data.dart';
 
+@DirectusCollection()
 class DirectusUser extends DirectusData {
   String get email => getValue(forKey: "email");
   set email(String value) => setValue(value, forKey: "email");

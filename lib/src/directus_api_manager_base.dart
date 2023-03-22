@@ -2,12 +2,17 @@ import 'dart:async';
 
 import 'package:directus_api_manager/directus_api_manager.dart';
 import 'package:directus_api_manager/src/directus_api.dart';
+import 'package:directus_api_manager/src/metadata_generator.dart';
 import 'package:directus_api_manager/src/model/directus_data.dart';
 import 'package:http/http.dart';
+import 'package:reflectable/reflectable.dart';
+
+import 'annotations.dart';
 
 class DirectusApiManager {
   final Client _client;
   final IDirectusAPI _api;
+  final MetadataGenerator _metadataGenerator = MetadataGenerator();
 
   DirectusUser? _currentUser;
 
@@ -218,7 +223,7 @@ class DirectusApiManager {
           return DirectusItemCreationResult.fromDirectus(
               api: _api,
               response: response,
-              createItemFunction: createItemFunction);
+              classMirror: _metadataGenerator.getClassMirrorForType(Type));
         });
   }
 
@@ -237,69 +242,81 @@ class DirectusApiManager {
     return wasLoggedOut;
   }
 
+  CollectionMetadata _collectionMetadataFromClass(ClassMirror collectionType) {
+    final CollectionMetadata collectionMetadata = collectionType.metadata
+            .firstWhere((element) => element is CollectionMetadata)
+        as CollectionMetadata;
+
+    return collectionMetadata;
+  }
+
   Future<Iterable<Type>> findListOfItems<Type extends DirectusItem>(
-      {required String name,
-      Filter? filter,
+      {Filter? filter,
       List<SortProperty>? sortBy,
-      String fields = "*",
+      String? fields,
       int? limit,
-      int? offset,
-      required Type Function(dynamic json) createItemFunction}) {
+      int? offset}) {
+    final collectionClass = _metadataGenerator.getClassMirrorForType(Type);
+    final collectionMetadata = _collectionMetadataFromClass(collectionClass);
     return _sendRequest(
-        prepareRequest: () => _api.prepareGetListOfItemsRequest(name,
+        prepareRequest: () => _api.prepareGetListOfItemsRequest(
+            collectionMetadata.endpointName,
             filter: filter,
             sortBy: sortBy,
-            fields: fields,
+            fields: fields ?? collectionMetadata.defaultFields,
             limit: limit,
             offset: offset),
-        parseResponse: (response) =>
-            _api.parseGetListOfItemsResponse(response).map(createItemFunction));
+        parseResponse: (response) => _api
+            .parseGetListOfItemsResponse(response)
+            .map((json) => collectionClass.newInstance('', [json]) as Type));
   }
 
   Future<Type> getSpecificItem<Type extends DirectusItem>(
-      {required String name,
-      required String id,
-      String fields = "*",
-      required Type Function(dynamic json) createItemFunction}) {
+      {required String id, String? fields}) {
+    final specificClass = _metadataGenerator.getClassMirrorForType(Type);
+    final collectionMetadata = _collectionMetadataFromClass(specificClass);
     return _sendRequest(
-        prepareRequest: () =>
-            _api.prepareGetSpecificItemRequest(name, id, fields: fields),
-        parseResponse: (response) =>
-            createItemFunction(_api.parseGetSpecificItemResponse(response)));
+        prepareRequest: () => _api.prepareGetSpecificItemRequest(
+            collectionMetadata.endpointName, id,
+            fields: fields ?? collectionMetadata.defaultFields),
+        parseResponse: (response) {
+          final parsedJson = _api.parseGetSpecificItemResponse(response);
+          return specificClass.newInstance('', [parsedJson]) as Type;
+        });
   }
 
   Future<DirectusItemCreationResult<Type>>
-      createNewItem<Type extends DirectusItem>(
-          {required Type objectToCreate,
-          String fields = "*",
-          required Type Function(dynamic json) createItemFunction}) {
+      createNewItem<Type extends DirectusItem>({
+    required Type objectToCreate,
+    String? fields,
+  }) {
+    final specificClass = _metadataGenerator.getClassMirrorForType(Type);
+    final collectionMetadata = _collectionMetadataFromClass(specificClass);
     return _sendRequest(
         prepareRequest: () => _api.prepareCreateNewItemRequest(
-            objectToCreate.endpointName, objectToCreate.mapForObjectCreation(),
-            fields: fields),
+            collectionMetadata.endpointName,
+            objectToCreate.mapForObjectCreation(),
+            fields: fields ?? collectionMetadata.defaultFields),
         parseResponse: (response) {
           return DirectusItemCreationResult.fromDirectus(
-              api: _api,
-              response: response,
-              createItemFunction: createItemFunction);
+              api: _api, response: response, classMirror: specificClass);
         });
   }
 
   Future<DirectusItemCreationResult<Type>>
       createMultipleItems<Type extends DirectusItem>(
-          {String fields = "*",
-          required Iterable<Type> objectList,
-          required Type Function(dynamic json) createItemFunction}) {
+          {String? fields, required Iterable<Type> objectList}) {
     if (objectList.isEmpty) {
       throw Exception("objectList can not be empty");
     }
-    final String endPoint = objectList.first.endpointName;
+    final specificClass = _metadataGenerator.getClassMirrorForType(Type);
+    final collectionMetadata = _collectionMetadataFromClass(specificClass);
     final List<Map<String, dynamic>> objectListData =
         objectList.map(((object) => object.mapForObjectCreation())).toList();
     return _sendRequest(
         prepareRequest: () => _api.prepareCreateNewItemRequest(
-            endPoint, objectListData,
-            fields: fields),
+            collectionMetadata.endpointName, objectListData,
+            fields: fields ?? collectionMetadata.defaultFields),
         parseResponse: (response) {
           switch (response.statusCode) {
             case 200:
@@ -309,7 +326,7 @@ class DirectusApiManager {
               if (listJson is List) {
                 for (final itemJson in listJson) {
                   creationResult.createdItemList
-                      .add(createItemFunction(itemJson));
+                      .add(specificClass.newInstance('', [itemJson]) as Type);
                 }
               }
               return creationResult;
@@ -324,19 +341,21 @@ class DirectusApiManager {
   }
 
   Future<Type> updateItem<Type extends DirectusItem>(
-      {required Type objectToUpdate,
-      required Type Function(dynamic json) updateItemFunction,
-      String fields = "*"}) {
+      {required Type objectToUpdate, String? fields}) {
+    final specificClass = _metadataGenerator.getClassMirrorForType(Type);
+    final collectionMetadata = _collectionMetadataFromClass(specificClass);
     try {
       if (objectToUpdate.needsSaving) {
         return _sendRequest(
             prepareRequest: () => _api.prepareUpdateItemRequest(
-                objectToUpdate.endpointName,
+                collectionMetadata.endpointName,
                 objectToUpdate.id!,
                 objectToUpdate.updatedProperties,
-                fields: fields),
-            parseResponse: (response) =>
-                updateItemFunction(_api.parseUpdateItemResponse(response)));
+                fields: fields ?? collectionMetadata.defaultFields),
+            parseResponse: (response) {
+              final parsedJson = _api.parseUpdateItemResponse(response);
+              return specificClass.newInstance('', [parsedJson]) as Type;
+            });
       }
     } catch (error) {
       if (objectToUpdate.id == null) {
@@ -348,39 +367,32 @@ class DirectusApiManager {
   }
 
   Future<bool> deleteItem<Type extends DirectusItem>(
-      {required Type objectToDelete, bool mustBeAuthenticated = true}) {
+      {required String objectId, bool mustBeAuthenticated = true}) {
+    final specificClass = _metadataGenerator.getClassMirrorForType(Type);
+    final collectionMetadata = _collectionMetadataFromClass(specificClass);
     try {
       return _sendRequest(
           prepareRequest: () => _api.prepareDeleteItemRequest(
-              objectToDelete.endpointName,
-              objectToDelete.id!,
-              mustBeAuthenticated),
+              collectionMetadata.endpointName, objectId, mustBeAuthenticated),
           parseResponse: (response) => _api.parseGenericBoolResponse(response));
     } catch (error) {
-      if (objectToDelete.id == null) {
-        throw Exception("The item ID can not be null");
-      }
       return Future.value(false);
     }
   }
 
   Future<bool> deleteMultipleItems<Type extends DirectusItem>(
-      {required Iterable<Type> objectListToDelete,
+      {required Iterable<dynamic> objectIdsToDelete,
       bool mustBeAuthenticated = true}) {
-    if (objectListToDelete.isEmpty) {
-      throw Exception("objectListToDelete can not be empty");
+    if (objectIdsToDelete.isEmpty) {
+      throw Exception("objectIdsToDelete can not be empty");
     }
-    final String endPoint = objectListToDelete.first.endpointName;
-    final List<dynamic> objectIdList = objectListToDelete.map(
-      ((object) {
-        if (object.id != null) {
-          return object.id;
-        }
-      }),
-    ).toList();
+    final specificClass = _metadataGenerator.getClassMirrorForType(Type);
+    final collectionMetadata = _collectionMetadataFromClass(specificClass);
     return _sendRequest(
         prepareRequest: () => _api.prepareDeleteMultipleItemRequest(
-            endPoint, objectIdList, mustBeAuthenticated),
+            collectionMetadata.endpointName,
+            objectIdsToDelete.toList(),
+            mustBeAuthenticated),
         parseResponse: (response) => _api.parseGenericBoolResponse(response));
   }
 

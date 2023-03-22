@@ -3,8 +3,10 @@ import 'package:test/expect.dart';
 import 'package:test/scaffolding.dart';
 
 import 'mock/mock_http_client.dart';
+import 'directus_api_manager_test.reflectable.dart';
 
 main() {
+  initializeReflectable();
   test('Empty manager does not have a logged in user', () async {
     final mockClient = MockHTTPClient();
     final sut =
