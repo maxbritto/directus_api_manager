@@ -33,7 +33,7 @@ dependencies:
 ## Getting started
 
 ### Create your models
-For each directus model, create a new class that inherits `DirectusItem`.and use annotations to specify the èndpointName`:
+For each directus model, create a new class that inherits `DirectusItem` and use annotations to specify the èndpointName`:
 
 ```dart
 @DirectusCollection()
@@ -91,6 +91,7 @@ This object is the one that will handle everything for you :
 - sending request
 - parsing responses
 - etc.
+
 You should only create one object of this type and it only requires the url of your Directus instance :
 ```dart
 DirectusApiManager _directusApiManager = DirectusApiManager(baseURL: "http://0.0.0.0:8055/");
