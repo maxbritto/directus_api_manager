@@ -13,9 +13,3 @@ class CollectionMetadata {
   const CollectionMetadata(
       {required this.endpointName, this.defaultFields = "*"});
 }
-
-class PropertyMetadata {
-  final String fieldName;
-
-  const PropertyMetadata({required this.fieldName});
-}

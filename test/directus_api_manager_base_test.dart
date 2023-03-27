@@ -1,4 +1,5 @@
 import 'package:directus_api_manager/directus_api_manager.dart';
+import 'package:directus_api_manager/src/model/directus_data.dart';
 import 'package:test/expect.dart';
 import 'package:test/scaffolding.dart';
 
@@ -255,9 +256,223 @@ main() {
       mockDirectusApi
           .addNextReturnFutureObject({"id": "element1", "name": "element1"});
       final item = await sut.getSpecificItem<DirectusItemTest>(id: "element1");
+      expect(mockDirectusApi.calledFunctions,
+          contains("prepareGetSpecificItemRequest"));
+      expect(mockDirectusApi.receivedObjects["itemName"], "itemTest");
+      expect(mockDirectusApi.receivedObjects["itemId"], "element1");
+      expect(mockDirectusApi.receivedObjects["fields"], "*");
+
+      expect(mockDirectusApi.calledFunctions,
+          contains("parseGetSpecificItemResponse"));
       expect(item, isNotNull);
       expect(item, isA<DirectusItemTest>());
       expect(item?.id, "element1");
+    });
+
+    test("getSpecificItem with item and fields", () async {
+      mockDirectusApi
+          .addNextReturnFutureObject({"id": "element1", "name": "element1"});
+      await sut.getSpecificItem<DirectusItemTest>(
+          id: "element1", fields: "name,description");
+      expect(mockDirectusApi.calledFunctions,
+          contains("prepareGetSpecificItemRequest"));
+      expect(mockDirectusApi.receivedObjects["itemName"], "itemTest");
+      expect(mockDirectusApi.receivedObjects["itemId"], "element1");
+      expect(mockDirectusApi.receivedObjects["fields"], "name,description");
+    });
+
+    test("getSpecificItem without specifying the type", () async {
+      mockDirectusApi
+          .addNextReturnFutureObject({"id": "element1", "name": "element1"});
+      final DirectusItemTest? item = await sut.getSpecificItem(id: "element1");
+      expect(mockDirectusApi.calledFunctions,
+          contains("prepareGetSpecificItemRequest"));
+      expect(mockDirectusApi.receivedObjects["itemName"], "itemTest");
+    });
+
+    test("findListOfItems", () async {
+      mockDirectusApi.addNextReturnFutureObject([
+        {"id": "element1", "name": "element1"}
+      ]);
+      final items = await sut.findListOfItems<DirectusItemTest>();
+      expect(mockDirectusApi.calledFunctions,
+          contains("prepareGetListOfItemsRequest"));
+      expect(mockDirectusApi.receivedObjects["itemName"], "itemTest");
+      expect(mockDirectusApi.receivedObjects["fields"], "*");
+      expect(mockDirectusApi.receivedObjects["filters"], isNull);
+      expect(mockDirectusApi.receivedObjects["limit"], isNull);
+      expect(mockDirectusApi.receivedObjects["offset"], isNull);
+      expect(mockDirectusApi.receivedObjects["sortBy"], isNull);
+
+      expect(mockDirectusApi.calledFunctions,
+          contains("parseGetListOfItemsResponse"));
+      expect(items, isNotNull);
+      expect(items.length, 1);
+      expect(items.first.id, "element1");
+    });
+
+    test("findListOfItems with filters", () async {
+      mockDirectusApi.addNextReturnFutureObject([
+        {"id": "element1", "name": "element1"}
+      ]);
+      final filters = PropertyFilter(
+          field: "field", operator: FilterOperator.equals, value: "value");
+      await sut.findListOfItems<DirectusItemTest>(filter: filters);
+      expect(mockDirectusApi.calledFunctions,
+          contains("prepareGetListOfItemsRequest"));
+      expect(mockDirectusApi.receivedObjects["itemName"], "itemTest");
+      expect(mockDirectusApi.receivedObjects["filter"], filters);
+    });
+
+    test("findListOfItems with limit", () async {
+      mockDirectusApi.addNextReturnFutureObject([
+        {"id": "element1", "name": "element1"}
+      ]);
+      await sut.findListOfItems<DirectusItemTest>(limit: 10);
+      expect(mockDirectusApi.calledFunctions,
+          contains("prepareGetListOfItemsRequest"));
+      expect(mockDirectusApi.receivedObjects["itemName"], "itemTest");
+      expect(mockDirectusApi.receivedObjects["limit"], 10);
+    });
+
+    test("findListOfItems with offset", () async {
+      mockDirectusApi.addNextReturnFutureObject([
+        {"id": "element1", "name": "element1"}
+      ]);
+      await sut.findListOfItems<DirectusItemTest>(offset: 10);
+      expect(mockDirectusApi.calledFunctions,
+          contains("prepareGetListOfItemsRequest"));
+      expect(mockDirectusApi.receivedObjects["itemName"], "itemTest");
+      expect(mockDirectusApi.receivedObjects["offset"], 10);
+    });
+
+    test("findListOfItems with sortBy", () async {
+      mockDirectusApi.addNextReturnFutureObject([
+        {"id": "element1", "name": "element1"}
+      ]);
+      await sut
+          .findListOfItems<DirectusItemTest>(sortBy: [SortProperty("name")]);
+      expect(mockDirectusApi.calledFunctions,
+          contains("prepareGetListOfItemsRequest"));
+      expect(mockDirectusApi.receivedObjects["itemName"], "itemTest");
+      expect(
+          mockDirectusApi.receivedObjects["sortBy"], isA<List<SortProperty>>());
+    });
+
+    test("findListOfItems without specifying the type", () async {
+      mockDirectusApi.addNextReturnFutureObject([
+        {"id": "element1", "name": "element1"}
+      ]);
+      final Iterable<DirectusItemTest> items = await sut.findListOfItems();
+      expect(mockDirectusApi.calledFunctions,
+          contains("prepareGetListOfItemsRequest"));
+      expect(mockDirectusApi.receivedObjects["itemName"], "itemTest");
+    });
+
+    test("createNewItem", () async {
+      mockDirectusApi.addNextReturnFutureObject({"id": "element1"});
+      final newItem = DirectusItemTest.newItem();
+      final item =
+          await sut.createNewItem<DirectusItemTest>(objectToCreate: newItem);
+      expect(mockDirectusApi.calledFunctions,
+          contains("prepareCreateNewItemRequest"));
+      expect(mockDirectusApi.receivedObjects["itemName"], "itemTest");
+      expect(mockDirectusApi.receivedObjects["objectData"],
+          newItem.mapForObjectCreation());
+
+      expect(mockDirectusApi.calledFunctions,
+          contains("parseCreateNewItemResponse"));
+      expect(item, isNotNull);
+      expect(item, isA<DirectusItemCreationResult>());
+    });
+
+    test("createNewItem without specifying the type", () async {
+      mockDirectusApi.addNextReturnFutureObject({"id": "element1"});
+      final newItem = DirectusItemTest.newItem();
+      final DirectusItemCreationResult<DirectusItemTest> item =
+          await sut.createNewItem(objectToCreate: newItem);
+      expect(mockDirectusApi.calledFunctions,
+          contains("prepareCreateNewItemRequest"));
+      expect(mockDirectusApi.receivedObjects["itemName"], "itemTest");
+    });
+
+    test("createMultipleItems", () async {
+      mockDirectusApi.addNextReturnFutureObject([
+        {"id": "element1"},
+        {"id": "element2"}
+      ]);
+      final newItem1 = DirectusItemTest.newItem();
+      newItem1.setValue("name 1", forKey: "name");
+      final newItem2 = DirectusItemTest.newItem();
+      newItem2.setValue("name 2", forKey: "name");
+      final items = await sut.createMultipleItems<DirectusItemTest>(
+          objectList: [newItem1, newItem2]);
+      expect(mockDirectusApi.calledFunctions,
+          contains("prepareCreateNewItemRequest"));
+      expect(mockDirectusApi.receivedObjects["itemName"], "itemTest");
+      expect(mockDirectusApi.receivedObjects["objectData"],
+          [newItem1.mapForObjectCreation(), newItem2.mapForObjectCreation()]);
+
+      expect(mockDirectusApi.calledFunctions,
+          contains("parseCreateNewItemResponse"));
+      expect(items, isNotNull);
+      expect(items, isA<DirectusItemCreationResult>());
+      final result = items;
+      expect(result.createdItemList.length, 2);
+      expect(result.createdItemList.first.id, "element1");
+      expect(result.createdItemList.last.id, "element2");
+    });
+    test("createMultipleItems with an empty list should throw", () async {
+      expect(() async {
+        await sut.createMultipleItems<DirectusItemTest>(objectList: []);
+      }, throwsException);
+    });
+
+    test("updateItem", () async {
+      mockDirectusApi
+          .addNextReturnFutureObject({"id": "element1", "name": "name 2"});
+      final newItem = DirectusItemTest({"id": "element1", "name": "name 1"});
+      newItem.setValue("name 2", forKey: "name");
+      final item =
+          await sut.updateItem<DirectusItemTest>(objectToUpdate: newItem);
+      expect(mockDirectusApi.calledFunctions,
+          contains("prepareUpdateItemRequest"));
+      expect(mockDirectusApi.receivedObjects["itemName"], "itemTest");
+      expect(mockDirectusApi.receivedObjects["objectData"], {"name": "name 2"},
+          reason: "Only the changed fields should be sent");
+
+      expect(
+          mockDirectusApi.calledFunctions, contains("parseUpdateItemResponse"));
+      expect(item, isNotNull);
+      expect(item, isA<DirectusItemTest>());
+    });
+
+    test("deleteItem", () async {
+      mockDirectusApi.addNextReturnFutureObject(true);
+      final item = await sut.deleteItem<DirectusItemTest>(objectId: "element1");
+      expect(mockDirectusApi.calledFunctions,
+          contains("prepareDeleteItemRequest"));
+      expect(mockDirectusApi.receivedObjects["itemName"], "itemTest");
+      expect(mockDirectusApi.receivedObjects["itemId"], "element1");
+
+      expect(mockDirectusApi.calledFunctions,
+          contains("parseGenericBoolResponse"));
+      expect(item, isTrue);
+    });
+
+    test("deleteMultipleItems", () async {
+      mockDirectusApi.addNextReturnFutureObject(true);
+      final item = await sut.deleteMultipleItems<DirectusItemTest>(
+          objectIdsToDelete: ["element1", "element2"]);
+      expect(mockDirectusApi.calledFunctions,
+          contains("prepareDeleteMultipleItemRequest"));
+      expect(mockDirectusApi.receivedObjects["itemName"], "itemTest");
+      expect(mockDirectusApi.receivedObjects["itemIdList"],
+          ["element1", "element2"]);
+
+      expect(mockDirectusApi.calledFunctions,
+          contains("parseGenericBoolResponse"));
+      expect(item, isTrue);
     });
   });
 }
