@@ -58,12 +58,34 @@ main() {
       expect(sut.createdItem, "a");
     });
 
-    test("CreatedList contains more than on item", () {
+    test("CreatedList contains more than one item", () {
       final DirectusItemCreationResult sut =
           DirectusItemCreationResult(isSuccess: true);
       sut.createdItemList.add("a");
       sut.createdItemList.add("b");
       expect(sut.createdItem, "a");
+    });
+    test("DirectusItemCreationResult constructor with 1 item received", () {
+      final DirectusItemCreationResult sut =
+          DirectusItemCreationResult(isSuccess: true, createdItem: "a");
+      expect(sut.createdItem, "a");
+      expect(sut.createdItemList, ["a"]);
+    });
+
+    test("DirectusItemCreationResult constructor with 2 items received", () {
+      final DirectusItemCreationResult sut = DirectusItemCreationResult(
+          isSuccess: true, createdItemList: ["a", "b"]);
+      expect(sut.createdItem, "a");
+      expect(sut.createdItemList, ["a", "b"]);
+    });
+
+    test(
+        "DirectusItemCreationResult constructor with array and specific item received",
+        () {
+      expect(
+          () => DirectusItemCreationResult(
+              isSuccess: true, createdItemList: ["a", "b"], createdItem: "c"),
+          throwsArgumentError);
     });
 
     test("From Directus Test single item creation with response", () {

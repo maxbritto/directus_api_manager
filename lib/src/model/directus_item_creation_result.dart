@@ -5,12 +5,24 @@ import 'package:reflectable/mirrors.dart';
 
 class DirectusItemCreationResult<T> {
   final bool isSuccess;
-  List<T> createdItemList = [];
-  DirectusApiError? error;
+  final List<T> createdItemList = [];
+  final DirectusApiError? error;
 
-  DirectusItemCreationResult({required this.isSuccess, this.error}) {
+  DirectusItemCreationResult(
+      {required this.isSuccess,
+      this.error,
+      List<T>? createdItemList,
+      T? createdItem}) {
     if (!isSuccess && error == null) {
       throw Exception("error must be initialized");
+    }
+    if (createdItemList != null && createdItem != null) {
+      throw ArgumentError("createdItemList and createdItem cannot be both set");
+    }
+    if (createdItemList != null) {
+      this.createdItemList.addAll(createdItemList);
+    } else if (createdItem != null) {
+      this.createdItemList.add(createdItem);
     }
   }
 
