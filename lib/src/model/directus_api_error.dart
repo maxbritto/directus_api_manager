@@ -1,6 +1,6 @@
 import 'package:http/http.dart';
 
-class DirectusApiError {
+class DirectusApiError extends Error {
   final Response? response;
   final String? customMessage;
 

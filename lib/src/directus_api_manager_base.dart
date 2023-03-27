@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer';
 
 import 'package:directus_api_manager/directus_api_manager.dart';
 import 'package:directus_api_manager/src/directus_api.dart';
@@ -6,8 +7,6 @@ import 'package:directus_api_manager/src/metadata_generator.dart';
 import 'package:directus_api_manager/src/model/directus_data.dart';
 import 'package:http/http.dart';
 import 'package:reflectable/reflectable.dart';
-
-import 'annotations.dart';
 
 class DirectusApiManager {
   final Client _client;
@@ -24,12 +23,14 @@ class DirectusApiManager {
   DirectusApiManager(
       {required String baseURL,
       Client? httpClient,
+      IDirectusAPI? api,
       Future<void> Function(String)? saveRefreshTokenCallback,
       Future<String?> Function()? loadRefreshTokenCallback})
       : _client = httpClient ?? Client(),
-        _api = DirectusAPI(baseURL,
-            saveRefreshTokenCallback: saveRefreshTokenCallback,
-            loadRefreshTokenCallback: loadRefreshTokenCallback) {
+        _api = api ??
+            DirectusAPI(baseURL,
+                saveRefreshTokenCallback: saveRefreshTokenCallback,
+                loadRefreshTokenCallback: loadRefreshTokenCallback) {
     DirectusFile.baseUrl = baseURL;
   }
 
