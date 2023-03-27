@@ -271,7 +271,7 @@ class DirectusApiManager {
             .map((json) => collectionClass.newInstance('', [json]) as Type));
   }
 
-  Future<Type> getSpecificItem<Type extends DirectusItem>(
+  Future<Type?> getSpecificItem<Type extends DirectusItem>(
       {required String id, String? fields}) {
     final specificClass = _metadataGenerator.getClassMirrorForType(Type);
     final collectionMetadata = _collectionMetadataFromClass(specificClass);
@@ -280,8 +280,14 @@ class DirectusApiManager {
             collectionMetadata.endpointName, id,
             fields: fields ?? collectionMetadata.defaultFields),
         parseResponse: (response) {
-          final parsedJson = _api.parseGetSpecificItemResponse(response);
-          return specificClass.newInstance('', [parsedJson]) as Type;
+          Type? item;
+          try {
+            final parsedJson = _api.parseGetSpecificItemResponse(response);
+            item = specificClass.newInstance('', [parsedJson]) as Type;
+          } catch (e) {
+            log("Error while parsing response: $e");
+          }
+          return item;
         });
   }
 

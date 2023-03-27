@@ -51,13 +51,17 @@ Future<void> main() async {
   }
 
   //One specific item from an ID
-  final PlayerDirectusModel onePlayer =
+  final PlayerDirectusModel? fetchedPlayer =
       await apiManager.getSpecificItem(id: playerId);
-  print(onePlayer.nickname);
+  if (fetchedPlayer != null) {
+    print(fetchedPlayer.nickname);
 
-  //Update item
-  onePlayer.bestScore = 123;
-  final updatedPlayer = await apiManager.updateItem(objectToUpdate: onePlayer);
+    //Update item
+    fetchedPlayer.bestScore = 123;
+    final updatedPlayer =
+        await apiManager.updateItem(objectToUpdate: fetchedPlayer);
+    print(updatedPlayer.bestScore);
+  }
 }
 
 @DirectusCollection()
