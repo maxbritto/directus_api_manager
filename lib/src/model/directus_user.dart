@@ -39,19 +39,17 @@ class DirectusUser extends DirectusData {
   DirectusUser.newDirectusUser() : super.newDirectusData();
 
   String get fullName {
-    String result = "";
-
     final String currentFirstName = firstname ?? "";
     final String currentLastName = lastname ?? "";
 
-    result = currentFirstName;
+    final buffer = StringBuffer(currentFirstName);
 
     if (currentFirstName != "" && currentLastName != "") {
-      result = result + " ";
+      buffer.write(" ");
     }
 
-    result = result + currentLastName;
+    buffer.write(currentLastName);
 
-    return result;
+    return buffer.toString();
   }
 }
