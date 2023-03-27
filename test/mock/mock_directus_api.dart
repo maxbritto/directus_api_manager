@@ -124,10 +124,13 @@ class MockDirectusApi with MockMixin implements IDirectusAPI {
   }
 
   @override
-  Request prepareCreateNewItemRequest(String itemName, objectData,
-      {String fields = "*"}) {
+  Request prepareCreateNewItemRequest(
+      {required String endpointName,
+      required String endpointPrefix,
+      required dynamic objectData,
+      String fields = "*"}) {
     addCalledFunction(named: "prepareCreateNewItemRequest");
-    addReceivedObject(itemName, name: "itemName");
+    addReceivedObject(endpointName, name: "endpointName");
     addReceivedObject(objectData, name: "objectData");
     addReceivedObject(fields, name: "fields");
     return nextReturnedRequest;
@@ -153,19 +156,26 @@ class MockDirectusApi with MockMixin implements IDirectusAPI {
 
   @override
   BaseRequest prepareDeleteItemRequest(
-      String itemName, String itemId, bool mustBeAuthenticated) {
+      {required String endpointName,
+      required String itemId,
+      required String endpointPrefix,
+      bool mustBeAuthenticated = false}) {
     addCalledFunction(named: "prepareDeleteItemRequest");
-    addReceivedObject(itemName, name: "itemName");
+    addReceivedObject(endpointName, name: "endpointName");
     addReceivedObject(itemId, name: "itemId");
+    addReceivedObject(endpointPrefix, name: "endpointPrefix");
     addReceivedObject(mustBeAuthenticated, name: "mustBeAuthenticated");
     return nextReturnedRequest;
   }
 
   @override
   BaseRequest prepareDeleteMultipleItemRequest(
-      String itemName, List itemIdList, bool mustBeAuthenticated) {
+      {required String endpointName,
+      required String endpointPrefix,
+      required List<dynamic> itemIdList,
+      required bool mustBeAuthenticated}) {
     addCalledFunction(named: "prepareDeleteMultipleItemRequest");
-    addReceivedObject(itemName, name: "itemName");
+    addReceivedObject(endpointName, name: "endpointName");
     addReceivedObject(itemIdList, name: "itemIdList");
     addReceivedObject(mustBeAuthenticated, name: "mustBeAuthenticated");
     return nextReturnedRequest;
@@ -205,14 +215,17 @@ class MockDirectusApi with MockMixin implements IDirectusAPI {
   }
 
   @override
-  BaseRequest prepareGetListOfItemsRequest(String itemName,
-      {String fields = "*",
+  BaseRequest prepareGetListOfItemsRequest(
+      {required String endpointName,
+      required String endpointPrefix,
+      String fields = "*",
       Filter? filter,
       List<SortProperty>? sortBy,
       int? limit,
       int? offset}) {
     addCalledFunction(named: "prepareGetListOfItemsRequest");
-    addReceivedObject(itemName, name: "itemName");
+    addReceivedObject(endpointName, name: "endpointName");
+    addReceivedObject(endpointPrefix, name: "endpointPrefix");
     addReceivedObject(fields, name: "fields");
     addReceivedObject(filter, name: "filter");
     addReceivedObject(sortBy, name: "sortBy");
@@ -223,20 +236,15 @@ class MockDirectusApi with MockMixin implements IDirectusAPI {
   }
 
   @override
-  BaseRequest prepareGetSpecificItemRequest(String itemName, String itemId,
-      {String fields = "*"}) {
+  BaseRequest prepareGetSpecificItemRequest(
+      {String fields = "*",
+      required String endpointPrefix,
+      required String endpointName,
+      required String itemId}) {
     addCalledFunction(named: "prepareGetSpecificItemRequest");
-    addReceivedObject(itemName, name: "itemName");
+    addReceivedObject(endpointName, name: "endpointName");
+    addReceivedObject(endpointPrefix, name: "endpointPrefix");
     addReceivedObject(itemId, name: "itemId");
-    addReceivedObject(fields, name: "fields");
-    return nextReturnedRequest;
-  }
-
-  @override
-  BaseRequest prepareGetSpecificUserRequest(String userId,
-      {String fields = "*"}) {
-    addCalledFunction(named: "prepareGetSpecificUserRequest");
-    addReceivedObject(userId, name: "userId");
     addReceivedObject(fields, name: "fields");
     return nextReturnedRequest;
   }
@@ -329,10 +337,13 @@ class MockDirectusApi with MockMixin implements IDirectusAPI {
 
   @override
   Request prepareUpdateItemRequest(
-      String itemName, String itemId, Map<String, dynamic> objectData,
-      {String fields = "*"}) {
+      {required String endpointName,
+      required String endpointPrefix,
+      required String itemId,
+      required Map<String, dynamic> objectData,
+      String fields = "*"}) {
     addCalledFunction(named: "prepareUpdateItemRequest");
-    addReceivedObject(itemName, name: "itemName");
+    addReceivedObject(endpointName, name: "endpointName");
     addReceivedObject(itemId, name: "itemId");
     addReceivedObject(objectData, name: "objectData");
     addReceivedObject(fields, name: "fields");

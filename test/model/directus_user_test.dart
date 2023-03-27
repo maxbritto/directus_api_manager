@@ -14,7 +14,19 @@ main() {
     });
 
     test('New User', () {
-      expect(() => DirectusUser.newDirectusUser(), returnsNormally);
+      final newUser = DirectusUser.newDirectusUser(
+          email: "will@acn.com",
+          password: "pass123",
+          firstname: "Will",
+          lastname: "McAvoy",
+          roleUUID: "abc-123",
+          otherProperties: {"location": "Sète"});
+      expect(newUser.email, "will@acn.com");
+      expect(newUser.mapForObjectCreation()["password"], "pass123");
+      expect(newUser.firstname, "Will");
+      expect(newUser.lastname, "McAvoy");
+      expect(newUser.roleUUID, "abc-123");
+      expect(newUser.getValue(forKey: "location"), "Sète");
     });
 
     test('User essential properties are retrieved from property list', () {

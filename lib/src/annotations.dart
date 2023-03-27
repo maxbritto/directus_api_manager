@@ -8,8 +8,11 @@ class DirectusCollection extends Reflectable {
 
 class CollectionMetadata {
   final String endpointName;
+  final String endpointPrefix;
   final String defaultFields;
 
   const CollectionMetadata(
-      {required this.endpointName, this.defaultFields = "*"});
+      {required this.endpointName,
+      this.defaultFields = "*",
+      this.endpointPrefix = "/items/"});
 }
