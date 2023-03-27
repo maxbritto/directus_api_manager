@@ -103,8 +103,10 @@ main() {
           throwsA(isA<AssertionError>()));
     });
 
-    test("getDirectusFile should throw if the property is not a map", () {
-      final sut = TestDirectusData({"id": "abc", "fileData": "star wars"});
+    test(
+        "getDirectusFile should throw if the property is not a map nor a string",
+        () {
+      final sut = TestDirectusData({"id": "abc", "fileData": 123});
       expect(() => sut.getDirectusFile(forKey: "fileData"),
           throwsA(isA<AssertionError>()));
     });
@@ -117,11 +119,21 @@ main() {
     });
 
     test(
-        "getOptionalDirectusFile should return null if the property is not a map",
+        "getOptionalDirectusFile should return null if the property is not a map nor a string",
         () {
-      final sut = TestDirectusData({"id": "abc", "fileData": "star wars"});
+      final sut = TestDirectusData({"id": "abc", "fileData": 123});
       final file = sut.getOptionalDirectusFile(forKey: "fileData");
       expect(file, null);
+    });
+    test(
+        "getOptionalDirectusFile should return a DirectusFile without title if the property is a string (id)",
+        () {
+      final sut = TestDirectusData({"id": "abc", "fileData": "file-123"});
+      final file = sut.getOptionalDirectusFile(forKey: "fileData");
+      expect(file, isNotNull);
+      expect(file, isA<DirectusFile?>());
+      expect(file?.id, "file-123");
+      expect(file?.title, null);
     });
 
     test("getOptionalDirectusFile should return a DirectusFile if present", () {

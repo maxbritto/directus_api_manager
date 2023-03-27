@@ -60,6 +60,8 @@ abstract class DirectusData {
     final dynamic value = getValue(forKey: forKey);
     if (value is Map<String, dynamic>) {
       return DirectusFile.fromJSON(value);
+    } else if (value is String) {
+      return DirectusFile(value);
     }
     return null;
   }
