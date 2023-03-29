@@ -86,10 +86,27 @@ abstract class DirectusData {
     return [];
   }
 
+  /// Returns a list of String for a given property.
+  /// Only use this property if you are certain your property will be a list whose members can be converted to String using [toString]
+  /// If the property is not a list, an empty list will be returned
+  @Deprecated(
+    "Use `getList<String>` instead",
+  )
   List<String> getStringList({required String forKey}) {
     final dynamic value = getValue(forKey: forKey);
     if (value is List<dynamic>) {
       return value.map((e) => e.toString()).toList();
+    }
+    return [];
+  }
+
+  /// Returns a list of the given type for a given property.
+  /// Only use this property if you are certain your property will be of this type for every object in the collection
+  /// If the property is not a list, an empty list will be returned
+  List<T> getList<T>({required String forKey}) {
+    final dynamic value = getValue(forKey: forKey);
+    if (value is List<dynamic>) {
+      return value.map((e) => e as T).toList();
     }
     return [];
   }

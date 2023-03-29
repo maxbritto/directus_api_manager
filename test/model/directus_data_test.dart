@@ -147,5 +147,44 @@ main() {
       expect(file?.id, "123");
       expect(file?.title, "star wars");
     });
+
+    test("getList with a listof int", () {
+      final sut = TestDirectusData({
+        "id": "abc",
+        "checkInt": <dynamic>[1, 2, 3]
+      });
+      final list = sut.getList<int>(forKey: "checkInt");
+      expect(list, isA<List<int>>());
+      expect(list, [1, 2, 3]);
+    });
+
+    test("getList with a listof string", () {
+      final sut = TestDirectusData({
+        "id": "abc",
+        "checkString": <dynamic>["1", "2", "3"]
+      });
+      final list = sut.getList<String>(forKey: "checkString");
+      expect(list, isA<List<String>>());
+      expect(list, ["1", "2", "3"]);
+    });
+
+    test("getList with wrong value (not a list)", () {
+      final sut = TestDirectusData({
+        "id": "abc",
+        "checkFile": "1",
+      });
+      final list = sut.getList<String>(forKey: "checkFile");
+
+      expect(list, <String>[]);
+    });
+
+    test("getList with wrong value (not a list of string)", () {
+      final sut = TestDirectusData({
+        "id": "abc",
+        "checkFile": <dynamic>[1, 2, 3],
+      });
+      expect(() => sut.getList<String>(forKey: "checkFile"),
+          throwsA(isA<TypeError>()));
+    });
   });
 }
