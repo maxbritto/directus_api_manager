@@ -66,14 +66,14 @@ main() {
     test("getStringList should return an empty list if the property is null",
         () {
       final sut = TestDirectusData({"id": "abc"});
-      expect(sut.getStringList(forKey: "checkString"), []);
+      expect(sut.getList<String>(forKey: "checkString"), []);
     });
 
     test(
         "getStringList should return an empty list if the property is not a list",
         () {
       final sut = TestDirectusData({"id": "abc", "checkString": "star wars"});
-      expect(sut.getStringList(forKey: "checkString"), []);
+      expect(sut.getList<String>(forKey: "checkString"), []);
     });
 
     test("getStringList should return a list of string", () {
@@ -81,7 +81,7 @@ main() {
         "id": "abc",
         "checkString": ["star wars", "lord of the ring"]
       });
-      expect(sut.getStringList(forKey: "checkString"),
+      expect(sut.getList<String>(forKey: "checkString"),
           ["star wars", "lord of the ring"]);
     });
 

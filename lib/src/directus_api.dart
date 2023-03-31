@@ -5,7 +5,6 @@ import 'package:directus_api_manager/src/filter.dart';
 import 'package:directus_api_manager/src/model/directus_api_error.dart';
 import 'package:directus_api_manager/src/model/directus_file.dart';
 import 'package:directus_api_manager/src/model/directus_login_result.dart';
-import 'package:directus_api_manager/src/model/directus_user.dart';
 import 'package:directus_api_manager/src/sort_property.dart';
 import 'package:http/http.dart';
 import 'package:http_parser/http_parser.dart';

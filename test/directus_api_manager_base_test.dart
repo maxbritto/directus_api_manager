@@ -286,6 +286,7 @@ main() {
     test("getSpecificItem without specifying the type", () async {
       mockDirectusApi
           .addNextReturnFutureObject({"id": "element1", "name": "element1"});
+      // ignore: unused_local_variable
       final DirectusItemTest? item = await sut.getSpecificItem(id: "element1");
       expect(mockDirectusApi.calledFunctions,
           contains("prepareGetSpecificItemRequest"));
@@ -295,6 +296,7 @@ main() {
     test("getSpecificItem with a DirectusUser", () async {
       mockDirectusApi.addNextReturnFutureObject(
           {"id": "user-123", "email": "will@acn.com"});
+      // ignore: unused_local_variable
       final DirectusUser? user = await sut.getSpecificItem(id: "user-123");
       expect(mockDirectusApi.calledFunctions,
           contains("prepareGetSpecificItemRequest"));
@@ -375,6 +377,7 @@ main() {
       mockDirectusApi.addNextReturnFutureObject([
         {"id": "element1", "name": "element1"}
       ]);
+      // ignore: unused_local_variable
       final Iterable<DirectusItemTest> items = await sut.findListOfItems();
       expect(mockDirectusApi.calledFunctions,
           contains("prepareGetListOfItemsRequest"));
@@ -401,6 +404,7 @@ main() {
     test("createNewItem without specifying the type", () async {
       mockDirectusApi.addNextReturnFutureObject({"id": "element1"});
       final newItem = DirectusItemTest.newItem();
+      // ignore: unused_local_variable
       final DirectusItemCreationResult<DirectusItemTest> item =
           await sut.createNewItem(objectToCreate: newItem);
       expect(mockDirectusApi.calledFunctions,

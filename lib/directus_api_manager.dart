@@ -12,4 +12,4 @@ export 'src/model/directus_item.dart';
 export 'src/model/directus_item_creation_result.dart';
 export 'src/model/directus_api_error.dart';
 
-export 'src/test_tools/mock_directus_api_manager.dart';
+export 'test/mock_directus_api_manager.dart';

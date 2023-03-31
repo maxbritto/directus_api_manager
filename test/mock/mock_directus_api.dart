@@ -4,7 +4,6 @@ import 'package:http/src/response.dart';
 import 'package:http/src/request.dart';
 import 'package:http/src/base_request.dart';
 import 'package:directus_api_manager/src/sort_property.dart';
-import 'package:directus_api_manager/src/model/directus_user.dart';
 import 'package:directus_api_manager/src/model/directus_login_result.dart';
 import 'package:directus_api_manager/src/model/directus_file.dart';
 import 'package:directus_api_manager/src/filter.dart';
@@ -35,13 +34,6 @@ class MockDirectusApi with MockMixin implements IDirectusAPI {
   @override
   parseCreateNewItemResponse(Response response) {
     addCalledFunction(named: "parseCreateNewItemResponse");
-    addReceivedObject(response, name: "response");
-    return popNextReturnedObject();
-  }
-
-  @override
-  bool parseDeleteUserResponse(Response response) {
-    addCalledFunction(named: "parseDeleteUserResponse");
     addReceivedObject(response, name: "response");
     return popNextReturnedObject();
   }
@@ -110,20 +102,6 @@ class MockDirectusApi with MockMixin implements IDirectusAPI {
   }
 
   @override
-  Iterable<DirectusUser> parseUserListResponse(Response response) {
-    addCalledFunction(named: "parseUserListResponse");
-    addReceivedObject(response, name: "response");
-    return popNextReturnedObject();
-  }
-
-  @override
-  DirectusUser parseUserResponse(Response response) {
-    addCalledFunction(named: "parseUserResponse");
-    addReceivedObject(response, name: "response");
-    return popNextReturnedObject();
-  }
-
-  @override
   Request prepareCreateNewItemRequest(
       {required String endpointName,
       required String endpointPrefix,
@@ -133,24 +111,6 @@ class MockDirectusApi with MockMixin implements IDirectusAPI {
     addReceivedObject(endpointName, name: "endpointName");
     addReceivedObject(objectData, name: "objectData");
     addReceivedObject(fields, name: "fields");
-    return nextReturnedRequest;
-  }
-
-  @override
-  BaseRequest prepareCreateUserRequest(
-      {required String email,
-      required String password,
-      String? firstname,
-      String? lastname,
-      String? roleUUID,
-      Map<String, dynamic> otherProperties = const {}}) {
-    addCalledFunction(named: "prepareCreateUserRequest");
-    addReceivedObject(email, name: "email");
-    addReceivedObject(password, name: "password");
-    addReceivedObject(firstname, name: "firstname");
-    addReceivedObject(lastname, name: "lastname");
-    addReceivedObject(roleUUID, name: "roleUUID");
-    addReceivedObject(otherProperties, name: "otherProperties");
     return nextReturnedRequest;
   }
 
@@ -177,15 +137,6 @@ class MockDirectusApi with MockMixin implements IDirectusAPI {
     addCalledFunction(named: "prepareDeleteMultipleItemRequest");
     addReceivedObject(endpointName, name: "endpointName");
     addReceivedObject(itemIdList, name: "itemIdList");
-    addReceivedObject(mustBeAuthenticated, name: "mustBeAuthenticated");
-    return nextReturnedRequest;
-  }
-
-  @override
-  BaseRequest? prepareDeleteUserRequest(
-      DirectusUser user, bool mustBeAuthenticated) {
-    addCalledFunction(named: "prepareDeleteUserRequest");
-    addReceivedObject(user, name: "user");
     addReceivedObject(mustBeAuthenticated, name: "mustBeAuthenticated");
     return nextReturnedRequest;
   }
@@ -246,22 +197,6 @@ class MockDirectusApi with MockMixin implements IDirectusAPI {
     addReceivedObject(endpointPrefix, name: "endpointPrefix");
     addReceivedObject(itemId, name: "itemId");
     addReceivedObject(fields, name: "fields");
-    return nextReturnedRequest;
-  }
-
-  @override
-  BaseRequest prepareGetUserListRequest(
-      {Filter? filter,
-      int limit = -1,
-      String? fields,
-      List<SortProperty>? sortBy,
-      int? offset}) {
-    addCalledFunction(named: "prepareGetUserListRequest");
-    addReceivedObject(filter, name: "filter");
-    addReceivedObject(limit, name: "limit");
-    addReceivedObject(fields, name: "fields");
-    addReceivedObject(sortBy, name: "sortBy");
-    addReceivedObject(offset, name: "offset");
     return nextReturnedRequest;
   }
 
@@ -346,15 +281,6 @@ class MockDirectusApi with MockMixin implements IDirectusAPI {
     addReceivedObject(endpointName, name: "endpointName");
     addReceivedObject(itemId, name: "itemId");
     addReceivedObject(objectData, name: "objectData");
-    addReceivedObject(fields, name: "fields");
-    return nextReturnedRequest;
-  }
-
-  @override
-  BaseRequest? prepareUpdateUserRequest(DirectusUser updatedUser,
-      {String fields = "*"}) {
-    addCalledFunction(named: "prepareUpdateUserRequest");
-    addReceivedObject(updatedUser, name: "updatedUser");
     addReceivedObject(fields, name: "fields");
     return nextReturnedRequest;
   }

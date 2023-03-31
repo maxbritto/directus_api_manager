@@ -1,14 +1,21 @@
 import 'dart:async';
 import 'dart:developer';
 
-import 'package:directus_api_manager/directus_api_manager.dart';
-import 'package:directus_api_manager/src/directus_api.dart';
-import 'package:directus_api_manager/src/metadata_generator.dart';
-import 'package:directus_api_manager/src/model/directus_data.dart';
 import 'package:http/http.dart';
 import 'package:reflectable/reflectable.dart';
 
+import 'annotations.dart';
+import 'directus_api.dart';
+import 'filter.dart';
 import 'idirectus_api_manager.dart';
+import 'metadata_generator.dart';
+import 'model/directus_api_error.dart';
+import 'model/directus_data.dart';
+import 'model/directus_file.dart';
+import 'model/directus_item_creation_result.dart';
+import 'model/directus_login_result.dart';
+import 'model/directus_user.dart';
+import 'sort_property.dart';
 
 class DirectusApiManager implements IDirectusApiManager {
   final Client _client;
