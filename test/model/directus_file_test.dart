@@ -21,9 +21,9 @@ main() {
                             "type": "image/jpeg",
                             "folder": null,
                             "uploaded_by": "0bc7b36a-9ba9-4ce0-83f0-0a526f354e07",
-                            "uploaded_on": "2021-02-04T11:37:41-05:00",
+                            "uploaded_on": "2021-02-04T11:37:41",
                             "modified_by": null,
-                            "modified_on": "2021-02-04T11:37:42-05:00",
+                            "modified_on": "2021-02-04T11:37:42",
                             "filesize": 3442252,
                             "width": 3456,
                             "height": 5184,
@@ -47,15 +47,21 @@ main() {
                             }
                           }
           """;
-          final sut = DirectusFile.fromJSON(jsonDecode(jsonData));
+          final sut = DirectusFile(jsonDecode(jsonData));
           expect(sut.id, "4f4b14fa-a43a-46d0-b7ad-90af5919bebb");
           expect(sut.title, "Paulo Silva (via Unsplash)");
+          expect(sut.type, "image/jpeg");
+          expect(sut.uploadedOn, DateTime(2021, 2, 4, 11, 37, 41));
+          expect(sut.fileSize, 3442252);
+          expect(sut.width, 3456);
+          expect(sut.height, 5184);
+          expect(sut.description, isNull);
         },
       );
 
       test("Get download url", () {
         DirectusFile.baseUrl = "https://www.base.com";
-        const sut = DirectusFile("123-abc");
+        final DirectusFile sut = DirectusFile({"id": "123-abc"});
         expect(sut.getDownloadURL(), "https://www.base.com/assets/123-abc");
         expect(sut.getDownloadURL(width: 100),
             "https://www.base.com/assets/123-abc?width=100");

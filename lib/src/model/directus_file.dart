@@ -1,13 +1,17 @@
-class DirectusFile {
+import 'package:directus_api_manager/src/model/directus_data.dart';
+
+class DirectusFile extends DirectusData {
   static String? baseUrl;
-  final String id;
-  final String? title;
 
-  DirectusFile.fromJSON(Map<String, dynamic> jsonData)
-      : id = jsonData["id"],
-        title = jsonData["title"];
+  String? get title => getValue(forKey: "title");
+  String? get type => getValue(forKey: "type");
+  DateTime get uploadedOn => getDateTime(forKey: "uploaded_on");
+  int get fileSize => getValue(forKey: "filesize");
+  int? get width => getValue(forKey: "width");
+  int? get height => getValue(forKey: "height");
+  String? get description => getValue(forKey: "description");
 
-  const DirectusFile(this.id, {this.title});
+  DirectusFile(Map<String, dynamic> rawReceivedData) : super(rawReceivedData);
 
   /// Builds an URL to download this file
   /// `DirectusFile.baseUrl` must have been filled at least once before calling this function.
