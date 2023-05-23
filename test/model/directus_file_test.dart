@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:directus_api_manager/src/model/directus_file.dart';
 import 'package:test/expect.dart';
@@ -56,6 +57,18 @@ main() {
           expect(sut.width, 3456);
           expect(sut.height, 5184);
           expect(sut.description, isNull);
+          expect(sut.duration, isNull);
+
+          final directusFile = DirectusFile.fromJSON(jsonDecode(jsonData));
+          expect(sut.id, "4f4b14fa-a43a-46d0-b7ad-90af5919bebb");
+          expect(sut.title, "Paulo Silva (via Unsplash)");
+          expect(sut.type, "image/jpeg");
+          expect(sut.uploadedOn, DateTime(2021, 2, 4, 11, 37, 41));
+          expect(sut.fileSize, 3442252);
+          expect(sut.width, 3456);
+          expect(sut.height, 5184);
+          expect(sut.description, isNull);
+          expect(sut.duration, isNull);
         },
       );
 
@@ -83,6 +96,17 @@ main() {
                 otherKeys: const {"fit": "cover", "format": "png"}),
             anyOf("https://www.base.com/assets/123-abc?fit=cover&format=png",
                 "https://www.base.com/assets/123-abc?format=png&fit=cover"));
+      });
+
+      test("Get ratio", () {
+        final sut = DirectusFile({"id": "a", "width": 100, "height": 200});
+        expect(sut.ratio, 0.5);
+
+        final noWidth = DirectusFile({"id": "a", "height": 200});
+        expect(noWidth.ratio, 1);
+
+        final noHeight = DirectusFile({"id": "a", "width": 200});
+        expect(noHeight.ratio, 1);
       });
     },
   );
