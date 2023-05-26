@@ -458,7 +458,7 @@ class DirectusAPI implements IDirectusAPI {
   @override
   DirectusFile parseFileUploadResponse(Response response) {
     _throwIfServerDeniedRequest(response);
-    return DirectusFile(jsonDecode(response.body)["data"]);
+    return DirectusFile.fromJSON(jsonDecode(response.body)["data"]);
   }
 
   @override
