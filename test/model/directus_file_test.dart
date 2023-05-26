@@ -9,10 +9,8 @@ main() {
   group(
     "DirectusFile",
     () {
-      test(
-        "Create from JSON",
-        () {
-          const jsonData = """
+      test("Create from JSON", () {
+        const jsonData = """
                           {
                             "id": "4f4b14fa-a43a-46d0-b7ad-90af5919bebb",
                             "storage": "local",
@@ -48,29 +46,79 @@ main() {
                             }
                           }
           """;
-          final sut = DirectusFile(jsonDecode(jsonData));
-          expect(sut.id, "4f4b14fa-a43a-46d0-b7ad-90af5919bebb");
-          expect(sut.title, "Paulo Silva (via Unsplash)");
-          expect(sut.type, "image/jpeg");
-          expect(sut.uploadedOn, DateTime(2021, 2, 4, 11, 37, 41));
-          expect(sut.fileSize, 3442252);
-          expect(sut.width, 3456);
-          expect(sut.height, 5184);
-          expect(sut.description, isNull);
-          expect(sut.duration, isNull);
+        final sut = DirectusFile(jsonDecode(jsonData));
+        expect(sut.id, "4f4b14fa-a43a-46d0-b7ad-90af5919bebb");
+        expect(sut.title, "Paulo Silva (via Unsplash)");
+        expect(sut.type, "image/jpeg");
+        expect(sut.uploadedOn, DateTime(2021, 2, 4, 11, 37, 41));
+        expect(sut.fileSize, 3442252);
+        expect(sut.width, 3456);
+        expect(sut.height, 5184);
+        expect(sut.description, isNull);
+        expect(sut.duration, isNull);
+      });
 
-          final directusFile = DirectusFile.fromJSON(jsonDecode(jsonData));
-          expect(sut.id, "4f4b14fa-a43a-46d0-b7ad-90af5919bebb");
-          expect(sut.title, "Paulo Silva (via Unsplash)");
-          expect(sut.type, "image/jpeg");
-          expect(sut.uploadedOn, DateTime(2021, 2, 4, 11, 37, 41));
-          expect(sut.fileSize, 3442252);
-          expect(sut.width, 3456);
-          expect(sut.height, 5184);
-          expect(sut.description, isNull);
-          expect(sut.duration, isNull);
-        },
-      );
+      test("Create with directus Json", () {
+        const jsonData = """
+                          {
+                            "id": "4f4b14fa-a43a-46d0-b7ad-90af5919bebb",
+                            "storage": "local",
+                            "filename_disk": "4f4b14fa-a43a-46d0-b7ad-90af5919bebb.jpeg",
+                            "filename_download": "paulo-silva-vSRgXtQuns8-unsplash.jpg",
+                            "title": "Paulo Silva (via Unsplash)",
+                            "type": "image/jpeg",
+                            "folder": null,
+                            "uploaded_by": "0bc7b36a-9ba9-4ce0-83f0-0a526f354e07",
+                            "uploaded_on": "2021-02-04T11:37:41",
+                            "modified_by": null,
+                            "modified_on": "2021-02-04T11:37:42",
+                            "filesize": 3442252,
+                            "width": 3456,
+                            "height": 5184,
+                            "duration": null,
+                            "description": null,
+                            "location": null,
+                            "tags": ["photo", "pretty"],
+                            "metadata": {
+                              "icc": {
+                                "version": "2.1",
+                                "intent": "Perceptual",
+                                "cmm": "lcms",
+                                "deviceClass": "Monitor",
+                                "colorSpace": "RGB",
+                                "connectionSpace": "XYZ",
+                                "platform": "Apple",
+                                "creator": "lcms",
+                                "description": "c2",
+                                "copyright": ""
+                              }
+                            }
+                          }
+          """;
+        final sut = DirectusFile.fromJSON(jsonDecode(jsonData));
+        expect(sut.id, "4f4b14fa-a43a-46d0-b7ad-90af5919bebb");
+        expect(sut.title, "Paulo Silva (via Unsplash)");
+        expect(sut.type, "image/jpeg");
+        expect(sut.uploadedOn, DateTime(2021, 2, 4, 11, 37, 41));
+        expect(sut.fileSize, 3442252);
+        expect(sut.width, 3456);
+        expect(sut.height, 5184);
+        expect(sut.description, isNull);
+        expect(sut.duration, isNull);
+      });
+
+      test("Create with fromId constructor", () {
+        final DirectusFile sut = DirectusFile.fromId("abc-123");
+        expect(sut.id, "abc-123");
+        expect(sut.title, isNull);
+        expect(sut.type, isNull);
+        expect(sut.uploadedOn, isNull);
+        expect(sut.fileSize, isNull);
+        expect(sut.width, isNull);
+        expect(sut.height, isNull);
+        expect(sut.description, isNull);
+        expect(sut.duration, isNull);
+      });
 
       test("Get download url", () {
         DirectusFile.baseUrl = "https://www.base.com";
