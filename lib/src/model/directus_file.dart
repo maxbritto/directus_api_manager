@@ -1,22 +1,13 @@
-import 'package:directus_api_manager/src/model/directus_data.dart';
-
-class DirectusFile extends DirectusData {
+class DirectusFile {
   static String? baseUrl;
+  final String id;
+  final String? title;
 
-  String? get title => getValue(forKey: "title");
-  String? get type => getValue(forKey: "type");
-  DateTime? get uploadedOn => getOptionalDateTime(forKey: "uploaded_on");
-  int? get fileSize => getValue(forKey: "filesize");
-  int? get width => getValue(forKey: "width");
-  int? get height => getValue(forKey: "height");
-  int? get duration => getValue(forKey: "duration");
-  String? get description => getValue(forKey: "description");
+  DirectusFile.fromJSON(Map<String, dynamic> jsonData)
+      : id = jsonData["id"],
+        title = jsonData["title"];
 
-  DirectusFile(Map<String, dynamic> rawReceivedData) : super(rawReceivedData);
-  DirectusFile.fromId(String id) : super({"id": id});
-
-  @Deprecated("message: Use DirectusFile instead")
-  DirectusFile.fromJSON(Map<String, dynamic> jsonData) : super(jsonData);
+  const DirectusFile(this.id, {this.title});
 
   /// Builds an URL to download this file
   /// `DirectusFile.baseUrl` must have been filled at least once before calling this function.
@@ -48,13 +39,6 @@ class DirectusFile extends DirectusData {
     }
 
     return buffer.toString();
-  }
-
-  double get ratio {
-    if (width == null || height == null) {
-      return 1;
-    }
-    return width! / height!;
   }
 
   @override
