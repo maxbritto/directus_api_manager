@@ -5,7 +5,7 @@ class DirectusFile extends DirectusData {
 
   String? get title => getValue(forKey: "title");
   String? get type => getValue(forKey: "type");
-  DateTime get uploadedOn => getDateTime(forKey: "uploaded_on");
+  DateTime? get uploadedOn => getOptionalDateTime(forKey: "uploaded_on");
   int? get fileSize => getValue(forKey: "filesize");
   int? get width => getValue(forKey: "width");
   int? get height => getValue(forKey: "height");
@@ -13,6 +13,7 @@ class DirectusFile extends DirectusData {
   String? get description => getValue(forKey: "description");
 
   DirectusFile(Map<String, dynamic> rawReceivedData) : super(rawReceivedData);
+  DirectusFile.fromId(String id) : super({"id": id});
 
   @Deprecated("message: Use DirectusFile instead")
   DirectusFile.fromJSON(Map<String, dynamic> jsonData) : super(jsonData);
