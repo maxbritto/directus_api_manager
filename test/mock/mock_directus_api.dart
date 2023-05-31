@@ -295,4 +295,7 @@ class MockDirectusApi with MockMixin implements IDirectusAPI {
 
   @override
   bool shouldRefreshToken = false;
+
+  @override
+  String? get accessToken => "accessToken";
 }

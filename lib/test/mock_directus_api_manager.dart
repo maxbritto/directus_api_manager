@@ -183,4 +183,15 @@ class MockDirectusApiManager extends IDirectusApiManager with MockMixin {
     addReceivedObject(folder, name: "folder");
     return Future.value(popNextReturnedObject());
   }
+
+  @override
+  String? get accessToken => "ABCD.1234.ABCD";
+
+  @override
+  bool get shouldRefreshToken => false;
+
+  @override
+  Future<bool> tryAndRefreshToken() {
+    return Future.value(true);
+  }
 }
