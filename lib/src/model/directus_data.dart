@@ -59,9 +59,9 @@ abstract class DirectusData {
   DirectusFile? getOptionalDirectusFile({required String forKey}) {
     final dynamic value = getValue(forKey: forKey);
     if (value is Map<String, dynamic>) {
-      return DirectusFile(value);
+      return DirectusFile.fromJSON(value);
     } else if (value is String) {
-      return DirectusFile({"id": value});
+      return DirectusFile(value);
     }
     return null;
   }
