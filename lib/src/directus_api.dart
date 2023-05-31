@@ -12,7 +12,7 @@ import 'package:http_parser/http_parser.dart';
 abstract class IDirectusAPI {
   bool get hasLoggedInUser;
   bool get shouldRefreshToken;
-
+  String? get accessToken;
   String? get currentAuthToken;
 
   BaseRequest authenticateRequest(BaseRequest request);
@@ -118,6 +118,7 @@ class DirectusAPI implements IDirectusAPI {
   }
 
   String get baseURL => _baseURL;
+  @override
   String? get accessToken => _accessToken;
   String? get refreshToken => _refreshToken;
 

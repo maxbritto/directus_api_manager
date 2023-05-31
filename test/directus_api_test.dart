@@ -17,6 +17,14 @@ void main() {
     return directusApi;
   }
 
+  group("DirectusAPI Getter", () {
+    test("Get access token", () {
+      final sut = makeAuthenticatedDirectusAPI();
+      expect(sut.accessToken, "ABCD.1234.ABCD");
+      expect(sut.shouldRefreshToken, false);
+    });
+  });
+
   group("DirectusAPI Data Management", () {
     test('Get list of items request', () {
       final sut = makeAuthenticatedDirectusAPI();

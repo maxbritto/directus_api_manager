@@ -10,3 +10,4 @@ build/
 pubspec.lock
 .DS_Store
 *.reflectable.dart
+/coverage

@@ -55,4 +55,7 @@ abstract class IDirectusApiManager {
   Future<T> sendRequestToEndpoint<T>(
       {required BaseRequest Function() prepareRequest,
       required T Function(Response) jsonConverter});
+  bool get shouldRefreshToken;
+  String? get accessToken;
+  Future<bool> tryAndRefreshToken();
 }

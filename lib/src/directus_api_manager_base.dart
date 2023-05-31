@@ -24,6 +24,11 @@ class DirectusApiManager implements IDirectusApiManager {
 
   DirectusUser? _currentUser;
 
+  @override
+  bool get shouldRefreshToken => _api.shouldRefreshToken;
+  @override
+  String? get accessToken => _api.accessToken;
+
   /// Creates a new DirectusApiManager instance.
   /// [baseURL] : The base URL of the Directus instance
   /// [httpClient] : The HTTP client to use. If not provided, a new [Client] will be created.
@@ -56,7 +61,7 @@ class DirectusApiManager implements IDirectusApiManager {
       required ResponseType Function(Response) parseResponse,
       bool dependsOnToken = true}) async {
     if (dependsOnToken && _api.shouldRefreshToken) {
-      await _tryAndRefreshToken();
+      await tryAndRefreshToken();
     }
     final request = prepareRequest();
     BaseRequest r;
@@ -81,7 +86,8 @@ class DirectusApiManager implements IDirectusApiManager {
   }
 
   Future? _refreshTokenLock;
-  Future<bool> _tryAndRefreshToken() async {
+  @override
+  Future<bool> tryAndRefreshToken() async {
     bool tokenRefreshed = false;
     final completer = Completer();
     final lock = _refreshTokenLock;
