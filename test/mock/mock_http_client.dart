@@ -1,9 +1,8 @@
 import 'dart:typed_data';
 
 import 'dart:convert';
+import 'package:extension_dart_tools/extension_tools.dart';
 import 'package:http/http.dart';
-
-import 'mock_mixin.dart';
 
 class MockHTTPClient with MockMixin implements Client {
   addStreamResponse({required String body, int statusCode = 200}) {

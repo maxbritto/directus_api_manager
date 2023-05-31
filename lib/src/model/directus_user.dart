@@ -1,5 +1,8 @@
+import 'package:directus_api_manager/src/annotations.dart';
 import 'package:directus_api_manager/src/model/directus_data.dart';
 
+@DirectusCollection()
+@CollectionMetadata(endpointName: "users", endpointPrefix: "/")
 class DirectusUser extends DirectusData {
   String get email => getValue(forKey: "email");
   set email(String value) => setValue(value, forKey: "email");
@@ -34,22 +37,36 @@ class DirectusUser extends DirectusData {
     }
   }
 
-  DirectusUser.newDirectusUser() : super.newDirectusData();
+  DirectusUser.newDirectusUser(
+      {required String email,
+      required String password,
+      String? firstname,
+      String? lastname,
+      String? roleUUID,
+      Map<String, dynamic> otherProperties = const {}})
+      : super.newDirectusData() {
+    this.email = email;
+    this.password = password;
+    this.firstname = firstname;
+    this.lastname = lastname;
+    this.roleUUID = roleUUID;
+    for (final key in otherProperties.keys) {
+      setValue(otherProperties[key], forKey: key);
+    }
+  }
 
   String get fullName {
-    String result = "";
-
     final String currentFirstName = firstname ?? "";
     final String currentLastName = lastname ?? "";
 
-    result = currentFirstName;
+    final buffer = StringBuffer(currentFirstName);
 
     if (currentFirstName != "" && currentLastName != "") {
-      result = result + " ";
+      buffer.write(" ");
     }
 
-    result = result + currentLastName;
+    buffer.write(currentLastName);
 
-    return result;
+    return buffer.toString();
   }
 }

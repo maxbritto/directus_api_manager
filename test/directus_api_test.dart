@@ -20,8 +20,8 @@ void main() {
   group("DirectusAPI Data Management", () {
     test('Get list of items request', () {
       final sut = makeAuthenticatedDirectusAPI();
-      final request =
-          sut.prepareGetListOfItemsRequest("article", fields: "*.*");
+      final request = sut.prepareGetListOfItemsRequest(
+          endpointName: "article", endpointPrefix: "/items/", fields: "*.*");
       expect(request.url.toString(), "http://api.com/items/article?fields=*.*");
       expect(request.method, "GET");
       expect(request.headers["Authorization"], "Bearer $defaultAccessToken");
@@ -29,7 +29,9 @@ void main() {
 
     test('Get list of items with filter request', () {
       final sut = makeAuthenticatedDirectusAPI();
-      final request = sut.prepareGetListOfItemsRequest("article",
+      final request = sut.prepareGetListOfItemsRequest(
+          endpointName: "article",
+          endpointPrefix: "/items/",
           filter: PropertyFilter(
               field: "title", operator: FilterOperator.equals, value: "A"));
       expect(request.url.toString(),
@@ -40,7 +42,9 @@ void main() {
 
     test('Get list of items with sort and filter request', () {
       final sut = makeAuthenticatedDirectusAPI();
-      final request = sut.prepareGetListOfItemsRequest("article",
+      final request = sut.prepareGetListOfItemsRequest(
+          endpointName: "article",
+          endpointPrefix: "/items/",
           sortBy: [
             SortProperty("score", ascending: false),
             SortProperty("level")
@@ -55,10 +59,13 @@ void main() {
 
     test('Get list of items with sort request', () {
       final sut = makeAuthenticatedDirectusAPI();
-      final request = sut.prepareGetListOfItemsRequest("article", sortBy: [
-        SortProperty("score", ascending: false),
-        SortProperty("level")
-      ]);
+      final request = sut.prepareGetListOfItemsRequest(
+          endpointName: "article",
+          endpointPrefix: "/items/",
+          sortBy: [
+            SortProperty("score", ascending: false),
+            SortProperty("level")
+          ]);
       expect(request.url.toString(),
           'http://api.com/items/article?fields=*&sort=-score,level');
       expect(request.method, "GET");
@@ -67,7 +74,8 @@ void main() {
 
     test('Get list of items with limit request', () {
       final sut = makeAuthenticatedDirectusAPI();
-      final request = sut.prepareGetListOfItemsRequest("article", limit: 10);
+      final request = sut.prepareGetListOfItemsRequest(
+          endpointName: "article", endpointPrefix: "/items/", limit: 10);
       expect(request.url.toString(),
           'http://api.com/items/article?fields=*&limit=10');
       expect(request.method, "GET");
@@ -76,7 +84,9 @@ void main() {
 
     test('Get list of items with filter and limit request', () {
       final sut = makeAuthenticatedDirectusAPI();
-      final request = sut.prepareGetListOfItemsRequest("article",
+      final request = sut.prepareGetListOfItemsRequest(
+          endpointName: "article",
+          endpointPrefix: "/items/",
           filter: PropertyFilter(
               field: "title", operator: FilterOperator.equals, value: "A"),
           limit: 10);
@@ -88,7 +98,8 @@ void main() {
 
     test('Get list of items with offset request', () {
       final sut = makeAuthenticatedDirectusAPI();
-      final request = sut.prepareGetListOfItemsRequest("article", offset: 10);
+      final request = sut.prepareGetListOfItemsRequest(
+          endpointName: "article", endpointPrefix: "/items/", offset: 10);
       expect(request.url.toString(),
           'http://api.com/items/article?fields=*&offset=10');
       expect(request.method, "GET");
@@ -97,7 +108,9 @@ void main() {
 
     test('Get list of items with filter, sort and limit request', () {
       final sut = makeAuthenticatedDirectusAPI();
-      final request = sut.prepareGetListOfItemsRequest("article",
+      final request = sut.prepareGetListOfItemsRequest(
+          endpointName: "article",
+          endpointPrefix: "/items/",
           filter: PropertyFilter(
               field: "title", operator: FilterOperator.equals, value: "A"),
           sortBy: [
@@ -112,7 +125,9 @@ void main() {
     });
     test('Get list of items with filter that includes special characters', () {
       final sut = makeAuthenticatedDirectusAPI();
-      final request = sut.prepareGetListOfItemsRequest("article",
+      final request = sut.prepareGetListOfItemsRequest(
+          endpointName: "article",
+          endpointPrefix: "/items/",
           filter: PropertyFilter(
               field: "date",
               operator: FilterOperator.between,
@@ -125,7 +140,8 @@ void main() {
 
     test('Get specific item request', () {
       final sut = makeAuthenticatedDirectusAPI();
-      final request = sut.prepareGetSpecificItemRequest("article", "123");
+      final request = sut.prepareGetSpecificItemRequest(
+          endpointName: "article", itemId: "123", endpointPrefix: "/items/");
       expect(
           request.url.toString(), "http://api.com/items/article/123?fields=*");
       expect(request.method, "GET");
@@ -134,8 +150,12 @@ void main() {
 
     test('Get specific item request with deep fields', () {
       final sut = makeAuthenticatedDirectusAPI();
-      final request =
-          sut.prepareGetSpecificItemRequest("article", "123", fields: "*.*");
+      final request = sut.prepareGetSpecificItemRequest(
+        endpointName: "article",
+        endpointPrefix: "/items/",
+        itemId: "123",
+        fields: "*.*",
+      );
       expect(request.url.toString(),
           "http://api.com/items/article/123?fields=*.*");
       expect(request.method, "GET");
@@ -145,8 +165,9 @@ void main() {
     test('New Item request', () {
       final sut = makeAuthenticatedDirectusAPI();
       final request = sut.prepareCreateNewItemRequest(
-          "articles",
-          {
+          endpointName: "articles",
+          endpointPrefix: "/items/",
+          objectData: {
             "title": "Let's dance",
             "pageCount": 10,
             "creationDate": DateTime(2022, 1, 2, 3, 4, 5)
@@ -163,13 +184,30 @@ void main() {
       expect(jsonParsedBody["pageCount"], 10);
       expect(jsonParsedBody["creationDate"], "2022-01-02T03:04:05.000");
     });
+    test('New user request', () {
+      final sut = makeAuthenticatedDirectusAPI();
+      final request = sut.prepareCreateNewItemRequest(
+          endpointName: "users",
+          endpointPrefix: "/",
+          objectData: {
+            "first_name": "John",
+            "last_name": "Doe",
+            "email": "will@acn.com"
+          });
+      expect(request.url.toString(), "http://api.com/users?fields=*");
+      expect(request.method, "POST");
+      expect(
+          request.headers["Content-Type"], "application/json; charset=utf-8");
+      expect(request.headers["Authorization"], "Bearer $defaultAccessToken");
+    });
 
     test('Update Item request', () {
       final sut = makeAuthenticatedDirectusAPI();
       final request = sut.prepareUpdateItemRequest(
-          "articles",
-          "abc-123",
-          {
+          endpointName: "articles",
+          endpointPrefix: "/items/",
+          itemId: "abc-123",
+          objectData: {
             "title": "Let's dance",
             "pageCount": 9,
             "creationDate": DateTime(2022, 1, 2, 3, 4, 5)
@@ -189,8 +227,11 @@ void main() {
 
     test('Delete Item request', () {
       final sut = makeAuthenticatedDirectusAPI();
-      final request =
-          sut.prepareDeleteItemRequest("articles", "abc-123", false);
+      final request = sut.prepareDeleteItemRequest(
+          endpointName: "articles",
+          endpointPrefix: "/items/",
+          itemId: "abc-123",
+          mustBeAuthenticated: false);
       expect(request.url.toString(), "http://api.com/items/articles/abc-123");
       expect(request.method, "DELETE");
     });
@@ -427,19 +468,9 @@ void main() {
 
     test('Get specific user request', () {
       final sut = makeAuthenticatedDirectusAPI();
-      final request =
-          sut.prepareGetSpecificUserRequest("abc-123", fields: "*.*");
-      expect(request.url.toString(), "http://api.com/users/abc-123?fields=*.*");
-      expect(request.method, "GET");
-      expect(request.headers["Authorization"], "Bearer $defaultAccessToken");
-    });
-
-    test('Get specific user request with fields', () {
-      final sut = makeAuthenticatedDirectusAPI();
-      final request =
-          sut.prepareGetSpecificUserRequest("abc-123", fields: "first_name");
-      expect(request.url.toString(),
-          "http://api.com/users/abc-123?fields=first_name");
+      final request = sut.prepareGetSpecificItemRequest(
+          endpointName: "users", itemId: "123", endpointPrefix: "/");
+      expect(request.url.toString(), "http://api.com/users/123?fields=*");
       expect(request.method, "GET");
       expect(request.headers["Authorization"], "Bearer $defaultAccessToken");
     });
@@ -462,41 +493,11 @@ void main() {
       expect(request.headers["Authorization"], "Bearer $defaultAccessToken");
     });
 
-    test('Parse user response', () {
-      final responseBody = """
-      {"data":{
-      	"id": "0bc7b36a-9ba9-4ce0-83f0-0a526f354e07",
-        "first_name": "Admin",
-        "last_name": "User",
-        "email": "admin@example.com",
-        "password": "**********",
-        "location": "New York City",
-        "title": "CTO",
-        "description": null,
-        "tags": null,
-        "avatar": null,
-        "language": "en-US",
-        "theme": "auto",
-        "tfa_secret": null,
-        "status": "active",
-        "role": "653925a9-970e-487a-bfc0-ab6c96affcdc",
-        "token": null,
-        "last_access": "2021-02-05T10:18:13-05:00",
-        "last_page": "/settings/roles/653925a9-970e-487a-bfc0-ab6c96affcdc"
-      }}
-      """;
-      final sut = DirectusAPI("http://api.com");
-      final parsedUser = sut.parseUserResponse(Response(responseBody, 200));
-      expect(parsedUser.id, "0bc7b36a-9ba9-4ce0-83f0-0a526f354e07");
-      expect(parsedUser.email, "admin@example.com");
-      expect(parsedUser.firstname, "Admin");
-      expect(parsedUser.lastname, "User");
-      expect(parsedUser.getValue(forKey: "title"), "CTO");
-    });
-
     test('Get list of users request', () {
       final sut = makeAuthenticatedDirectusAPI();
-      final request = sut.prepareGetUserListRequest(
+      final request = sut.prepareGetListOfItemsRequest(
+          endpointName: "users",
+          endpointPrefix: "/",
           filter: PropertyFilter(
               field: "firstName",
               operator: FilterOperator.equals,
@@ -511,133 +512,6 @@ void main() {
       expect(request.headers["Authorization"], "Bearer $defaultAccessToken");
     });
 
-    test('Parse user list response', () {
-      final responseBody = """
-      {"data":[{
-      	"id": "00000001-9ba9-4ce0-83f0-0a526f354e07",
-        "first_name": "firstname1",
-        "last_name": "lastname1",
-        "email": "email1@example.com",
-        "password": "**********",
-        "location": "New York City",
-        "title": "CTO",
-        "description": null,
-        "tags": null,
-        "avatar": null,
-        "language": "en-US",
-        "theme": "auto",
-        "tfa_secret": null,
-        "status": "active",
-        "role": "653925a9-970e-487a-bfc0-ab6c96affcdc",
-        "token": null,
-        "last_access": "2021-02-05T10:18:13-05:00",
-        "last_page": "/settings/roles/653925a9-970e-487a-bfc0-ab6c96affcdc"
-      },
-      {
-      	"id": "00000002-9ba9-4ce0-83f0-0a526f354e07",
-        "first_name": "firstname2",
-        "last_name": "lastname2",
-        "email": "email2@example.com",
-        "password": "**********",
-        "location": "New York City",
-        "title": "CTO",
-        "description": null,
-        "tags": null,
-        "avatar": null,
-        "language": "en-US",
-        "theme": "auto",
-        "tfa_secret": null,
-        "status": "active",
-        "role": "653925a9-970e-487a-bfc0-ab6c96affcdc",
-        "token": null,
-        "last_access": "2021-02-05T10:18:13-05:00",
-        "last_page": "/settings/roles/653925a9-970e-487a-bfc0-ab6c96affcdc"
-      }
-      ]}
-      """;
-      final sut = DirectusAPI("http://api.com");
-      final parsedUserList =
-          sut.parseUserListResponse(Response(responseBody, 200));
-      expect(parsedUserList.length, 2);
-      expect(parsedUserList.elementAt(0).id,
-          "00000001-9ba9-4ce0-83f0-0a526f354e07");
-      expect(parsedUserList.elementAt(0).email, "email1@example.com");
-      expect(parsedUserList.elementAt(0).firstname, "firstname1");
-      expect(parsedUserList.elementAt(0).lastname, "lastname1");
-
-      expect(parsedUserList.elementAt(1).id,
-          "00000002-9ba9-4ce0-83f0-0a526f354e07");
-      expect(parsedUserList.elementAt(1).email, "email2@example.com");
-      expect(parsedUserList.elementAt(1).firstname, "firstname2");
-      expect(parsedUserList.elementAt(1).lastname, "lastname2");
-    });
-
-    test('Create User request (minimum data)', () {
-      final sut = makeAuthenticatedDirectusAPI();
-      final request = sut.prepareCreateUserRequest(
-          email: "will@acn.com", password: "will!acn");
-      expect(request.url.toString(), "http://api.com/users");
-      expect(request.method, "POST");
-      expect(
-          request.headers["Content-Type"], "application/json; charset=utf-8");
-      expect(request.headers["Authorization"], "Bearer $defaultAccessToken");
-      final jsonParsedBody = jsonDecode(request.body);
-      expect(jsonParsedBody["email"], "will@acn.com");
-      expect(jsonParsedBody["password"], "will!acn");
-    });
-
-    test('Create User request (some extra data)', () {
-      final sut = makeAuthenticatedDirectusAPI();
-      final request = sut.prepareCreateUserRequest(
-          email: "will@acn.com",
-          password: "will!acn",
-          firstname: "Will",
-          lastname: "McAvoy",
-          roleUUID: "001-abcd-1234-cfvg");
-      expect(request.url.toString(), "http://api.com/users");
-      expect(request.method, "POST");
-      expect(
-          request.headers["Content-Type"], "application/json; charset=utf-8");
-      expect(request.headers["Authorization"], "Bearer $defaultAccessToken");
-      final jsonParsedBody = jsonDecode(request.body);
-      expect(jsonParsedBody["email"], "will@acn.com");
-      expect(jsonParsedBody["password"], "will!acn");
-      expect(jsonParsedBody["first_name"], "Will");
-      expect(jsonParsedBody["last_name"], "McAvoy");
-      expect(jsonParsedBody["role"], "001-abcd-1234-cfvg");
-    });
-
-    test('Create User request (many extra data)', () {
-      final sut = makeAuthenticatedDirectusAPI();
-      final request = sut.prepareCreateUserRequest(
-          email: "will@acn.com",
-          password: "will!acn",
-          firstname: "Will",
-          lastname: "McAvoy",
-          roleUUID: "001-abcd-1234-cfvg",
-          otherProperties: {
-            "description": "Main achor",
-            "custom_property": "custom_value",
-            "score": 23,
-            "birthDate": DateTime(2022, 1, 2, 3, 4, 5)
-          });
-      expect(request.url.toString(), "http://api.com/users");
-      expect(request.method, "POST");
-      expect(
-          request.headers["Content-Type"], "application/json; charset=utf-8");
-      expect(request.headers["Authorization"], "Bearer $defaultAccessToken");
-      final jsonParsedBody = jsonDecode(request.body);
-      expect(jsonParsedBody["email"], "will@acn.com");
-      expect(jsonParsedBody["password"], "will!acn");
-      expect(jsonParsedBody["first_name"], "Will");
-      expect(jsonParsedBody["last_name"], "McAvoy");
-      expect(jsonParsedBody["role"], "001-abcd-1234-cfvg");
-      expect(jsonParsedBody["description"], "Main achor");
-      expect(jsonParsedBody["custom_property"], "custom_value");
-      expect(jsonParsedBody["score"], 23);
-      expect(jsonParsedBody["birthDate"], "2022-01-02T03:04:05.000");
-    });
-
     test('Update User request with modification', () {
       final sut = makeAuthenticatedDirectusAPI();
       final user = DirectusUser({
@@ -648,24 +522,26 @@ void main() {
       });
       user.firstname = "Will 2";
       user.setValue(DateTime(2022, 1, 2, 3, 4, 5), forKey: "birthDate");
-      final request = sut.prepareUpdateUserRequest(user, fields: "*.*");
-      if (request != null) {
-        expect(request.url.toString(),
-            "http://api.com/users/123-abc-456?fields=*.*");
-        expect(request.method, "PATCH");
-        expect(request.headers["Authorization"], "Bearer $defaultAccessToken");
-        final jsonParsedBody = jsonDecode(request.body) as Map;
-        expect(jsonParsedBody["first_name"], "Will 2");
-        expect(jsonParsedBody["birthDate"], "2022-01-02T03:04:05.000");
-        expect(jsonParsedBody.containsKey("email"), false,
-            reason: "Only modified properties should be sent");
-        expect(jsonParsedBody.containsKey("id"), false,
-            reason: "Only modified properties should be sent");
-        expect(jsonParsedBody.containsKey("score"), false,
-            reason: "Only modified properties should be sent");
-      } else {
-        expect(request, request is Request, reason: "Request must not be null");
-      }
+      final request = sut.prepareUpdateItemRequest(
+          endpointName: "users",
+          endpointPrefix: "/",
+          objectData: user.updatedProperties,
+          itemId: user.id!,
+          fields: "*.*");
+
+      expect(request.url.toString(),
+          "http://api.com/users/123-abc-456?fields=*.*");
+      expect(request.method, "PATCH");
+      expect(request.headers["Authorization"], "Bearer $defaultAccessToken");
+      final jsonParsedBody = jsonDecode(request.body) as Map;
+      expect(jsonParsedBody["first_name"], "Will 2");
+      expect(jsonParsedBody["birthDate"], "2022-01-02T03:04:05.000");
+      expect(jsonParsedBody.containsKey("email"), false,
+          reason: "Only modified properties should be sent");
+      expect(jsonParsedBody.containsKey("id"), false,
+          reason: "Only modified properties should be sent");
+      expect(jsonParsedBody.containsKey("score"), false,
+          reason: "Only modified properties should be sent");
     });
     test('Update User request with no modification', () {
       final sut = makeAuthenticatedDirectusAPI();
@@ -675,17 +551,18 @@ void main() {
         "first_name": "Will",
         "score": 23
       });
-      final request = sut.prepareUpdateUserRequest(user);
-      if (request != null) {
-        expect(request.url.toString(),
-            "http://api.com/users/123-abc-456?fields=*");
-        expect(request.method, "PATCH");
-        expect(request.headers["Authorization"], "Bearer $defaultAccessToken");
-        final jsonParsedBody = jsonDecode(request.body) as Map;
-        expect(jsonParsedBody, isEmpty);
-      } else {
-        expect(request, request is Request, reason: "Request must not be null");
-      }
+      final request = sut.prepareUpdateItemRequest(
+          endpointName: "users",
+          endpointPrefix: "/",
+          objectData: user.updatedProperties,
+          itemId: user.id!,
+          fields: "*.*");
+      expect(request.url.toString(),
+          "http://api.com/users/123-abc-456?fields=*.*");
+      expect(request.method, "PATCH");
+      expect(request.headers["Authorization"], "Bearer $defaultAccessToken");
+      final jsonParsedBody = jsonDecode(request.body) as Map;
+      expect(jsonParsedBody, isEmpty);
     });
     test('Request user password reset', () {
       final sut = makeAuthenticatedDirectusAPI();
@@ -727,36 +604,15 @@ void main() {
 
     test('Delete User request', () {
       final sut = makeAuthenticatedDirectusAPI();
-      final request = sut.prepareDeleteUserRequest(
-          DirectusUser({
-            "id": "123-abc-456",
-            "email": "will@acn.com",
-            "first_name": "Will",
-            "score": 23
-          }),
-          true);
-      if (request != null) {
-        expect(request.url.toString(), "http://api.com/users/123-abc-456");
-        expect(request.method, "DELETE");
-        expect(request.headers["Authorization"], "Bearer $defaultAccessToken");
-      } else {
-        expect(request, request is Request);
-      }
-    });
+      final request = sut.prepareDeleteItemRequest(
+          endpointName: "users",
+          endpointPrefix: "/",
+          itemId: "123-abc-456",
+          mustBeAuthenticated: true);
 
-    test('Delete User ok responses', () {
-      final sut = makeAuthenticatedDirectusAPI();
-
-      expect(sut.parseDeleteUserResponse(Response("", 200)), true);
-      expect(sut.parseDeleteUserResponse(Response("", 299)), true);
-    });
-    test('Delete User denied responses', () {
-      final sut = makeAuthenticatedDirectusAPI();
-
-      expect(() => sut.parseDeleteUserResponse(Response("", 300)),
-          throwsException);
-      expect(() => sut.parseDeleteUserResponse(Response("", 400)),
-          throwsException);
+      expect(request.url.toString(), "http://api.com/users/123-abc-456");
+      expect(request.method, "DELETE");
+      expect(request.headers["Authorization"], "Bearer $defaultAccessToken");
     });
   });
 

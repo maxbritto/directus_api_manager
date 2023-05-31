@@ -5,7 +5,6 @@ import 'package:directus_api_manager/src/filter.dart';
 import 'package:directus_api_manager/src/model/directus_api_error.dart';
 import 'package:directus_api_manager/src/model/directus_file.dart';
 import 'package:directus_api_manager/src/model/directus_login_result.dart';
-import 'package:directus_api_manager/src/model/directus_user.dart';
 import 'package:directus_api_manager/src/sort_property.dart';
 import 'package:http/http.dart';
 import 'package:http_parser/http_parser.dart';
@@ -16,58 +15,51 @@ abstract class IDirectusAPI {
 
   String? get currentAuthToken;
 
-  BaseRequest prepareGetSpecificUserRequest(String userId,
-      {String fields = "*"});
   BaseRequest authenticateRequest(BaseRequest request);
   BaseRequest prepareGetCurrentUserRequest({String fields = "*"});
-  DirectusUser parseUserResponse(Response response);
 
-  BaseRequest? prepareUpdateUserRequest(DirectusUser updatedUser,
-      {String fields = "*"});
-  BaseRequest prepareGetUserListRequest(
-      {Filter? filter,
-      int limit = -1,
-      String? fields,
-      List<SortProperty>? sortBy,
-      int? offset});
-  Iterable<DirectusUser> parseUserListResponse(Response response);
-  BaseRequest prepareCreateUserRequest(
-      {required String email,
-      required String password,
-      String? firstname,
-      String? lastname,
-      String? roleUUID,
-      Map<String, dynamic> otherProperties = const {}});
-
-  BaseRequest? prepareDeleteUserRequest(
-      DirectusUser user, bool mustBeAuthenticated);
-  bool parseDeleteUserResponse(Response response);
-
-  BaseRequest prepareGetListOfItemsRequest(String itemName,
-      {String fields = "*",
+  BaseRequest prepareGetListOfItemsRequest(
+      {required String endpointName,
+      required String endpointPrefix,
+      String fields = "*",
       Filter? filter,
       List<SortProperty>? sortBy,
       int? limit,
       int? offset});
   Iterable<dynamic> parseGetListOfItemsResponse(Response response);
 
-  BaseRequest prepareGetSpecificItemRequest(String itemName, String itemId,
-      {String fields = "*"});
+  BaseRequest prepareGetSpecificItemRequest(
+      {String fields = "*",
+      required String endpointPrefix,
+      required String endpointName,
+      required String itemId});
   dynamic parseGetSpecificItemResponse(Response response);
 
-  Request prepareCreateNewItemRequest(String itemName, dynamic objectData,
-      {String fields = "*"});
+  Request prepareCreateNewItemRequest(
+      {required String endpointName,
+      required String endpointPrefix,
+      required dynamic objectData,
+      String fields = "*"});
   dynamic parseCreateNewItemResponse(Response response);
 
   Request prepareUpdateItemRequest(
-      String itemName, String itemId, Map<String, dynamic> objectData,
-      {String fields = "*"});
+      {required String endpointName,
+      required String endpointPrefix,
+      required String itemId,
+      required Map<String, dynamic> objectData,
+      String fields = "*"});
   dynamic parseUpdateItemResponse(Response response);
 
   BaseRequest prepareDeleteItemRequest(
-      String itemName, String itemId, bool mustBeAuthenticated);
+      {required String endpointName,
+      required String itemId,
+      required String endpointPrefix,
+      bool mustBeAuthenticated = false});
   BaseRequest prepareDeleteMultipleItemRequest(
-      String itemName, List<dynamic> itemIdList, bool mustBeAuthenticated);
+      {required String endpointName,
+      required String endpointPrefix,
+      required List<dynamic> itemIdList,
+      required bool mustBeAuthenticated});
   bool parseGenericBoolResponse(Response response);
 
   Future<Request?> prepareRefreshTokenRequest();
@@ -287,13 +279,15 @@ class DirectusAPI implements IDirectusAPI {
   }
 
   @override
-  BaseRequest prepareGetListOfItemsRequest(String itemName,
-      {String fields = "*",
+  BaseRequest prepareGetListOfItemsRequest(
+      {required String endpointName,
+      required String endpointPrefix,
+      String fields = "*",
       Filter? filter,
       List<SortProperty>? sortBy,
       int? limit,
       int? offset}) {
-    return _prepareGetRequest("/items/$itemName",
+    return _prepareGetRequest("$endpointPrefix$endpointName",
         filter: filter,
         fields: fields,
         sortBy: sortBy,
@@ -331,9 +325,13 @@ class DirectusAPI implements IDirectusAPI {
   }
 
   @override
-  BaseRequest prepareGetSpecificItemRequest(String itemName, String itemId,
-      {String fields = "*"}) {
-    return _prepareGetRequest("/items/$itemName/$itemId", fields: fields);
+  BaseRequest prepareGetSpecificItemRequest(
+      {String fields = "*",
+      required String endpointPrefix,
+      required String endpointName,
+      required String itemId}) {
+    return _prepareGetRequest("$endpointPrefix$endpointName/$itemId",
+        fields: fields);
   }
 
   @override
@@ -360,10 +358,13 @@ class DirectusAPI implements IDirectusAPI {
   }
 
   @override
-  Request prepareCreateNewItemRequest(String itemName, dynamic objectData,
-      {String fields = "*"}) {
-    Request request = Request(
-        "POST", Uri.parse(_baseURL + "/items/$itemName?fields=$fields"));
+  Request prepareCreateNewItemRequest(
+      {required String endpointName,
+      required String endpointPrefix,
+      required dynamic objectData,
+      String fields = "*"}) {
+    Request request = Request("POST",
+        Uri.parse("$_baseURL$endpointPrefix$endpointName?fields=$fields"));
     request.body = jsonEncode(
       objectData,
       toEncodable: (nonEncodable) => _toEncodable(nonEncodable),
@@ -374,10 +375,15 @@ class DirectusAPI implements IDirectusAPI {
 
   @override
   Request prepareUpdateItemRequest(
-      String itemName, String itemId, Map<String, dynamic> objectData,
-      {String fields = "*"}) {
-    Request request = Request("PATCH",
-        Uri.parse(_baseURL + "/items/$itemName/$itemId?fields=$fields"));
+      {required String endpointName,
+      required String endpointPrefix,
+      required String itemId,
+      required Map<String, dynamic> objectData,
+      String fields = "*"}) {
+    Request request = Request(
+        "PATCH",
+        Uri.parse(
+            "$_baseURL$endpointPrefix$endpointName/$itemId?fields=$fields"));
     request.body = jsonEncode(
       objectData,
       toEncodable: (nonEncodable) => _toEncodable(nonEncodable),
@@ -387,132 +393,17 @@ class DirectusAPI implements IDirectusAPI {
   }
 
   @override
-  DirectusUser parseUserResponse(Response response) {
-    final userData = _parseGenericResponse(response);
-    if (userData is Map<String, dynamic>) {
-      return DirectusUser(userData);
-    } else {
-      throw "Invalid user response format";
-    }
-  }
-
-  @override
   BaseRequest prepareGetCurrentUserRequest({String fields = "*"}) {
-    return prepareGetSpecificUserRequest("me", fields: fields);
-  }
-
-  @override
-  BaseRequest prepareGetSpecificUserRequest(String userId,
-      {String fields = "*"}) {
-    return _prepareGetRequest("/users/$userId", fields: fields);
-  }
-
-  @override
-  Iterable<DirectusUser> parseUserListResponse(Response response) {
-    final userListData = _parseGenericResponse(response) as List;
-    return userListData.map((userData) => DirectusUser(userData));
-  }
-
-  @override
-  BaseRequest prepareGetUserListRequest(
-      {Filter? filter,
-      int limit = -1,
-      String? fields,
-      List<SortProperty>? sortBy,
-      int? offset}) {
-    return _prepareGetRequest("/users",
-        filter: filter,
-        limit: limit,
-        fields: fields ?? "*",
-        sortBy: sortBy,
-        offset: offset);
-  }
-
-  @override
-  Request prepareCreateUserRequest(
-      {required String email,
-      required String password,
-      String? firstname,
-      String? lastname,
-      String? roleUUID,
-      Map<String, dynamic> otherProperties = const {}}) {
-    Request request = Request("POST", Uri.parse(_baseURL + "/users"));
-    final Map<String, dynamic> userProperties = {
-      "email": email,
-      "password": password
-    };
-    if (firstname != null) {
-      userProperties["first_name"] = firstname;
-    }
-    if (lastname != null) {
-      userProperties["last_name"] = lastname;
-    }
-    if (roleUUID != null) {
-      userProperties["role"] = roleUUID;
-    }
-    for (final propertyKey in otherProperties.keys) {
-      userProperties[propertyKey] = otherProperties[propertyKey];
-    }
-    request.body = jsonEncode(
-      userProperties,
-      toEncodable: (nonEncodable) => _toEncodable(nonEncodable),
-    );
-    request.addJsonHeaders();
-    return authenticateRequest(request) as Request;
-  }
-
-  @override
-  Request? prepareUpdateUserRequest(DirectusUser updatedUser,
-      {String fields = "*"}) {
-    try {
-      Request request = Request(
-          "PATCH",
-          Uri.parse(
-              _baseURL + "/users/" + updatedUser.id! + "?fields=" + fields));
-      request.body = jsonEncode(
-        updatedUser.updatedProperties,
-        toEncodable: (nonEncodable) => _toEncodable(nonEncodable),
-      );
-      request.addJsonHeaders();
-      return authenticateRequest(request) as Request;
-    } catch (error) {
-      if (updatedUser.id == null) {
-        throw Exception("The user id can not be null.");
-      }
-    }
-
-    return null;
+    return prepareGetSpecificItemRequest(
+        endpointName: "users",
+        endpointPrefix: "/",
+        itemId: "me",
+        fields: fields);
   }
 
   Object? _toEncodable(Object? nonEncodable) {
     if (nonEncodable is DateTime) {
       return nonEncodable.toIso8601String();
-    }
-
-    return null;
-  }
-
-  @override
-  bool parseDeleteUserResponse(Response response) {
-    _throwIfServerDeniedRequest(response);
-    return true;
-  }
-
-  @override
-  BaseRequest? prepareDeleteUserRequest(
-      DirectusUser user, bool mustBeAuthenticated) {
-    try {
-      Request request =
-          Request("DELETE", Uri.parse("$_baseURL/users/${user.id}"));
-      if (mustBeAuthenticated) {
-        return authenticateRequest(request);
-      }
-
-      return request;
-    } catch (error) {
-      if (user.id == null) {
-        throw Exception("The user id can not be null");
-      }
     }
 
     return null;
@@ -533,9 +424,12 @@ class DirectusAPI implements IDirectusAPI {
 
   @override
   BaseRequest prepareDeleteItemRequest(
-      String itemName, String itemId, bool mustBeAuthenticated) {
-    Request request =
-        Request("DELETE", Uri.parse("$_baseURL/items/$itemName/$itemId"));
+      {required String endpointName,
+      required String itemId,
+      required String endpointPrefix,
+      bool mustBeAuthenticated = false}) {
+    Request request = Request(
+        "DELETE", Uri.parse("$_baseURL$endpointPrefix$endpointName/$itemId"));
     if (mustBeAuthenticated) {
       return authenticateRequest(request);
     }
@@ -545,8 +439,12 @@ class DirectusAPI implements IDirectusAPI {
 
   @override
   BaseRequest prepareDeleteMultipleItemRequest(
-      String itemName, List<dynamic> itemIdList, bool mustBeAuthenticated) {
-    Request request = Request("DELETE", Uri.parse("$_baseURL/items/$itemName"));
+      {required String endpointName,
+      required String endpointPrefix,
+      required List<dynamic> itemIdList,
+      required bool mustBeAuthenticated}) {
+    Request request =
+        Request("DELETE", Uri.parse("$_baseURL/items/$endpointName"));
     request.body = jsonEncode(itemIdList);
     request.addJsonHeaders();
     log(request.body);

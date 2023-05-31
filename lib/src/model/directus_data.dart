@@ -25,6 +25,16 @@ abstract class DirectusData {
     return idData;
   }
 
+  /// Returns the id of the item if you used `Integer` as the [id] type in Directus
+  int? get intId {
+    dynamic idData = getValue(forKey: "id");
+    if (idData is int) {
+      return idData;
+    }
+
+    return null;
+  }
+
   Map<String, dynamic> getRawData() => _rawReceivedData;
   bool get needsSaving => updatedProperties.isNotEmpty;
 
@@ -49,9 +59,88 @@ abstract class DirectusData {
   DirectusFile? getOptionalDirectusFile({required String forKey}) {
     final dynamic value = getValue(forKey: forKey);
     if (value is Map<String, dynamic>) {
-      return DirectusFile.fromJSON(value);
+      return DirectusFile(value);
+    } else if (value is String) {
+      return DirectusFile.fromId(value);
     }
     return null;
+  }
+
+  /// Set a DirectusFile to the value of the given key
+  /// If the file is null, the value will be set to null
+  void setOptionalDirectusFile(DirectusFile? file, {required String forKey}) {
+    if (file != null) {
+      setValue(file.id, forKey: forKey);
+    } else {
+      setValue(null, forKey: forKey);
+    }
+  }
+
+  List<T> getObjectList<T>(
+      {required String forKey,
+      required T Function(Map<String, dynamic>) fromMap}) {
+    final dynamic value = getValue(forKey: forKey);
+    if (value is List<dynamic>) {
+      return value.map((e) => fromMap(e)).toList();
+    }
+    return [];
+  }
+
+  /// Returns a list of String for a given property.
+  /// Only use this property if you are certain your property will be a list whose members can be converted to String using [toString]
+  /// If the property is not a list, an empty list will be returned
+  @Deprecated(
+    "Use `getList<String>` instead",
+  )
+  List<String> getStringList({required String forKey}) {
+    final dynamic value = getValue(forKey: forKey);
+    if (value is List<dynamic>) {
+      return value.map((e) => e.toString()).toList();
+    }
+    return [];
+  }
+
+  /// Returns a list of the given type for a given property.
+  /// Only use this property if you are certain your property will be of this type for every object in the collection
+  /// If the property is not a list, an empty list will be returned
+  List<T> getList<T>({required String forKey}) {
+    final dynamic value = getValue(forKey: forKey);
+    if (value is List<dynamic>) {
+      return value.map((e) => e as T).toList();
+    }
+    return [];
+  }
+
+  /// Returns a DateTime if the value is a DateTime or a String that can be parsed as a DateTime
+  /// This property can be used if you are not certain your property will be filled for every object in the collection
+  DateTime? getOptionalDateTime({required String forKey}) {
+    final dynamic value = getValue(forKey: forKey);
+    DateTime? date;
+    if (value is DateTime) {
+      date = value;
+    } else if (value is String) {
+      date = DateTime.tryParse(value);
+    }
+    return date;
+  }
+
+  /// Returns a DateTime for a given property.
+  /// Only use this property if you are certain your property will be filled for every object in the collection
+  /// If you are not certain, use [getOptionalDateTime] instead
+  DateTime getDateTime({required String forKey}) {
+    final dynamic value = getOptionalDateTime(forKey: forKey);
+    assert(value != null);
+    return value!;
+  }
+
+  /// Sets a DateTime for a given property.
+  /// if the value is null, the property will be removed from the updated properties
+  void setOptionalDateTime(DateTime? value, {required String forKey}) {
+    if (value != null) {
+      setValue(value.toIso8601String(), forKey: forKey);
+    } else {
+      setValue(null, forKey: forKey);
+    }
   }
 
   /// returns a map of all the properties of the item merged with the ones that have been updated

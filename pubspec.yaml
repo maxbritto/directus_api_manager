@@ -1,14 +1,28 @@
 name: directus_api_manager
 description: Communicate with a Directus server using its REST API.
-version: 1.2.1
+version: 1.6.0
 
 environment:
-  sdk: '>=2.14.3 <3.0.0'
-
+     sdk: ">=2.14.3 <3.0.0"
 
 dependencies:
-  http: ^0.13.4
+     http: ^0.13.4
+     http_parser: ^4.0.2
+     reflectable: ^4.0.5
+     extension_dart_tools:
+          git: https://github.com/maxbritto/extension_dart_tools
+          version: ^1.0.0
 
 dev_dependencies:
-  lints: ^1.0.0
-  test: ^1.16.0
+     build_runner: any
+     lints: ^2.0.1
+     test: ^1.16.0
+
+targets:
+     $default:
+          builders:
+               reflectable:
+                    generate_for:
+                         - example/directus_api_manager_example.dart
+                    options:
+                         formatted: true

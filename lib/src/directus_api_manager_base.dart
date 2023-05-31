@@ -1,13 +1,26 @@
 import 'dart:async';
+import 'dart:developer';
 
-import 'package:directus_api_manager/directus_api_manager.dart';
-import 'package:directus_api_manager/src/directus_api.dart';
-import 'package:directus_api_manager/src/model/directus_data.dart';
 import 'package:http/http.dart';
+import 'package:reflectable/reflectable.dart';
 
-class DirectusApiManager {
+import 'annotations.dart';
+import 'directus_api.dart';
+import 'filter.dart';
+import 'idirectus_api_manager.dart';
+import 'metadata_generator.dart';
+import 'model/directus_api_error.dart';
+import 'model/directus_data.dart';
+import 'model/directus_file.dart';
+import 'model/directus_item_creation_result.dart';
+import 'model/directus_login_result.dart';
+import 'model/directus_user.dart';
+import 'sort_property.dart';
+
+class DirectusApiManager implements IDirectusApiManager {
   final Client _client;
   final IDirectusAPI _api;
+  final MetadataGenerator _metadataGenerator = MetadataGenerator();
 
   DirectusUser? _currentUser;
 
@@ -19,12 +32,14 @@ class DirectusApiManager {
   DirectusApiManager(
       {required String baseURL,
       Client? httpClient,
+      IDirectusAPI? api,
       Future<void> Function(String)? saveRefreshTokenCallback,
       Future<String?> Function()? loadRefreshTokenCallback})
       : _client = httpClient ?? Client(),
-        _api = DirectusAPI(baseURL,
-            saveRefreshTokenCallback: saveRefreshTokenCallback,
-            loadRefreshTokenCallback: loadRefreshTokenCallback) {
+        _api = api ??
+            DirectusAPI(baseURL,
+                saveRefreshTokenCallback: saveRefreshTokenCallback,
+                loadRefreshTokenCallback: loadRefreshTokenCallback) {
     DirectusFile.baseUrl = baseURL;
   }
 
@@ -60,6 +75,7 @@ class DirectusApiManager {
 
   Client get client => _client;
 
+  @override
   Future<bool> hasLoggedInUser() async {
     return await _api.prepareRefreshTokenRequest() != null;
   }
@@ -93,6 +109,7 @@ class DirectusApiManager {
 
   /// Logs in a user with the given [username] and [password].
   /// Returns a Future [DirectusLoginResult] object that contains the result of the login attempt.
+  @override
   Future<DirectusLoginResult> loginDirectusUser(
       String username, String password) {
     discardCurrentUserCache();
@@ -109,6 +126,7 @@ class DirectusApiManager {
   /// Returns all the information about the currently logged in user.
   /// Returns null if no user is logged in.
   /// [fields] : A comma separated list of fields to return. If not provided, all fields will be returned.
+  @override
   Future<DirectusUser?> currentDirectusUser({String fields = "*"}) async {
     final completer = Completer();
     final lock = _currentUserLock;
@@ -122,7 +140,10 @@ class DirectusApiManager {
         _currentUser = await _sendRequest(
             prepareRequest: () =>
                 _api.prepareGetCurrentUserRequest(fields: fields),
-            parseResponse: (response) => _api.parseUserResponse(response));
+            parseResponse: (response) {
+              final parsedJson = _api.parseGetSpecificItemResponse(response);
+              return DirectusUser(parsedJson);
+            });
       }
     } catch (error) {
       print(error);
@@ -140,35 +161,29 @@ class DirectusApiManager {
   /// Fetches the Directus user with the given [userId].
   /// Returns null if no user with the given [userId] exists.
   /// [fields] : A comma separated list of fields to return. If not provided, all fields will be returned.
+  @Deprecated("Use [getSpecificItem] instead")
   Future<DirectusUser?> getDirectusUser(String userId, {String fields = "*"}) {
-    return _sendRequest(
-        prepareRequest: () =>
-            _api.prepareGetSpecificUserRequest(userId, fields: fields),
-        parseResponse: (response) => _api.parseUserResponse(response));
+    return getSpecificItem<DirectusUser>(id: userId, fields: fields);
   }
 
+  @Deprecated("Use [findListOfItems] instead")
   Future<Iterable<DirectusUser>> getDirectusUserList(
       {Filter? filter,
       int limit = -1,
       String? fields,
       List<SortProperty>? sortBy,
       int? offset}) {
-    return _sendRequest(
-        prepareRequest: () => _api.prepareGetUserListRequest(
-            filter: filter,
-            limit: limit,
-            fields: fields,
-            sortBy: sortBy,
-            offset: offset),
-        parseResponse: (response) => _api.parseUserListResponse(response));
+    return findListOfItems<DirectusUser>(
+        filter: filter,
+        limit: limit,
+        fields: fields,
+        sortBy: sortBy,
+        offset: offset);
   }
 
   Future<DirectusUser> updateDirectusUser(
       {required DirectusUser updatedUser, String fields = "*"}) {
-    return _sendRequest(
-        prepareRequest: () =>
-            _api.prepareUpdateUserRequest(updatedUser, fields: fields),
-        parseResponse: (response) => _api.parseUserResponse(response));
+    return updateItem(objectToUpdate: updatedUser, fields: fields);
   }
 
   /// Sends a password request to the server for the provided [email].
@@ -178,6 +193,7 @@ class DirectusApiManager {
   /// You can provide an optional [resetUrl] if you want to send the user to your own password reset web page.
   /// If you do, you have to add the url the `PASSWORD_RESET_URL_ALLOW_LIST` environment variable for it to be accepted.
   /// That page will receive the reset token by parameter so you can call the password change api from there.
+  @override
   Future<bool> requestPasswordReset({required String email, String? resetUrl}) {
     return _sendRequest(
         prepareRequest: () =>
@@ -189,6 +205,7 @@ class DirectusApiManager {
   ///
   /// Only use this API if you do not rely on directus standard password reset page.
   /// If you have your own custom password reset page, it will receive the refresh [token] as a GET parameter on load and the user will have to chose a [password] himself.
+  @override
   Future<bool> confirmPasswordReset(
       {required String token, required String password}) {
     return _sendRequest(
@@ -197,31 +214,26 @@ class DirectusApiManager {
         parseResponse: _api.parseGenericBoolResponse);
   }
 
-  Future<DirectusItemCreationResult<Type>>
-      createNewDirectusUser<Type extends DirectusUser>(
-          {required String email,
-          required String password,
-          String? firstname,
-          String? lastname,
-          String? roleUUID,
-          Map<String, dynamic> otherProperties = const {},
-          required Type Function(dynamic json) createItemFunction}) {
-    return _sendRequest(
-        prepareRequest: () => _api.prepareCreateUserRequest(
-            email: email,
-            password: password,
-            firstname: firstname,
-            lastname: lastname,
-            roleUUID: roleUUID,
-            otherProperties: otherProperties),
-        parseResponse: (response) {
-          return DirectusItemCreationResult.fromDirectus(
-              api: _api,
-              response: response,
-              createItemFunction: createItemFunction);
-        });
+  @Deprecated("Use [createNewItem] instead")
+  Future<DirectusItemCreationResult<DirectusUser>> createNewDirectusUser(
+      {required String email,
+      required String password,
+      String? firstname,
+      String? lastname,
+      String? roleUUID,
+      Map<String, dynamic> otherProperties = const {},
+      required Type Function(dynamic json) createItemFunction}) {
+    final newUser = DirectusUser.newDirectusUser(
+        email: email,
+        password: password,
+        firstname: firstname,
+        lastname: lastname,
+        roleUUID: roleUUID,
+        otherProperties: otherProperties);
+    return createNewItem<DirectusUser>(objectToCreate: newUser);
   }
 
+  @override
   Future<bool> logoutDirectusUser() async {
     discardCurrentUserCache();
     var wasLoggedOut = false;
@@ -237,69 +249,97 @@ class DirectusApiManager {
     return wasLoggedOut;
   }
 
-  Future<Iterable<Type>> findListOfItems<Type extends DirectusItem>(
-      {required String name,
-      Filter? filter,
+  CollectionMetadata _collectionMetadataFromClass(ClassMirror collectionType) {
+    final CollectionMetadata collectionMetadata = collectionType.metadata
+            .firstWhere((element) => element is CollectionMetadata)
+        as CollectionMetadata;
+
+    return collectionMetadata;
+  }
+
+  @override
+  Future<Iterable<Type>> findListOfItems<Type extends DirectusData>(
+      {Filter? filter,
       List<SortProperty>? sortBy,
-      String fields = "*",
+      String? fields,
       int? limit,
-      int? offset,
-      required Type Function(dynamic json) createItemFunction}) {
+      int? offset}) {
+    final collectionClass = _metadataGenerator.getClassMirrorForType(Type);
+    final collectionMetadata = _collectionMetadataFromClass(collectionClass);
     return _sendRequest(
-        prepareRequest: () => _api.prepareGetListOfItemsRequest(name,
+        prepareRequest: () => _api.prepareGetListOfItemsRequest(
+            endpointName: collectionMetadata.endpointName,
+            endpointPrefix: collectionMetadata.endpointPrefix,
             filter: filter,
             sortBy: sortBy,
-            fields: fields,
+            fields: fields ?? collectionMetadata.defaultFields,
             limit: limit,
             offset: offset),
-        parseResponse: (response) =>
-            _api.parseGetListOfItemsResponse(response).map(createItemFunction));
+        parseResponse: (response) => _api
+            .parseGetListOfItemsResponse(response)
+            .map((json) => collectionClass.newInstance('', [json]) as Type));
   }
 
-  Future<Type> getSpecificItem<Type extends DirectusItem>(
-      {required String name,
-      required String id,
-      String fields = "*",
-      required Type Function(dynamic json) createItemFunction}) {
+  @override
+  Future<Type?> getSpecificItem<Type extends DirectusData>(
+      {required String id, String? fields}) {
+    final specificClass = _metadataGenerator.getClassMirrorForType(Type);
+    final collectionMetadata = _collectionMetadataFromClass(specificClass);
     return _sendRequest(
-        prepareRequest: () =>
-            _api.prepareGetSpecificItemRequest(name, id, fields: fields),
-        parseResponse: (response) =>
-            createItemFunction(_api.parseGetSpecificItemResponse(response)));
-  }
-
-  Future<DirectusItemCreationResult<Type>>
-      createNewItem<Type extends DirectusItem>(
-          {required Type objectToCreate,
-          String fields = "*",
-          required Type Function(dynamic json) createItemFunction}) {
-    return _sendRequest(
-        prepareRequest: () => _api.prepareCreateNewItemRequest(
-            objectToCreate.endpointName, objectToCreate.mapForObjectCreation(),
-            fields: fields),
+        prepareRequest: () => _api.prepareGetSpecificItemRequest(
+            endpointName: collectionMetadata.endpointName,
+            endpointPrefix: collectionMetadata.endpointPrefix,
+            itemId: id,
+            fields: fields ?? collectionMetadata.defaultFields),
         parseResponse: (response) {
-          return DirectusItemCreationResult.fromDirectus(
-              api: _api,
-              response: response,
-              createItemFunction: createItemFunction);
+          Type? item;
+          try {
+            final parsedJson = _api.parseGetSpecificItemResponse(response);
+            item = specificClass.newInstance('', [parsedJson]) as Type;
+          } catch (e) {
+            log("Error while parsing response: $e");
+          }
+          return item;
         });
   }
 
+  @override
   Future<DirectusItemCreationResult<Type>>
-      createMultipleItems<Type extends DirectusItem>(
-          {String fields = "*",
-          required Iterable<Type> objectList,
-          required Type Function(dynamic json) createItemFunction}) {
+      createNewItem<Type extends DirectusData>({
+    required Type objectToCreate,
+    String? fields,
+  }) {
+    final specificClass = _metadataGenerator.getClassMirrorForType(Type);
+    final collectionMetadata = _collectionMetadataFromClass(specificClass);
+    return _sendRequest(
+        prepareRequest: () => _api.prepareCreateNewItemRequest(
+            endpointName: collectionMetadata.endpointName,
+            endpointPrefix: collectionMetadata.endpointPrefix,
+            objectData: objectToCreate.mapForObjectCreation(),
+            fields: fields ?? collectionMetadata.defaultFields),
+        parseResponse: (response) {
+          return DirectusItemCreationResult.fromDirectus(
+              api: _api, response: response, classMirror: specificClass);
+        });
+  }
+
+  @override
+  Future<DirectusItemCreationResult<Type>>
+      createMultipleItems<Type extends DirectusData>(
+          {String? fields, required Iterable<Type> objectList}) {
     if (objectList.isEmpty) {
       throw Exception("objectList can not be empty");
     }
-    final String endPoint = objectList.first.endpointName;
+    final specificClass = _metadataGenerator.getClassMirrorForType(Type);
+    final collectionMetadata = _collectionMetadataFromClass(specificClass);
     final List<Map<String, dynamic>> objectListData =
         objectList.map(((object) => object.mapForObjectCreation())).toList();
     return _sendRequest(
         prepareRequest: () => _api.prepareCreateNewItemRequest(
-            endPoint, objectListData,
-            fields: fields),
+            endpointName: collectionMetadata.endpointName,
+            endpointPrefix: collectionMetadata.endpointPrefix,
+            objectData: objectListData,
+            fields: fields ?? collectionMetadata.defaultFields),
         parseResponse: (response) {
           switch (response.statusCode) {
             case 200:
@@ -309,7 +349,7 @@ class DirectusApiManager {
               if (listJson is List) {
                 for (final itemJson in listJson) {
                   creationResult.createdItemList
-                      .add(createItemFunction(itemJson));
+                      .add(specificClass.newInstance('', [itemJson]) as Type);
                 }
               }
               return creationResult;
@@ -323,20 +363,24 @@ class DirectusApiManager {
         });
   }
 
-  Future<Type> updateItem<Type extends DirectusItem>(
-      {required Type objectToUpdate,
-      required Type Function(dynamic json) updateItemFunction,
-      String fields = "*"}) {
+  @override
+  Future<Type> updateItem<Type extends DirectusData>(
+      {required Type objectToUpdate, String? fields}) {
+    final specificClass = _metadataGenerator.getClassMirrorForType(Type);
+    final collectionMetadata = _collectionMetadataFromClass(specificClass);
     try {
       if (objectToUpdate.needsSaving) {
         return _sendRequest(
             prepareRequest: () => _api.prepareUpdateItemRequest(
-                objectToUpdate.endpointName,
-                objectToUpdate.id!,
-                objectToUpdate.updatedProperties,
-                fields: fields),
-            parseResponse: (response) =>
-                updateItemFunction(_api.parseUpdateItemResponse(response)));
+                endpointName: collectionMetadata.endpointName,
+                endpointPrefix: collectionMetadata.endpointPrefix,
+                itemId: objectToUpdate.id!,
+                objectData: objectToUpdate.updatedProperties,
+                fields: fields ?? collectionMetadata.defaultFields),
+            parseResponse: (response) {
+              final parsedJson = _api.parseUpdateItemResponse(response);
+              return specificClass.newInstance('', [parsedJson]) as Type;
+            });
       }
     } catch (error) {
       if (objectToUpdate.id == null) {
@@ -347,51 +391,53 @@ class DirectusApiManager {
     return Future.value(objectToUpdate);
   }
 
-  Future<bool> deleteItem<Type extends DirectusItem>(
-      {required Type objectToDelete, bool mustBeAuthenticated = true}) {
+  @override
+  Future<bool> deleteItem<Type extends DirectusData>(
+      {required String objectId, bool mustBeAuthenticated = true}) {
+    final specificClass = _metadataGenerator.getClassMirrorForType(Type);
+    final collectionMetadata = _collectionMetadataFromClass(specificClass);
     try {
       return _sendRequest(
           prepareRequest: () => _api.prepareDeleteItemRequest(
-              objectToDelete.endpointName,
-              objectToDelete.id!,
-              mustBeAuthenticated),
+              endpointName: collectionMetadata.endpointName,
+              endpointPrefix: collectionMetadata.endpointPrefix,
+              itemId: objectId,
+              mustBeAuthenticated: mustBeAuthenticated),
           parseResponse: (response) => _api.parseGenericBoolResponse(response));
     } catch (error) {
-      if (objectToDelete.id == null) {
-        throw Exception("The item ID can not be null");
-      }
       return Future.value(false);
     }
   }
 
-  Future<bool> deleteMultipleItems<Type extends DirectusItem>(
-      {required Iterable<Type> objectListToDelete,
+  @override
+  Future<bool> deleteMultipleItems<Type extends DirectusData>(
+      {required Iterable<dynamic> objectIdsToDelete,
       bool mustBeAuthenticated = true}) {
-    if (objectListToDelete.isEmpty) {
-      throw Exception("objectListToDelete can not be empty");
+    if (objectIdsToDelete.isEmpty) {
+      throw Exception("objectIdsToDelete can not be empty");
     }
-    final String endPoint = objectListToDelete.first.endpointName;
-    final List<dynamic> objectIdList = objectListToDelete.map(
-      ((object) {
-        if (object.id != null) {
-          return object.id;
-        }
-      }),
-    ).toList();
+    final specificClass = _metadataGenerator.getClassMirrorForType(Type);
+    final collectionMetadata = _collectionMetadataFromClass(specificClass);
     return _sendRequest(
         prepareRequest: () => _api.prepareDeleteMultipleItemRequest(
-            endPoint, objectIdList, mustBeAuthenticated),
+            endpointName: collectionMetadata.endpointName,
+            endpointPrefix: collectionMetadata.endpointPrefix,
+            itemIdList: objectIdsToDelete.toList(),
+            mustBeAuthenticated: mustBeAuthenticated),
         parseResponse: (response) => _api.parseGenericBoolResponse(response));
   }
 
+  @Deprecated("Use [deleteItem] instead")
   Future<bool> deleteUser(
       {required DirectusUser user, bool mustBeAuthenticated = true}) {
-    return _sendRequest(
-        prepareRequest: () =>
-            _api.prepareDeleteUserRequest(user, mustBeAuthenticated),
-        parseResponse: (response) => _api.parseDeleteUserResponse(response));
+    final id = user.id;
+    if (id == null) {
+      throw Exception("User ID can not be null when trying to delete an user");
+    }
+    return deleteItem<DirectusUser>(objectId: id);
   }
 
+  @override
   Future<DirectusFile> uploadFileFromUrl(
       {required String remoteUrl, String? title, String? folder}) async {
     return _sendRequest(
@@ -400,6 +446,7 @@ class DirectusApiManager {
         parseResponse: (response) => _api.parseFileUploadResponse(response));
   }
 
+  @override
   Future<DirectusFile> uploadFile(
       {required List<int> fileBytes,
       required String filename,
@@ -416,6 +463,7 @@ class DirectusApiManager {
         parseResponse: (response) => _api.parseFileUploadResponse(response));
   }
 
+  @override
   Future<DirectusFile> updateExistingFile(
       {required List<int> fileBytes,
       required String fileId,
@@ -430,12 +478,14 @@ class DirectusApiManager {
         parseResponse: (response) => _api.parseFileUploadResponse(response));
   }
 
+  @override
   Future<bool> deleteFile({required String fileId}) {
     return _sendRequest(
         prepareRequest: () => _api.prepareFileDeleteRequest(fileId: fileId),
         parseResponse: (response) => _api.parseGenericBoolResponse(response));
   }
 
+  @override
   Future<T> sendRequestToEndpoint<T>(
       {required BaseRequest Function() prepareRequest,
       required T Function(Response) jsonConverter}) {
