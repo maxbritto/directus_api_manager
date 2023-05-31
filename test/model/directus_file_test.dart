@@ -108,9 +108,9 @@ main() {
       });
 
       test("Create with fromId constructor", () {
-        final DirectusFile sut = DirectusFile.fromId("abc-123");
+        final DirectusFile sut = DirectusFile.fromId("abc-123", title: "title");
         expect(sut.id, "abc-123");
-        expect(sut.title, isNull);
+        expect(sut.title, "title");
         expect(sut.type, isNull);
         expect(sut.uploadedOn, isNull);
         expect(sut.fileSize, isNull);
