@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:math';
 
 import 'package:directus_api_manager/src/model/directus_file.dart';
 import 'package:test/expect.dart';
@@ -95,7 +94,7 @@ main() {
                             }
                           }
           """;
-        final sut = DirectusFile.fromJSON(jsonDecode(jsonData));
+        final sut = DirectusFile(jsonDecode(jsonData));
         expect(sut.id, "4f4b14fa-a43a-46d0-b7ad-90af5919bebb");
         expect(sut.title, "Paulo Silva (via Unsplash)");
         expect(sut.type, "image/jpeg");

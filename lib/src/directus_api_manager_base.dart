@@ -458,14 +458,16 @@ class DirectusApiManager implements IDirectusApiManager {
       required String filename,
       String? title,
       String? contentType,
-      String? folder}) {
+      String? folder,
+      String storage = "local"}) {
     return _sendRequest(
         prepareRequest: () => _api.prepareNewFileUploadRequest(
             fileBytes: fileBytes,
             filename: filename,
             title: title,
             contentType: contentType,
-            folder: folder),
+            folder: folder,
+            storage: storage),
         parseResponse: (response) => _api.parseFileUploadResponse(response));
   }
 

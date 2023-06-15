@@ -1,5 +1,8 @@
+import 'package:directus_api_manager/directus_api_manager.dart';
 import 'package:directus_api_manager/src/model/directus_data.dart';
 
+@DirectusCollection()
+@CollectionMetadata(endpointName: "files", endpointPrefix: "/")
 class DirectusFile extends DirectusData {
   static String? baseUrl;
 
@@ -11,6 +14,7 @@ class DirectusFile extends DirectusData {
   int? get height => getValue(forKey: "height");
   int? get duration => getValue(forKey: "duration");
   String? get description => getValue(forKey: "description");
+  Map<String, dynamic>? get metadata => getValue(forKey: "metadata");
 
   DirectusFile(Map<String, dynamic> rawReceivedData) : super(rawReceivedData);
   DirectusFile.fromId(String id, {String? title})

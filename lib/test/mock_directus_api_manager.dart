@@ -164,7 +164,8 @@ class MockDirectusApiManager extends IDirectusApiManager with MockMixin {
       required String filename,
       String? title,
       String? contentType,
-      String? folder}) {
+      String? folder,
+      String storage = "local"}) {
     addCalledFunction(named: "uploadFile");
     addReceivedObject(fileBytes, name: "fileBytes");
     addReceivedObject(filename, name: "filename");
