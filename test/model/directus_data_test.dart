@@ -16,6 +16,17 @@ main() {
       expect(() => TestDirectusData({"id": 1}), returnsNormally);
     });
 
+    test("Reading the id and intId getter", () {
+      final sut1 = TestDirectusData({"id": 1});
+      expect(sut1.id, "1");
+      expect(sut1.intId, 1);
+      expect(sut1.getRawData(), {"id": 1});
+
+      final sut2 = TestDirectusData({"id": "abc-123"});
+      expect(sut2.id, "abc-123");
+      expect(sut2.intId, null);
+    });
+
     test('Extra properties can be added and read', () {
       final sut = TestDirectusData({"id": "abc-123"});
       sut.setValue("Sète", forKey: "location");
@@ -27,13 +38,14 @@ main() {
       expect(sut.getValue(forKey: "undefined_property"), null);
     });
 
-    test('needsSaving on custom properties', () {
-      final sut = TestDirectusData({
-        "id": "abc-123",
-      });
+    test('needsSaving and hasChangedIn on custom properties', () {
+      final sut = TestDirectusData({"id": "abc-123", "name": "Darth Vader"});
       expect(sut.needsSaving, false);
+      expect(sut.hasChangedIn(forKey: "name"), false);
       sut.setValue("endor", forKey: "location");
       expect(sut.needsSaving, true);
+      sut.setValue("Darth Sidious", forKey: "name");
+      expect(sut.hasChangedIn(forKey: "name"), true);
     });
 
     test('Generate map of this object', () {
@@ -148,6 +160,19 @@ main() {
       expect(file?.title, "star wars");
     });
 
+    test("Set optional Directus File", () {
+      final DirectusFile file = DirectusFile({"id": "123"});
+      final sut = TestDirectusData({"id": "abc"});
+      sut.setOptionalDirectusFile(file, forKey: "file");
+      DirectusFile? result = sut.getOptionalDirectusFile(forKey: "file");
+      expect(result, isNotNull);
+      expect(result!.id, "123");
+
+      sut.setOptionalDirectusFile(null, forKey: "file");
+      result = sut.getOptionalDirectusFile(forKey: "file");
+      expect(result, isNull);
+    });
+
     test("getList with a listof int", () {
       final sut = TestDirectusData({
         "id": "abc",
@@ -185,6 +210,81 @@ main() {
       });
       expect(() => sut.getList<String>(forKey: "checkFile"),
           throwsA(isA<TypeError>()));
+    });
+
+    test("getObjectList with a list of DirectusData", () {
+      final sut = TestDirectusData({
+        "id": "abc",
+        "checkObject": <dynamic>[
+          {"id": "1"},
+          {"id": "2"}
+        ]
+      });
+      final list = sut.getObjectList<TestDirectusData>(
+          forKey: "checkObject", fromMap: (map) => TestDirectusData(map));
+      expect(list, isA<List<TestDirectusData>>());
+      expect(list.length, 2);
+      expect(list[0].id, "1");
+
+      expect(list[1].id, "2");
+    });
+
+    test("getObjectList with an empty list", () {
+      final sut = TestDirectusData({"id": "abc", "checkObject": null});
+      final list = sut.getObjectList<TestDirectusData>(
+          forKey: "checkObject", fromMap: (map) => TestDirectusData(map));
+      expect(list, isA<List<TestDirectusData>>());
+      expect(list.isEmpty, true);
+    });
+
+    test("getDateTime", () {
+      final sut = TestDirectusData({"id": "abc", "creationDate": "2023-06-15"});
+      final creationDate = sut.getDateTime(forKey: "creationDate");
+      expect(creationDate, isA<DateTime>());
+      expect(creationDate.year, 2023);
+      expect(creationDate.month, 6);
+      expect(creationDate.day, 15);
+    });
+
+    test("setOptionalDateTime", () {
+      final sut = TestDirectusData({"id": "abc"});
+      final creationDate = DateTime(2023, 6, 15);
+      sut.setOptionalDateTime(creationDate, forKey: "creationDate");
+      DateTime? saveDateTime = sut.getOptionalDateTime(forKey: "creationDate");
+      expect(saveDateTime, isNotNull);
+      expect(saveDateTime, isA<DateTime>());
+      expect(saveDateTime!.year, 2023);
+      expect(saveDateTime.month, 6);
+      expect(saveDateTime.day, 15);
+
+      sut.setOptionalDateTime(null, forKey: "creationDate");
+      saveDateTime = sut.getOptionalDateTime(forKey: "creationDate");
+      expect(saveDateTime, isNull);
+    });
+
+    test("toMap", () {
+      final sut = TestDirectusData({"id": "abc", "title": "test"});
+      Map<String, dynamic> map = sut.toMap();
+      expect(map, isA<Map<String, dynamic>>());
+      expect(map["id"], "abc");
+      expect(map["title"], "test");
+      sut.setValue("endor", forKey: "location");
+      map = sut.toMap();
+      expect(map["location"], "endor");
+    });
+
+    test("mapForObjectCreation", () {
+      final sut = TestDirectusData({
+        "id": "abc",
+        "creator": {"id": "idCreator", "name": "creatorName"},
+        "title": "test"
+      });
+      final map = sut.mapForObjectCreation();
+      expect(map, isA<Map<String, dynamic>>());
+      expect(map.containsKey("id"), false);
+      expect(map["creationDate"], null);
+      expect(map["title"], "test");
+      expect(map["creator"], "idCreator");
     });
   });
 }

@@ -224,6 +224,19 @@ main() {
       expect(await sut.hasLoggedInUser(), true);
     });
 
+    test("Manager with logged in user must give the access token", () async {
+      final mockClient = MockHTTPClient();
+      const successLoginResponse = """
+    {"data":{"access_token":"ABCD.1234.ABCD","expires":900000,"refresh_token":"REFRESH.TOKEN.5678"}}
+    """;
+      mockClient.addStreamResponse(body: successLoginResponse);
+      final sut =
+          DirectusApiManager(baseURL: "http://api.com", httpClient: mockClient);
+      await sut.loginDirectusUser("l", "p");
+      expect(sut.accessToken, "ABCD.1234.ABCD");
+      expect(sut.shouldRefreshToken, false);
+    });
+
     test('Empty manager with successfull refresh token load', () async {
       final mockClient = MockHTTPClient();
       final sut = DirectusApiManager(
@@ -438,6 +451,7 @@ main() {
       expect(result.createdItemList.first.id, "element1");
       expect(result.createdItemList.last.id, "element2");
     });
+
     test("createMultipleItems with an empty list should throw", () async {
       expect(() async {
         await sut.createMultipleItems<DirectusItemTest>(objectList: []);

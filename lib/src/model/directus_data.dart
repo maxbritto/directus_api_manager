@@ -38,6 +38,9 @@ abstract class DirectusData {
   Map<String, dynamic> getRawData() => _rawReceivedData;
   bool get needsSaving => updatedProperties.isNotEmpty;
 
+  bool hasChangedIn({required String forKey}) =>
+      updatedProperties.containsKey(forKey);
+
   setValue(dynamic value, {required String forKey}) {
     if (value != getValue(forKey: forKey)) {
       updatedProperties[forKey] = value;
@@ -152,6 +155,15 @@ abstract class DirectusData {
 extension DirectusDataExtension on DirectusData {
   /// Returns a map of all the properties of the item without the id that must not be sent to the server when creating a new item
   Map<String, dynamic> mapForObjectCreation() {
-    return toMap()..remove("id");
+    final Map<String, dynamic> map = Map<String, dynamic>.of(_rawReceivedData)
+      ..addAll(updatedProperties);
+
+    map.forEach((key, value) {
+      if (value is Map<String, dynamic>) {
+        map[key] = value["id"];
+      }
+    });
+
+    return map..remove("id");
   }
 }
