@@ -284,7 +284,7 @@ main() {
       expect(map.containsKey("id"), false);
       expect(map["creationDate"], null);
       expect(map["title"], "test");
-      expect(map["creator"], "idCreator");
+      expect(map["creator"], {"id": "idCreator", "name": "creatorName"});
     });
   });
 }
