@@ -195,4 +195,7 @@ class MockDirectusApiManager extends IDirectusApiManager with MockMixin {
   Future<bool> tryAndRefreshToken() {
     return Future.value(true);
   }
+
+  @override
+  String? get refreshToken => "refreshToken";
 }

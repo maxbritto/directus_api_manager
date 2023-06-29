@@ -28,6 +28,7 @@ class DirectusApiManager implements IDirectusApiManager {
   bool get shouldRefreshToken => _api.shouldRefreshToken;
   @override
   String? get accessToken => _api.accessToken;
+  String? get refreshToken => _api.refreshToken;
 
   /// Creates a new DirectusApiManager instance.
   /// [baseURL] : The base URL of the Directus instance

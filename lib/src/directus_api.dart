@@ -14,6 +14,7 @@ abstract class IDirectusAPI {
   bool get shouldRefreshToken;
   String? get accessToken;
   String? get currentAuthToken;
+  String? get refreshToken;
 
   BaseRequest authenticateRequest(BaseRequest request);
   BaseRequest prepareGetCurrentUserRequest({String fields = "*"});
