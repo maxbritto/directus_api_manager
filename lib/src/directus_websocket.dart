@@ -5,7 +5,6 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 
 class DirectusWebSocket {
   DirectusApiManager apiManager;
-  Function(dynamic) onListen;
   Function(Object)? onError;
   Function()? onDone;
   List<DirectusWebSocketSubscription<DirectusData>> subscriptionDataList;
@@ -13,7 +12,6 @@ class DirectusWebSocket {
 
   DirectusWebSocket({
     required this.apiManager,
-    required this.onListen,
     required this.subscriptionDataList,
     this.onError,
     this.onDone,
