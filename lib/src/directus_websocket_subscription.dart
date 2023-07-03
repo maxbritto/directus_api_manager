@@ -80,9 +80,7 @@ class DirectusWebSocketSubscription<Type extends DirectusData> {
       query["offset"] = offset;
     }
 
-    if (uid != null) {
-      result["uid"] = uid!;
-    }
+    result["uid"] = uid;
 
     return jsonEncode(result).replaceAll(" ", "").replaceAll("\\", "");
   }
