@@ -1,31 +1,27 @@
 import 'dart:convert';
-import 'package:directus_api_manager/src/directus_websocket_subscription.dart';
+import 'package:directus_api_manager/directus_api_manager.dart';
 import 'package:directus_api_manager/src/model/directus_data.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 class DirectusWebSocket {
-  final String url;
+  DirectusApiManager apiManager;
   Function(dynamic) onListen;
   Function(Object)? onError;
   Function()? onDone;
   List<DirectusWebSocketSubscription<DirectusData>> subscriptionDataList;
   late WebSocketChannel _channel;
 
-  String? accessToken;
-  String? refreshToken;
-
-  DirectusWebSocket(
-      {required this.url,
-      required this.onListen,
-      required this.subscriptionDataList,
-      this.refreshToken,
-      this.onError,
-      this.onDone,
-      this.accessToken}) {
-    _channel = WebSocketChannel.connect(Uri.parse(url));
+  DirectusWebSocket({
+    required this.apiManager,
+    required this.onListen,
+    required this.subscriptionDataList,
+    this.onError,
+    this.onDone,
+  }) {
+    _channel = WebSocketChannel.connect(Uri.parse(apiManager.webSocketBaseUrl));
     _channel.stream.listen(listenSocket, onError: onError, onDone: onDone);
-    // _sendRefreshTokenRequest();
-    if (accessToken != null) {
+
+    if (apiManager.accessToken != null) {
       _authenticateWebSocket();
     } else {
       _subscribe();
@@ -41,8 +37,7 @@ class DirectusWebSocket {
     }
 
     // Handle the auth request
-    if (refreshToken != null &&
-        data["type"] == "auth" &&
+    if (data["type"] == "auth" &&
         data["status"] == "error" &&
         data["error"]["code"] == "TOKEN_EXPIRED") {
       _sendRefreshTokenRequest();
@@ -51,7 +46,7 @@ class DirectusWebSocket {
     // Handle the auth request
     if (data["type"] == "auth" && data["status"] == 'ok') {
       if (data.containsKey("refresh_token")) {
-        refreshToken = data["refresh_token"];
+        apiManager.refreshToken = data["refresh_token"];
       }
 
       _subscribe();
@@ -86,14 +81,14 @@ class DirectusWebSocket {
   _authenticateWebSocket() {
     _channel.sink.add(jsonEncode({
       "type": "auth",
-      "access_token": accessToken,
+      "access_token": apiManager.accessToken,
     }));
   }
 
   _sendRefreshTokenRequest() {
     _channel.sink.add(jsonEncode({
       "type": "auth",
-      "refresh_token": refreshToken,
+      "refresh_token": apiManager.refreshToken,
     }));
   }
 }

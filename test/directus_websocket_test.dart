@@ -9,18 +9,20 @@ main() {
   initializeReflectable();
   late DirectusWebSocket sut;
 
+  onCallBack(Map<String, dynamic> message) {}
+
   group('DirectusWebSocket', () {
     setUp(() {
       sut = DirectusWebSocket(
-          url: "ws://localhost:8080",
+          apiManager: DirectusApiManager(baseURL: "http://api.com:8055"),
           onListen: (dynamic message) {},
           subscriptionDataList: [
-            DirectusWebSocketSubscription<DirectusItemTest>(uid: "itemTest")
+            DirectusWebSocketSubscription<DirectusItemTest>(
+                uid: "itemTest", onCreate: onCallBack)
           ]);
     });
 
     test('Init value are set', () {
-      expect(sut.url, "ws://localhost:8080");
       expect(sut.subscriptionDataList.length, 1);
     });
 

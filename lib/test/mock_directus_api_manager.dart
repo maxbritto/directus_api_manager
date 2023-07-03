@@ -198,4 +198,7 @@ class MockDirectusApiManager extends IDirectusApiManager with MockMixin {
 
   @override
   String? get refreshToken => "refreshToken";
+
+  @override
+  String get webSocketBaseUrl => throw UnimplementedError();
 }
