@@ -28,8 +28,10 @@ class DirectusApiManager implements IDirectusApiManager {
   bool get shouldRefreshToken => _api.shouldRefreshToken;
   @override
   String? get accessToken => _api.accessToken;
+
   @override
   String? get refreshToken => _api.refreshToken;
+  set refreshToken(String? value) => _api.refreshToken = value;
 
   @override
   String get webSocketBaseUrl {
