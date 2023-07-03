@@ -9,9 +9,13 @@ class DirectusWebSocketSubscription<Type extends DirectusData> {
   final List<String>? fields;
   final Filter? filter;
   final List<SortProperty>? sort;
-  final String? uid;
+  final String uid;
   final int? limit;
   final int? offset;
+
+  Function(Map<String, dynamic>)? onCreate;
+  Function(Map<String, dynamic>)? onUpdate;
+  Function(Map<String, dynamic>)? onDelete;
 
   String get collection => collectionMetadata.endpointName;
 
@@ -23,7 +27,20 @@ class DirectusWebSocketSubscription<Type extends DirectusData> {
       _collectionMetadataFromClass(specificClass);
 
   DirectusWebSocketSubscription(
-      {this.fields, this.filter, this.sort, this.uid, this.limit, this.offset});
+      {required this.uid,
+      this.fields,
+      this.filter,
+      this.sort,
+      this.limit,
+      this.offset,
+      this.onCreate,
+      this.onUpdate,
+      this.onDelete}) {
+    if (onCreate == null && onUpdate == null && onDelete == null) {
+      throw Exception(
+          "You must provide at least one callback for onCreate, onUpdate or onDelete");
+    }
+  }
 
   CollectionMetadata _collectionMetadataFromClass(ClassMirror collectionType) {
     final CollectionMetadata collectionMetadata = collectionType.metadata

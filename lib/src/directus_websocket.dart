@@ -33,12 +33,14 @@ class DirectusWebSocket {
   }
 
   listenSocket(dynamic message) async {
-    final data = jsonDecode(message);
+    final Map<String, dynamic> data = jsonDecode(message);
 
+    // Handle the ping pong request to keep the connection alive
     if (data["type"] == "ping") {
       _channel.sink.add(jsonEncode({"type": "pong"}));
     }
 
+    // Handle the auth request
     if (refreshToken != null &&
         data["type"] == "auth" &&
         data["status"] == "error" &&
@@ -46,6 +48,7 @@ class DirectusWebSocket {
       _sendRefreshTokenRequest();
     }
 
+    // Handle the auth request
     if (data["type"] == "auth" && data["status"] == 'ok') {
       if (data.containsKey("refresh_token")) {
         refreshToken = data["refresh_token"];
@@ -53,7 +56,25 @@ class DirectusWebSocket {
 
       _subscribe();
     }
-    onListen(message);
+
+    // Find the subscription that matches the data
+    final subscription = subscriptionDataList.firstWhere(
+        (element) => element.uid == data["uid"],
+        orElse: () =>
+            throw Exception("No subscription found for uid ${data["uid"]}"));
+
+    if (data["type"] == "subscription" &&
+        (data["event"] == "init" || data["event"] == "create")) {
+      subscription.onCreate!(data);
+    }
+
+    if (data["type"] == "subscription" && data["event"] == "update") {
+      subscription.onUpdate!(data);
+    }
+
+    if (data["type"] == "subscription" && data["event"] == "delete") {
+      subscription.onDelete!(data);
+    }
   }
 
   _subscribe() {

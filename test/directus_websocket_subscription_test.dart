@@ -9,10 +9,34 @@ main() {
   initializeReflectable();
   late DirectusWebSocketSubscription sut;
 
+  callBack(Map<String, dynamic> data) {}
+
   group('DirectusWebSocketSubscription', () {
     setUp(() {
       sut = DirectusWebSocketSubscription<DirectusItemTest>(
-          fields: ["id", "name"]);
+          uid: "itemTest", fields: ["id", "name"], onCreate: callBack);
+    });
+
+    test("Init with no call back must throw an exception", () {
+      expect(
+          () => DirectusWebSocketSubscription<DirectusItemTest>(
+              uid: "itemTest", fields: ["id", "name"]),
+          throwsException);
+    });
+
+    test("Init with at least one call back must return normaly", () {
+      expect(
+          () => DirectusWebSocketSubscription<DirectusItemTest>(
+              uid: "itemTest", fields: ["id", "name"], onCreate: callBack),
+          returnsNormally);
+      expect(
+          () => DirectusWebSocketSubscription<DirectusItemTest>(
+              uid: "itemTest", fields: ["id", "name"], onUpdate: callBack),
+          returnsNormally);
+      expect(
+          () => DirectusWebSocketSubscription<DirectusItemTest>(
+              uid: "itemTest", fields: ["id", "name"], onDelete: callBack),
+          returnsNormally);
     });
 
     test('Init value are set', () {
@@ -22,7 +46,8 @@ main() {
     test('Fields json generator', () {
       expect(sut.fieldsToJson, ["id", "name"]);
       final DirectusWebSocketSubscription<DirectusItemTest> temp =
-          DirectusWebSocketSubscription<DirectusItemTest>();
+          DirectusWebSocketSubscription<DirectusItemTest>(
+              uid: "itemTest", onCreate: callBack);
       expect(temp.fieldsToJson, ["*"]);
     });
 
@@ -31,7 +56,8 @@ main() {
       final filter = PropertyFilter(
           field: "id", operator: FilterOperator.equals, value: "123-abc");
       final DirectusWebSocketSubscription temp =
-          DirectusWebSocketSubscription<DirectusItemTest>(filter: filter);
+          DirectusWebSocketSubscription<DirectusItemTest>(
+              uid: "itemTest", filter: filter, onCreate: callBack);
       expect(temp.filterToJson, {
         'id': {'_eq': '123-abc'}
       });
@@ -39,45 +65,58 @@ main() {
 
     test("toJson", () {
       expect(sut.toJson(),
-          '{"type":"subscribe","collection":"itemTest","query":{"fields":["id","name"]}}');
+          '{"type":"subscribe","collection":"itemTest","query":{"fields":["id","name"]},"uid":"itemTest"}');
       final filter = PropertyFilter(
           field: "id", operator: FilterOperator.equals, value: "123-abc");
       final List<SortProperty> sort = [SortProperty("id", ascending: true)];
 
       DirectusWebSocketSubscription temp =
-          DirectusWebSocketSubscription<DirectusItemTest>(filter: filter);
+          DirectusWebSocketSubscription<DirectusItemTest>(
+              uid: "itemTest", filter: filter, onCreate: callBack);
       expect(temp.toJson(),
-          '{"type":"subscribe","collection":"itemTest","query":{"fields":["*"],"filter":{"id":{"_eq":"123-abc"}}}}');
+          '{"type":"subscribe","collection":"itemTest","query":{"fields":["*"],"filter":{"id":{"_eq":"123-abc"}}},"uid":"itemTest"}');
 
       temp = DirectusWebSocketSubscription<DirectusItemTest>(
-          fields: ["id", "name"]);
+          uid: "itemTest", fields: ["id", "name"], onCreate: callBack);
       expect(temp.toJson(),
-          '{"type":"subscribe","collection":"itemTest","query":{"fields":["id","name"]}}');
+          '{"type":"subscribe","collection":"itemTest","query":{"fields":["id","name"]},"uid":"itemTest"}');
 
       temp = DirectusWebSocketSubscription<DirectusItemTest>(
-          sort: sort, fields: ["id", "name"]);
+          uid: "itemTest",
+          sort: sort,
+          fields: ["id", "name"],
+          onCreate: callBack);
       expect(temp.toJson(),
-          '{"type":"subscribe","collection":"itemTest","query":{"fields":["id","name"],"sort":["id"]}}');
+          '{"type":"subscribe","collection":"itemTest","query":{"fields":["id","name"],"sort":["id"]},"uid":"itemTest"}');
 
       temp = DirectusWebSocketSubscription<DirectusItemTest>(
-          fields: ["id", "name"], sort: [SortProperty("id", ascending: false)]);
+          uid: "itemTest",
+          fields: ["id", "name"],
+          sort: [SortProperty("id", ascending: false)],
+          onCreate: callBack);
       expect(temp.toJson(),
-          '{"type":"subscribe","collection":"itemTest","query":{"fields":["id","name"],"sort":["-id"]}}');
+          '{"type":"subscribe","collection":"itemTest","query":{"fields":["id","name"],"sort":["-id"]},"uid":"itemTest"}');
 
       temp = DirectusWebSocketSubscription<DirectusItemTest>(
-          fields: ["id", "name"], limit: 2);
+          uid: "itemTest",
+          fields: ["id", "name"],
+          limit: 2,
+          onCreate: callBack);
       expect(temp.toJson(),
-          '{"type":"subscribe","collection":"itemTest","query":{"fields":["id","name"],"limit":2}}');
+          '{"type":"subscribe","collection":"itemTest","query":{"fields":["id","name"],"limit":2},"uid":"itemTest"}');
 
       temp = DirectusWebSocketSubscription<DirectusItemTest>(
-          fields: ["id", "name"], offset: 2);
+          uid: "itemTest",
+          fields: ["id", "name"],
+          offset: 2,
+          onCreate: callBack);
       expect(temp.toJson(),
-          '{"type":"subscribe","collection":"itemTest","query":{"fields":["id","name"],"offset":2}}');
+          '{"type":"subscribe","collection":"itemTest","query":{"fields":["id","name"],"offset":2},"uid":"itemTest"}');
 
       temp = DirectusWebSocketSubscription<DirectusItemTest>(
-          fields: ["id", "name"], uid: "testUid");
+          uid: "itemTest", fields: ["id", "name"], onCreate: callBack);
       expect(temp.toJson(),
-          '{"type":"subscribe","collection":"itemTest","query":{"fields":["id","name"]},"uid":"testUid"}');
+          '{"type":"subscribe","collection":"itemTest","query":{"fields":["id","name"]},"uid":"itemTest"}');
 
       temp = DirectusWebSocketSubscription<DirectusItemTest>(
           fields: ["id", "name"],
@@ -85,9 +124,10 @@ main() {
           sort: sort,
           limit: 2,
           offset: 2,
-          uid: "testUid");
+          uid: "itemTest",
+          onCreate: callBack);
       expect(temp.toJson(),
-          '{"type":"subscribe","collection":"itemTest","query":{"fields":["id","name"],"filter":{"id":{"_eq":"123-abc"}},"sort":["id"],"limit":2,"offset":2},"uid":"testUid"}');
+          '{"type":"subscribe","collection":"itemTest","query":{"fields":["id","name"],"filter":{"id":{"_eq":"123-abc"}},"sort":["id"],"limit":2,"offset":2},"uid":"itemTest"}');
     });
   });
 }

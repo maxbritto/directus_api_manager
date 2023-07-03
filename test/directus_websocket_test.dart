@@ -15,7 +15,7 @@ main() {
           url: "ws://localhost:8080",
           onListen: (dynamic message) {},
           subscriptionDataList: [
-            DirectusWebSocketSubscription<DirectusItemTest>()
+            DirectusWebSocketSubscription<DirectusItemTest>(uid: "itemTest")
           ]);
     });
 
