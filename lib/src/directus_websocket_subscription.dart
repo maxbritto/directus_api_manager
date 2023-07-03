@@ -6,7 +6,6 @@ import 'metadata_generator.dart';
 import 'package:reflectable/reflectable.dart';
 
 class DirectusWebSocketSubscription<Type extends DirectusData> {
-  final String collection;
   final List<String>? fields;
   final Filter? filter;
   final List<SortProperty>? sort;
@@ -14,16 +13,17 @@ class DirectusWebSocketSubscription<Type extends DirectusData> {
   final int? limit;
   final int? offset;
 
+  String get collection => collectionMetadata.endpointName;
+
   final MetadataGenerator _metadataGenerator = MetadataGenerator();
 
+  ClassMirror get specificClass =>
+      _metadataGenerator.getClassMirrorForType(Type);
+  CollectionMetadata get collectionMetadata =>
+      _collectionMetadataFromClass(specificClass);
+
   DirectusWebSocketSubscription(
-      {required this.collection,
-      this.fields,
-      this.filter,
-      this.sort,
-      this.uid,
-      this.limit,
-      this.offset});
+      {this.fields, this.filter, this.sort, this.uid, this.limit, this.offset});
 
   CollectionMetadata _collectionMetadataFromClass(ClassMirror collectionType) {
     final CollectionMetadata collectionMetadata = collectionType.metadata
@@ -36,7 +36,7 @@ class DirectusWebSocketSubscription<Type extends DirectusData> {
   String toJson() {
     Map<String, Object> result = {
       "type": "subscribe",
-      "collection": collection,
+      "collection": collectionMetadata.endpointName,
     };
     List<String> fieldsAsJson = fieldsToJson;
     Map<String, dynamic>? filterAsJson = filterToJson;
@@ -74,9 +74,6 @@ class DirectusWebSocketSubscription<Type extends DirectusData> {
     if (fields != null) {
       return fields!;
     }
-
-    final specificClass = _metadataGenerator.getClassMirrorForType(Type);
-    final collectionMetadata = _collectionMetadataFromClass(specificClass);
 
     return collectionMetadata.defaultFields.split(",");
   }

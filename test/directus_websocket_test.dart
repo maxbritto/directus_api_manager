@@ -15,8 +15,7 @@ main() {
           url: "ws://localhost:8080",
           onListen: (dynamic message) {},
           subscriptionDataList: [
-            DirectusWebSocketSubscription<DirectusItemTest>(
-                collection: "collectionName")
+            DirectusWebSocketSubscription<DirectusItemTest>()
           ]);
     });
 
@@ -25,6 +24,16 @@ main() {
       expect(sut.subscriptionDataList.length, 1);
     });
 
-    test('Listen receive a ping message', () {});
+    test('Listen receive a ping message', () {
+      //TODO
+    });
+
+    test('Request auth', () {
+      //TODO
+    });
+
+    test('Request token refresh', () {
+      //TODO
+    });
   });
 }
