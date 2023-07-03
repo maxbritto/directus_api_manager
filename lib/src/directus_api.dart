@@ -15,6 +15,8 @@ abstract class IDirectusAPI {
   String? get accessToken;
   String? get currentAuthToken;
   String? get refreshToken;
+  set refreshToken(String? value);
+  String get baseUrl;
 
   BaseRequest authenticateRequest(BaseRequest request);
   BaseRequest prepareGetCurrentUserRequest({String fields = "*"});
@@ -103,8 +105,14 @@ abstract class IDirectusAPI {
 
 class DirectusAPI implements IDirectusAPI {
   String _baseURL;
+  @override
+  String get baseUrl => _baseURL;
+
   String? _accessToken;
   String? _refreshToken;
+  @override
+  set refreshToken(String? value) => _refreshToken = value;
+
   DateTime? _accessTokenExpirationDate;
   final Future<void> Function(String)? _saveRefreshTokenCallback;
   final Future<String?> Function()? _loadRefreshTokenCallback;

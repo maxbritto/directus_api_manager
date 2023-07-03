@@ -60,4 +60,5 @@ abstract class IDirectusApiManager {
   String? get accessToken;
   String? get refreshToken;
   Future<bool> tryAndRefreshToken();
+  String get webSocketBaseUrl;
 }

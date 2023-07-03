@@ -35,6 +35,24 @@ main() {
       expect(await sut.currentDirectusUser(), isNull);
     });
 
+    test('URL for websocket must return', () async {
+      final mockClient = MockHTTPClient();
+      DirectusApiManager sut =
+          DirectusApiManager(baseURL: "http://api.com", httpClient: mockClient);
+      expect(sut.webSocketBaseUrl, "ws://api.com/websocket");
+
+      sut = DirectusApiManager(
+          baseURL: "http://api.com/", httpClient: mockClient);
+      expect(sut.webSocketBaseUrl, "ws://api.com/websocket");
+
+      sut = DirectusApiManager(
+          baseURL: "https://api.com", httpClient: mockClient);
+      expect(sut.webSocketBaseUrl, "wss://api.com/websocket");
+      sut = DirectusApiManager(
+          baseURL: "https://api.com/", httpClient: mockClient);
+      expect(sut.webSocketBaseUrl, "wss://api.com/websocket");
+    });
+
     test(
         'Empty manager with successfull refresh token load should be able to load current user',
         () async {

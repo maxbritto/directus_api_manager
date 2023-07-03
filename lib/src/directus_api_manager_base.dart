@@ -31,6 +31,22 @@ class DirectusApiManager implements IDirectusApiManager {
   @override
   String? get refreshToken => _api.refreshToken;
 
+  @override
+  String get webSocketBaseUrl {
+    // Remove last / if present
+    String url = _api.baseUrl;
+    if (url.endsWith("/")) {
+      return url.substring(0, _api.baseUrl.length - 1);
+    }
+    if (url.startsWith("http")) {
+      return "${url.replaceFirst("http", "ws")}/websocket";
+    } else if (url.startsWith("https")) {
+      return "${url.replaceFirst("http", "wss")}/websocket";
+    }
+
+    throw Exception("Invalid base URL");
+  }
+
   /// Creates a new DirectusApiManager instance.
   /// [baseURL] : The base URL of the Directus instance
   /// [httpClient] : The HTTP client to use. If not provided, a new [Client] will be created.
