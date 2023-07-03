@@ -39,3 +39,9 @@ This version add some new features :
 Bug Fix :
 
 -    the multi delete file function was not able to delete files.
+
+## 1.7.0 - 2023/06/29
+
+This version add some new features :
+
+-    expose the refresh token

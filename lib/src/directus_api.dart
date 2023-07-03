@@ -122,6 +122,7 @@ class DirectusAPI implements IDirectusAPI {
   String get baseURL => _baseURL;
   @override
   String? get accessToken => _accessToken;
+  @override
   String? get refreshToken => _refreshToken;
 
   @override

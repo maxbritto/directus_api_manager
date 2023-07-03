@@ -26,6 +26,7 @@ enum FilterOperator {
 /// Instead use [PropertyFilter], [LogicalOperatorFilter], [RelationFilter].
 abstract class Filter {
   String get asJSON;
+  Map<String, dynamic> get asMap;
 }
 
 class PropertyFilter implements Filter {
@@ -129,6 +130,11 @@ class PropertyFilter implements Filter {
     }
     return builder.toString();
   }
+
+  @override
+  Map<String, dynamic> get asMap => {
+        field: {_operatorAsString(operator): value}
+      };
 }
 
 enum LogicalOperator { and, or }
@@ -165,6 +171,19 @@ class LogicalOperatorFilter implements Filter {
     buffer.write(" ] }");
     return buffer.toString();
   }
+
+  @override
+  Map<String, dynamic> get asMap {
+    List<Map<String, dynamic>> childrenMap = [];
+    final count = children.length;
+    for (int childIndex = 0; childIndex < count; childIndex++) {
+      final child = children[childIndex];
+      childrenMap.add(child.asMap);
+    }
+    Map<String, dynamic> map = {_operatorAsString(operator): childrenMap};
+
+    return map;
+  }
 }
 
 class RelationFilter implements Filter {
@@ -175,4 +194,7 @@ class RelationFilter implements Filter {
       {required this.propertyName, required this.linkedObjectFilter});
   @override
   String get asJSON => '{ "$propertyName": ${linkedObjectFilter.asJSON}}';
+
+  @override
+  Map<String, dynamic> get asMap => {propertyName: linkedObjectFilter.asMap};
 }

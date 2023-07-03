@@ -300,4 +300,7 @@ class MockDirectusApi with MockMixin implements IDirectusAPI {
 
   @override
   String? get accessToken => "accessToken";
+
+  @override
+  String? get refreshToken => "refreshToken";
 }
