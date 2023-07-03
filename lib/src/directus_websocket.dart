@@ -50,23 +50,22 @@ class DirectusWebSocket {
       _subscribe();
     }
 
-    if (data["type"] == "subscribe") {
+    if (data["type"] == "subscription") {
       // Find the subscription that matches the data
       final subscription = subscriptionDataList.firstWhere(
           (element) => element.uid == data["uid"],
           orElse: () =>
               throw Exception("No subscription found for uid ${data["uid"]}"));
 
-      if (data["type"] == "subscribe" &&
-          (data["event"] == "init" || data["event"] == "create")) {
+      if (data["event"] == "init" || data["event"] == "create") {
         subscription.onCreate!(data);
       }
 
-      if (data["type"] == "subscribe" && data["event"] == "update") {
+      if (data["event"] == "update") {
         subscription.onUpdate!(data);
       }
 
-      if (data["type"] == "subscribe" && data["event"] == "delete") {
+      if (data["event"] == "delete") {
         subscription.onDelete!(data);
       }
     }
