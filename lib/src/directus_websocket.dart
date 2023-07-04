@@ -26,28 +26,29 @@ class DirectusWebSocket {
     }
   }
 
-  listenSocket(dynamic message) async {
+  listenSocket(dynamic message) {
     final Map<String, dynamic> data = jsonDecode(message);
 
     // Handle the ping pong request to keep the connection alive
     if (data["type"] == "ping") {
       _channel.sink.add(jsonEncode({"type": "pong"}));
+      return "pong sent";
     }
 
     // Handle the auth request
     if (data["type"] == "auth" &&
         data["status"] == "error" &&
         data["error"]["code"] == "TOKEN_EXPIRED") {
-      _sendRefreshTokenRequest();
+      return _sendRefreshTokenRequest();
     }
 
     // Handle the auth request
     if (data["type"] == "auth" && data["status"] == 'ok') {
       if (data.containsKey("refresh_token")) {
         apiManager.refreshToken = data["refresh_token"];
+      } else {
+        return _subscribe();
       }
-
-      _subscribe();
     }
 
     if (data["type"] == "subscription") {
@@ -58,36 +59,42 @@ class DirectusWebSocket {
               throw Exception("No subscription found for uid ${data["uid"]}"));
 
       if (data["event"] == "init" || data["event"] == "create") {
-        subscription.onCreate!(data);
+        return subscription.onCreate!(data);
       }
 
       if (data["event"] == "update") {
-        subscription.onUpdate!(data);
+        return subscription.onUpdate!(data);
       }
 
       if (data["event"] == "delete") {
-        subscription.onDelete!(data);
+        return subscription.onDelete!(data);
       }
     }
   }
 
-  _subscribe() {
+  String _subscribe() {
     for (var subscriptionData in subscriptionDataList) {
       _channel.sink.add(subscriptionData.toJson());
     }
+
+    return "subscription request sent";
   }
 
-  _authenticateWebSocket() {
+  String _authenticateWebSocket() {
     _channel.sink.add(jsonEncode({
       "type": "auth",
       "access_token": apiManager.accessToken,
     }));
+
+    return "auth request sent";
   }
 
-  _sendRefreshTokenRequest() {
+  String _sendRefreshTokenRequest() {
     _channel.sink.add(jsonEncode({
       "type": "auth",
       "refresh_token": apiManager.refreshToken,
     }));
+
+    return "refresh token request sent";
   }
 }
