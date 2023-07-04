@@ -97,5 +97,57 @@ main() {
       sut.listenSocket(message);
       expect(sut.apiManager.refreshToken, "newRefreshToken");
     });
+
+    test("Socket receive init message with no onCreated must throw an error",
+        () {
+      sut = DirectusWebSocket(
+          apiManager: DirectusApiManager(baseURL: "http://api.com:8055"),
+          subscriptionDataList: [
+            DirectusWebSocketSubscription<DirectusItemTest>(
+                uid: "itemTest", onDelete: onDelete)
+          ]);
+      final String message =
+          '{"type":"subscription","event":"init","data":[{"id":"abc-123","uploaded_by":{"id":"123456"}},{"id":"abc-123","uploaded_by":{"id":"123456"}}],"uid":"itemTest"}';
+      expect(() => sut.listenSocket(message), throwsException);
+    });
+
+    test("Socket receive create message with no onCreated must throw an error",
+        () {
+      sut = DirectusWebSocket(
+          apiManager: DirectusApiManager(baseURL: "http://api.com:8055"),
+          subscriptionDataList: [
+            DirectusWebSocketSubscription<DirectusItemTest>(
+                uid: "itemTest", onDelete: onDelete)
+          ]);
+      final String message =
+          '{"type":"subscription","event":"create","data":[{"id":"abc-123","uploaded_by":{"id":"123456"}},{"id":"abc-123","uploaded_by":{"id":"123456"}}],"uid":"itemTest"}';
+      expect(() => sut.listenSocket(message), throwsException);
+    });
+
+    test("Socket receive update message with no onUpdate must throw an error",
+        () {
+      sut = DirectusWebSocket(
+          apiManager: DirectusApiManager(baseURL: "http://api.com:8055"),
+          subscriptionDataList: [
+            DirectusWebSocketSubscription<DirectusItemTest>(
+                uid: "itemTest", onCreate: onCreate)
+          ]);
+      final String message =
+          '{"type":"subscription","event":"update","data":[{"id":"abc-123","uploaded_by":{"id":"123456"}},{"id":"abc-123","uploaded_by":{"id":"123456"}}],"uid":"itemTest"}';
+      expect(() => sut.listenSocket(message), throwsException);
+    });
+
+    test("Socket receive delete message with no onDelete must throw an error",
+        () {
+      final String message =
+          '{"type":"subscription","event":"delete","data":[{"id":"abc-123","uploaded_by":{"id":"123456"}},{"id":"abc-123","uploaded_by":{"id":"123456"}}],"uid":"itemTest"}';
+      sut = DirectusWebSocket(
+          apiManager: DirectusApiManager(baseURL: "http://api.com:8055"),
+          subscriptionDataList: [
+            DirectusWebSocketSubscription<DirectusItemTest>(
+                uid: "itemTest", onCreate: onCreate)
+          ]);
+      expect(() => sut.listenSocket(message), throwsException);
+    });
   });
 }

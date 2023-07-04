@@ -58,16 +58,31 @@ class DirectusWebSocket {
           orElse: () =>
               throw Exception("No subscription found for uid ${data["uid"]}"));
 
-      if (data["event"] == "init" || data["event"] == "create") {
-        return subscription.onCreate!(data);
+      if ((data["event"] == "init" || data["event"] == "create")) {
+        final onCreate = subscription.onCreate;
+        if (onCreate == null) {
+          throw Exception("onCreate callback can not be null");
+        } else {
+          return onCreate(data);
+        }
       }
 
       if (data["event"] == "update") {
-        return subscription.onUpdate!(data);
+        final onUpdate = subscription.onUpdate;
+        if (onUpdate == null) {
+          throw Exception("onUpdate callback can not be null");
+        } else {
+          return onUpdate(data);
+        }
       }
 
       if (data["event"] == "delete") {
-        return subscription.onDelete!(data);
+        final onDelete = subscription.onDelete;
+        if (onDelete == null) {
+          throw Exception("onDelete callback can not be null");
+        } else {
+          return onDelete(data);
+        }
       }
     }
   }

@@ -53,6 +53,13 @@ main() {
       expect(sut.webSocketBaseUrl, "wss://api.com/websocket");
     });
 
+    test("URL for websocket with invalid url", () {
+      final mockClient = MockHTTPClient();
+      DirectusApiManager sut =
+          DirectusApiManager(baseURL: "invalidUrl", httpClient: mockClient);
+      expect(() => sut.webSocketBaseUrl, throwsException);
+    });
+
     test(
         'Empty manager with successfull refresh token load should be able to load current user',
         () async {

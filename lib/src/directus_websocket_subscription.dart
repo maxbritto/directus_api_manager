@@ -65,9 +65,10 @@ class DirectusWebSocketSubscription<Type extends DirectusData> {
       query["filter"] = filterAsJson;
     }
 
-    if (sort != null && sort!.isNotEmpty) {
+    final sort = this.sort;
+    if (sort != null && sort.isNotEmpty) {
       query["sort"] =
-          sort!.map((e) => e.ascending ? e.name : "-${e.name}").toList();
+          sort.map((e) => e.ascending ? e.name : "-${e.name}").toList();
     }
 
     result["query"] = query;
@@ -86,18 +87,20 @@ class DirectusWebSocketSubscription<Type extends DirectusData> {
   }
 
   List<String> get fieldsToJson {
+    final fields = this.fields;
     if (fields != null) {
-      return fields!;
+      return fields;
     }
 
     return collectionMetadata.defaultFields.split(",");
   }
 
   Map<String, dynamic>? get filterToJson {
+    final filter = this.filter;
     if (filter == null) {
       return null;
     }
 
-    return filter!.asMap;
+    return filter.asMap;
   }
 }
