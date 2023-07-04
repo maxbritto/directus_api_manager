@@ -129,5 +129,19 @@ main() {
       expect(temp.toJson(),
           '{"type":"subscribe","collection":"itemTest","query":{"fields":["id","name"],"filter":{"id":{"_eq":"123-abc"}},"sort":["id"],"limit":2,"offset":2},"uid":"itemTest"}');
     });
+
+    test("toJson for directus_files end point", () {
+      sut = DirectusWebSocketSubscription<DirectusFile>(
+          uid: "itemTest", fields: ["id", "name"], onCreate: callBack);
+      expect(sut.toJson(),
+          '{"type":"subscribe","collection":"directus_files","query":{"fields":["id","name"]},"uid":"itemTest"}');
+    });
+
+    test("toJson for directus_users end point", () {
+      sut = DirectusWebSocketSubscription<DirectusUser>(
+          uid: "itemTest", fields: ["id", "name"], onCreate: callBack);
+      expect(sut.toJson(),
+          '{"type":"subscribe","collection":"directus_users","query":{"fields":["id","name"]},"uid":"itemTest"}');
+    });
   });
 }

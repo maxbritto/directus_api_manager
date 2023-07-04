@@ -2,7 +2,10 @@ import 'package:directus_api_manager/directus_api_manager.dart';
 import 'package:directus_api_manager/src/model/directus_data.dart';
 
 @DirectusCollection()
-@CollectionMetadata(endpointName: "files", endpointPrefix: "/")
+@CollectionMetadata(
+    endpointName: "files",
+    endpointPrefix: "/",
+    webSocketEndPoint: "directus_files")
 class DirectusFile extends DirectusData {
   static String? baseUrl;
 

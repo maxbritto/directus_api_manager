@@ -2,7 +2,10 @@ import 'package:directus_api_manager/src/annotations.dart';
 import 'package:directus_api_manager/src/model/directus_data.dart';
 
 @DirectusCollection()
-@CollectionMetadata(endpointName: "users", endpointPrefix: "/")
+@CollectionMetadata(
+    endpointName: "users",
+    endpointPrefix: "/",
+    webSocketEndPoint: "directus_users")
 class DirectusUser extends DirectusData {
   String get email => getValue(forKey: "email");
   set email(String value) => setValue(value, forKey: "email");
