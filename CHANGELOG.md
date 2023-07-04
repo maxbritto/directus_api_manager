@@ -44,4 +44,5 @@ Bug Fix :
 
 This version add some new features :
 
+-    add web socket support
 -    expose the refresh token
