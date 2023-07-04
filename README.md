@@ -189,13 +189,13 @@ final updatedPlayer = await apiManager.updateItem(objectToUpdate: onePlayer);
 
 ### DirectusWebSocket
 
-`DirectusWebSocket` allow to consume data from Directus via a WebSocket. It will handle the authentication, the refresh token process and keep the connection alive. Each `DirectusWebSocket` can have more the one `DirectusWebSocketSubscription`.
+`DirectusWebSocket` allow to consume data from Directus via a WebSocket. It will handle the authentication, the refresh token process and keep the connection alive. Each `DirectusWebSocket` can have more than one `DirectusWebSocketSubscription`.
 
 ### DirectusWebSocketSubscription
 
 `DirectusWebSocketSubscription` represent a subscription to your Directus server. Here are the mandatory properties to use it :
 
--    `uid` must be specifiy. When the server will send a message, this uid will be provided. This allow us to know from which subscription this message came from.
+-    `uid` must be specified. When the server will send a message, this uid will be provided. This allow us to know from which subscription this message came from.
 -    `onCreate`, `onUpdate`, `onDelete` callbacks are trigger when a subscription receive a subscription message. They are all optional but the `DirectusWebSocketSubscription` must have at least one of them.
 
 ```dart
