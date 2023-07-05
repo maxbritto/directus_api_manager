@@ -87,6 +87,10 @@ class DirectusWebSocket {
     }
   }
 
+  disconnect() {
+    _channel.sink.close();
+  }
+
   String _subscribe() {
     for (var subscriptionData in subscriptionDataList) {
       _channel.sink.add(subscriptionData.toJson());
