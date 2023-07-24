@@ -17,6 +17,14 @@ void main() {
     return directusApi;
   }
 
+  group("DirectusAPI Getter", () {
+    test("Get access token", () {
+      final sut = makeAuthenticatedDirectusAPI();
+      expect(sut.accessToken, "ABCD.1234.ABCD");
+      expect(sut.shouldRefreshToken, false);
+    });
+  });
+
   group("DirectusAPI Data Management", () {
     test('Get list of items request', () {
       final sut = makeAuthenticatedDirectusAPI();
@@ -286,6 +294,7 @@ void main() {
       String? savedToken;
       final sut = DirectusAPI("http://api.com",
           saveRefreshTokenCallback: (t) async => savedToken = t);
+      expect(sut.hasLoggedInUser, false);
       final response = Response("""
       {"data":{"access_token":"ABCD.1234.ABCD","expires":900000,"refresh_token":"REFRESH.TOKEN.5678"}}
       """, 200);
@@ -297,6 +306,7 @@ void main() {
           reason:
               "We passed a save function for refresh token, it should be used");
       expect(sut.shouldRefreshToken, false);
+      expect(sut.hasLoggedInUser, true);
     });
 
     test('Failed Login response', () {

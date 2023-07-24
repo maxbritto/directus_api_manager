@@ -24,6 +24,29 @@ class DirectusApiManager implements IDirectusApiManager {
 
   DirectusUser? _currentUser;
 
+  @override
+  bool get shouldRefreshToken => _api.shouldRefreshToken;
+  @override
+  String? get accessToken => _api.accessToken;
+
+  @override
+  String? get refreshToken => _api.refreshToken;
+  set refreshToken(String? value) => _api.refreshToken = value;
+
+  @override
+  String get webSocketBaseUrl {
+    // Remove last / if present
+    String url = _api.baseUrl;
+    if (url.endsWith("/")) {
+      url = url.substring(0, _api.baseUrl.length - 1);
+    }
+    if (url.startsWith("http")) {
+      return "${url.replaceFirst("http", "ws")}/websocket";
+    }
+
+    throw Exception("Invalid base URL");
+  }
+
   /// Creates a new DirectusApiManager instance.
   /// [baseURL] : The base URL of the Directus instance
   /// [httpClient] : The HTTP client to use. If not provided, a new [Client] will be created.
@@ -56,7 +79,7 @@ class DirectusApiManager implements IDirectusApiManager {
       required ResponseType Function(Response) parseResponse,
       bool dependsOnToken = true}) async {
     if (dependsOnToken && _api.shouldRefreshToken) {
-      await _tryAndRefreshToken();
+      await tryAndRefreshToken();
     }
     final request = prepareRequest();
     BaseRequest r;
@@ -81,7 +104,8 @@ class DirectusApiManager implements IDirectusApiManager {
   }
 
   Future? _refreshTokenLock;
-  Future<bool> _tryAndRefreshToken() async {
+  @override
+  Future<bool> tryAndRefreshToken() async {
     bool tokenRefreshed = false;
     final completer = Completer();
     final lock = _refreshTokenLock;
@@ -452,14 +476,16 @@ class DirectusApiManager implements IDirectusApiManager {
       required String filename,
       String? title,
       String? contentType,
-      String? folder}) {
+      String? folder,
+      String storage = "local"}) {
     return _sendRequest(
         prepareRequest: () => _api.prepareNewFileUploadRequest(
             fileBytes: fileBytes,
             filename: filename,
             title: title,
             contentType: contentType,
-            folder: folder),
+            folder: folder,
+            storage: storage),
         parseResponse: (response) => _api.parseFileUploadResponse(response));
   }
 

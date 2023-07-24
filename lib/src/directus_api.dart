@@ -12,8 +12,11 @@ import 'package:http_parser/http_parser.dart';
 abstract class IDirectusAPI {
   bool get hasLoggedInUser;
   bool get shouldRefreshToken;
-
+  String? get accessToken;
   String? get currentAuthToken;
+  String? get refreshToken;
+  set refreshToken(String? value);
+  String get baseUrl;
 
   BaseRequest authenticateRequest(BaseRequest request);
   BaseRequest prepareGetCurrentUserRequest({String fields = "*"});
@@ -82,7 +85,8 @@ abstract class IDirectusAPI {
       String? title,
       String? contentType,
       required String filename,
-      String? folder});
+      String? folder,
+      String storage = "local"});
   BaseRequest prepareUpdateFileRequest(
       {required fileId,
       List<int>? fileBytes,
@@ -101,8 +105,14 @@ abstract class IDirectusAPI {
 
 class DirectusAPI implements IDirectusAPI {
   String _baseURL;
+  @override
+  String get baseUrl => _baseURL;
+
   String? _accessToken;
   String? _refreshToken;
+  @override
+  set refreshToken(String? value) => _refreshToken = value;
+
   DateTime? _accessTokenExpirationDate;
   final Future<void> Function(String)? _saveRefreshTokenCallback;
   final Future<String?> Function()? _loadRefreshTokenCallback;
@@ -118,7 +128,9 @@ class DirectusAPI implements IDirectusAPI {
   }
 
   String get baseURL => _baseURL;
+  @override
   String? get accessToken => _accessToken;
+  @override
   String? get refreshToken => _refreshToken;
 
   @override
@@ -139,7 +151,7 @@ class DirectusAPI implements IDirectusAPI {
 
   @override
   Request prepareLoginRequest(String username, String password) {
-    final request = Request("POST", Uri.parse(_baseURL + "/auth/login"));
+    final request = Request("POST", Uri.parse("$_baseURL/auth/login"));
     final credentials = {};
     credentials["email"] = username;
     credentials["password"] = password;
@@ -221,7 +233,7 @@ class DirectusAPI implements IDirectusAPI {
     Request? request;
     final refreshToken = _refreshToken;
     if (refreshToken != null && refreshToken.isNotEmpty) {
-      request = Request("POST", Uri.parse(_baseURL + "/auth/refresh"));
+      request = Request("POST", Uri.parse("$_baseURL/auth/refresh"));
       request.body = jsonEncode({"refresh_token": refreshToken});
       request.addJsonHeaders();
     }
@@ -259,7 +271,7 @@ class DirectusAPI implements IDirectusAPI {
     Request? logoutRequest;
     Request? tokenRefreshRequest = _prepareStokedRefreshTokenRequest();
     if (tokenRefreshRequest != null) {
-      logoutRequest = Request("POST", Uri.parse(_baseURL + "/auth/logout"));
+      logoutRequest = Request("POST", Uri.parse("$_baseURL/auth/logout"));
       logoutRequest.body = tokenRefreshRequest.body;
       logoutRequest.addJsonHeaders();
     }
@@ -306,7 +318,7 @@ class DirectusAPI implements IDirectusAPI {
       List<SortProperty>? sortBy,
       int? limit,
       int? offset}) {
-    final urlBuilder = StringBuffer(_baseURL + "$path?fields=$fields");
+    final urlBuilder = StringBuffer("$_baseURL$path?fields=$fields");
     if (filter != null) {
       urlBuilder.write("&filter=${Uri.encodeQueryComponent(filter.asJSON)}");
     }
@@ -314,7 +326,7 @@ class DirectusAPI implements IDirectusAPI {
       urlBuilder.write("&limit=$limit");
     }
     if (sortBy != null && sortBy.isNotEmpty) {
-      urlBuilder.write("&sort=" + sortBy.join(","));
+      urlBuilder.write("&sort=${sortBy.join(",")}");
     }
 
     if (offset != null) {
@@ -443,8 +455,8 @@ class DirectusAPI implements IDirectusAPI {
       required String endpointPrefix,
       required List<dynamic> itemIdList,
       required bool mustBeAuthenticated}) {
-    Request request =
-        Request("DELETE", Uri.parse("$_baseURL/items/$endpointName"));
+    Request request = Request("DELETE",
+        Uri.parse("$_baseURL$endpointPrefix$endpointName/$endpointName"));
     request.body = jsonEncode(itemIdList);
     request.addJsonHeaders();
     log(request.body);
@@ -458,24 +470,32 @@ class DirectusAPI implements IDirectusAPI {
   @override
   DirectusFile parseFileUploadResponse(Response response) {
     _throwIfServerDeniedRequest(response);
-    return DirectusFile.fromJSON(jsonDecode(response.body)["data"]);
+    return DirectusFile(jsonDecode(response.body)["data"]);
   }
 
   @override
-  BaseRequest prepareNewFileUploadRequest(
-      {required List<int> fileBytes,
-      String? title,
-      String? contentType,
-      required String filename,
-      String? folder}) {
+  BaseRequest prepareNewFileUploadRequest({
+    required List<int> fileBytes,
+    String? title,
+    String? contentType,
+    required String filename,
+    String? folder,
+    String storage = "local",
+  }) {
     return _prepareMultipartFileRequest(
         "POST", "$_baseURL/files", fileBytes, title,
-        contentType: contentType, filename: filename, folder: folder);
+        contentType: contentType,
+        filename: filename,
+        folder: folder,
+        storage: storage);
   }
 
   MultipartRequest _prepareMultipartFileRequest(
       String method, String url, List<int>? fileBytes, String? title,
-      {String? contentType, required String filename, String? folder}) {
+      {String? contentType,
+      required String filename,
+      String? folder,
+      String storage = "local"}) {
     final request = MultipartRequest(method, Uri.parse(url));
     if (title != null) {
       request.fields["title"] = title;
@@ -484,6 +504,8 @@ class DirectusAPI implements IDirectusAPI {
     if (folder != null) {
       request.fields["folder"] = folder;
     }
+
+    request.fields["storage"] = storage;
 
     if (fileBytes != null) {
       request.files.add(MultipartFile.fromBytes("file", fileBytes,

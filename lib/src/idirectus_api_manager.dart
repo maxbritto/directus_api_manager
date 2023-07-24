@@ -45,7 +45,8 @@ abstract class IDirectusApiManager {
       required String filename,
       String? title,
       String? contentType,
-      String? folder});
+      String? folder,
+      String storage});
   Future<DirectusFile> updateExistingFile(
       {required List<int> fileBytes,
       required String fileId,
@@ -55,4 +56,9 @@ abstract class IDirectusApiManager {
   Future<T> sendRequestToEndpoint<T>(
       {required BaseRequest Function() prepareRequest,
       required T Function(Response) jsonConverter});
+  bool get shouldRefreshToken;
+  String? get accessToken;
+  String? get refreshToken;
+  Future<bool> tryAndRefreshToken();
+  String get webSocketBaseUrl;
 }

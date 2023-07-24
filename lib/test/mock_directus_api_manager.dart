@@ -164,7 +164,8 @@ class MockDirectusApiManager extends IDirectusApiManager with MockMixin {
       required String filename,
       String? title,
       String? contentType,
-      String? folder}) {
+      String? folder,
+      String storage = "local"}) {
     addCalledFunction(named: "uploadFile");
     addReceivedObject(fileBytes, name: "fileBytes");
     addReceivedObject(filename, name: "filename");
@@ -183,4 +184,21 @@ class MockDirectusApiManager extends IDirectusApiManager with MockMixin {
     addReceivedObject(folder, name: "folder");
     return Future.value(popNextReturnedObject());
   }
+
+  @override
+  String? get accessToken => "ABCD.1234.ABCD";
+
+  @override
+  bool get shouldRefreshToken => false;
+
+  @override
+  Future<bool> tryAndRefreshToken() {
+    return Future.value(true);
+  }
+
+  @override
+  String? get refreshToken => "refreshToken";
+
+  @override
+  String get webSocketBaseUrl => throw UnimplementedError();
 }

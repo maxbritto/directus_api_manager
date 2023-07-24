@@ -220,13 +220,15 @@ class MockDirectusApi with MockMixin implements IDirectusAPI {
       String? title,
       String? contentType,
       required String filename,
-      String? folder}) {
+      String? folder,
+      String storage = "local"}) {
     addCalledFunction(named: "prepareNewFileUploadRequest");
     addReceivedObject(fileBytes, name: "fileBytes");
     addReceivedObject(title, name: "title");
     addReceivedObject(contentType, name: "contentType");
     addReceivedObject(filename, name: "filename");
     addReceivedObject(folder, name: "folder");
+    addReceivedObject(storage, name: "storage");
     return nextReturnedRequest;
   }
 
@@ -295,4 +297,16 @@ class MockDirectusApi with MockMixin implements IDirectusAPI {
 
   @override
   bool shouldRefreshToken = false;
+
+  @override
+  String? get accessToken => "accessToken";
+
+  @override
+  String? get refreshToken => "refreshToken";
+
+  @override
+  String get baseUrl => "http://api.com";
+
+  @override
+  set refreshToken(String? value) {}
 }
