@@ -257,6 +257,20 @@ void main() {
       expect(() => sut.parseGenericBoolResponse(Response("", 400)),
           throwsException);
     });
+
+    test("Delete multiple items request", () {
+      final sut = makeAuthenticatedDirectusAPI();
+      final request = sut.prepareDeleteMultipleItemRequest(
+          endpointName: "articles",
+          endpointPrefix: "/items/",
+          itemIdList: ["abc-123", "def-456"],
+          mustBeAuthenticated: false) as Request;
+      expect(request.url.toString(), "http://api.com/items/articles");
+      expect(request.method, "DELETE");
+      expect(
+          request.headers["Content-Type"], "application/json; charset=utf-8");
+      expect(request.body, jsonEncode(["abc-123", "def-456"]));
+    });
   });
   group('DirectusAPI Users management', () {
     test('Correct initialization', () {

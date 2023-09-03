@@ -455,8 +455,8 @@ class DirectusAPI implements IDirectusAPI {
       required String endpointPrefix,
       required List<dynamic> itemIdList,
       required bool mustBeAuthenticated}) {
-    Request request = Request("DELETE",
-        Uri.parse("$_baseURL$endpointPrefix$endpointName/$endpointName"));
+    Request request =
+        Request("DELETE", Uri.parse("$_baseURL$endpointPrefix$endpointName"));
     request.body = jsonEncode(itemIdList);
     request.addJsonHeaders();
     log(request.body);
