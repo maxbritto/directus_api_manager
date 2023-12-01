@@ -1,12 +1,12 @@
 name: directus_api_manager
 description: Communicate with a Directus server using its REST API.
-version: 1.7.1
+version: 1.7.2
 
 environment:
      sdk: ">=2.14.3 <3.0.0"
 
 dependencies:
-     http: ^0.13.4
+     http: ">=0.13.4 <2.0.0"
      http_parser: ^4.0.2
      reflectable: ^4.0.5
      web_socket_channel: ^2.4.0
