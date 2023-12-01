@@ -51,14 +51,14 @@ main() {
     final sut = PropertyFilter(
         field: "title", operator: FilterOperator.oneOf, value: [1, 2, 3]);
     final json = sut.asJSON;
-    expect(json, '{ "title": { "_in": [1, 2, 3] }}');
+    expect(json, '{ "title": { "_in": [1,2,3] }}');
   });
 
   test('PropertyFilter is not one of', () {
     final sut = PropertyFilter(
         field: "title", operator: FilterOperator.notOneOf, value: [1, 2, 3]);
     final json = sut.asJSON;
-    expect(json, '{ "title": { "_nin": [1, 2, 3] }}');
+    expect(json, '{ "title": { "_nin": [1,2,3] }}');
   });
 
   test('PropertyFilter isNull', () {
@@ -121,14 +121,14 @@ main() {
     final sut = PropertyFilter(
         field: "score", operator: FilterOperator.between, value: [10, 100]);
     final json = sut.asJSON;
-    expect(json, '{ "score": { "_between": [10, 100] }}');
+    expect(json, '{ "score": { "_between": [10,100] }}');
   });
 
   test('PropertyFilter not between', () {
     final sut = PropertyFilter(
         field: "score", operator: FilterOperator.notBetween, value: [10, 100]);
     final json = sut.asJSON;
-    expect(json, '{ "score": { "_nbetween": [10, 100] }}');
+    expect(json, '{ "score": { "_nbetween": [10,100] }}');
   });
 
   test('PropertyFilter between system variables', () {
@@ -138,7 +138,7 @@ main() {
         value: ["\$NOW", "\$NOW(+2 weeks)"]);
     final json = sut.asJSON;
     expect(
-        json, '{ "start_date": { "_between": ["\$NOW", "\$NOW(+2 weeks)"] }}');
+        json, '{ "start_date": { "_between": ["\$NOW","\$NOW(+2 weeks)"] }}');
   });
 
   test('PropertyFilter is empty', () {
@@ -211,5 +211,14 @@ main() {
 
     expect(
         json, '{ "words": { "idWord": { "word": { "_contains": "zelda" }}}}');
+  });
+
+  test('PropertyFilter with json content', () {
+    final sut = PropertyFilter(
+        field: "json",
+        operator: FilterOperator.equals,
+        value: '{"key": "value"}');
+    final json = sut.asJSON;
+    expect(json, '{ "json": { "_eq": "{\\"key\\": \\"value\\"}" }}');
   });
 }

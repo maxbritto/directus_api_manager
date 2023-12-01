@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 enum FilterOperator {
   equals,
   notEqual,
@@ -109,27 +111,7 @@ class PropertyFilter implements Filter {
 
   @override
   String get asJSON =>
-      '{ "$field": { "${_operatorAsString(operator)}": ${_encodeFilteredValue(value)} }}';
-
-  String _encodeFilteredValue(dynamic value) {
-    final builder = StringBuffer();
-    if (value is String) {
-      builder.write('"$value"');
-    } else if (value is Iterable) {
-      builder.write('[');
-      for (int index = 0; index < value.length; index++) {
-        final child = value.elementAt(index);
-        builder.write(_encodeFilteredValue(child));
-        if (index < value.length - 1) {
-          builder.write(", ");
-        }
-      }
-      builder.write(']');
-    } else {
-      builder.write(value);
-    }
-    return builder.toString();
-  }
+      '{ "$field": { "${_operatorAsString(operator)}": ${jsonEncode(value)} }}';
 
   @override
   Map<String, dynamic> get asMap => {
