@@ -51,8 +51,6 @@ class DirectusWebSocketSubscription<Type extends DirectusData> {
   }
 
   String toJson() {
-    final String collectionName;
-
     Map<String, Object> result = {
       "type": "subscribe",
       "collection": collectionMetadata.webSocketEndpoint,

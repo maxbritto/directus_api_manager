@@ -1,5 +1,4 @@
 import 'package:directus_api_manager/directus_api_manager.dart';
-import 'package:directus_api_manager/src/model/directus_data.dart';
 import 'package:test/expect.dart';
 import 'package:test/scaffolding.dart';
 
