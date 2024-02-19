@@ -115,6 +115,7 @@ main() {
       expect(mapResult["first_name"], "Luke");
       expect(mapResult["last_name"], "Skywalker");
     });
+
     test('needsSaving on regular properties', () {
       final sut = DirectusUser({
         "id": "abc-123",
@@ -126,6 +127,7 @@ main() {
       sut.firstname = "Luke 2";
       expect(sut.needsSaving, true);
     });
+
     test('needsSaving on custom properties', () {
       final sut = DirectusUser({
         "id": "abc-123",

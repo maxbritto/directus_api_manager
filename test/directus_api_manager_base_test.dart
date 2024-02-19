@@ -96,6 +96,7 @@ main() {
       expect(currentUser, isNotNull);
       expect(currentUser?.email, "will@acn.com");
     });
+
     test('Manager should only load current user once.', () async {
       final mockClient = MockHTTPClient();
       const successLoginResponse = """
@@ -146,6 +147,7 @@ main() {
           reason:
               "Subsequent calls to currentDirectusUser() should not trigger a fetch for user data");
     });
+
     test('Discarding current user cache', () async {
       final mockClient = MockHTTPClient();
       const successLoginResponse = """
@@ -194,6 +196,7 @@ main() {
           reason:
               "Since the cache was discarded, current user should have been refetched on last call");
     });
+
     test('Logged out user should not be fetchable', () async {
       final mockClient = MockHTTPClient();
       const successLoginResponse = """

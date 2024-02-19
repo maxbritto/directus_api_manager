@@ -112,6 +112,16 @@ class MockDirectusApiManager extends IDirectusApiManager with MockMixin {
   }
 
   @override
+  Future<DirectusLoginResult> loginDirectusUserWithOtp(
+      String username, String password, String otp) {
+    addCalledFunction(named: "loginDirectusUserWithOtp");
+    addReceivedObject(username, name: "username");
+    addReceivedObject(password, name: "password");
+    addReceivedObject(otp, name: "otp");
+    return Future.value(popNextReturnedObject());
+  }
+
+  @override
   Future<bool> logoutDirectusUser() {
     addCalledFunction(named: "logoutDirectusUser");
     return Future.value(popNextReturnedObject());
