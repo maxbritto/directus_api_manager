@@ -12,6 +12,8 @@ Future<void> main() async {
     print("User logged in");
   } else if (loginResult.type == DirectusLoginResultType.invalidCredentials) {
     print("Please verify entered credentials");
+  } else if (loginResult.type == DirectusLoginResultType.invalidOTP) {
+    print("You need to provide a valid OneTimePassword code");
   } else if (loginResult.type == DirectusLoginResultType.error) {
     print("An unknown error occured");
     final additionalMessage = loginResult.message;

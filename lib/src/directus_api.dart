@@ -71,7 +71,8 @@ abstract class IDirectusAPI {
   BaseRequest? prepareLogoutRequest();
   bool parseLogoutResponse(Response response);
 
-  Request prepareLoginRequest(String username, String password);
+  Request prepareLoginRequest(
+      String username, String password, {String? oneTimePassword});
   DirectusLoginResult parseLoginResponse(Response response);
 
   Request prepareUserInviteRequest(String email, String roleId);
@@ -150,11 +151,15 @@ class DirectusAPI implements IDirectusAPI {
   }
 
   @override
-  Request prepareLoginRequest(String username, String password) {
+  Request prepareLoginRequest(String username, String password,
+      {String? oneTimePassword}) {
     final request = Request("POST", Uri.parse("$_baseURL/auth/login"));
     final credentials = {};
     credentials["email"] = username;
     credentials["password"] = password;
+    if (oneTimePassword != null) {
+      credentials["otp"] = oneTimePassword;
+    }
     request.body = jsonEncode(credentials);
     request.addJsonHeaders();
     return request;
@@ -184,8 +189,14 @@ class DirectusAPI implements IDirectusAPI {
     _refreshToken = null;
     if (response.statusCode != 200) {
       if (response.statusCode == 401) {
-        return const DirectusLoginResult(
-            DirectusLoginResultType.invalidCredentials);
+        final errorCode =
+            jsonDecode(response.body)["errors"][0]["extensions"]["code"];
+        if (errorCode == "INVALID_OTP") {
+          return DirectusLoginResult(DirectusLoginResultType.invalidOTP,
+              message: _extractErrorMessageFromResponse(response));
+        }
+        return DirectusLoginResult(DirectusLoginResultType.invalidCredentials,
+            message: _extractErrorMessageFromResponse(response));
       } else {
         return DirectusLoginResult(DirectusLoginResultType.error,
             message: _extractErrorMessageFromResponse(response));

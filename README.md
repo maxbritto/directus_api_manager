@@ -122,6 +122,10 @@ if (result.type == DirectusLoginResultType.success) {
   print("User logged in");
 } else if (result.type == DirectusLoginResultType.invalidCredentials) {
   print("Please verify entered credentials");
+} else if (result.type == DirectusLoginResultType.invalidOTP) {
+  print("Please provide OTP");
+  // Keep email and password for the next screen or extra field and resumit using
+  // await apiManager.loginDirectusUserWithOtp("will@acn.com", "will-password", "123456");
 } else if (result.type == DirectusLoginResultType.error) {
   print("An unknown error occured");
   final additionalMessage = result.message;
@@ -129,6 +133,12 @@ if (result.type == DirectusLoginResultType.success) {
     print("More information : $additionalMessage");
   }
 }
+```
+
+If the user's login requires MFA/OTP, you should present an extra field or page to the user to complete, and resend the authentification to the `loginDirectusUserWithOtp` method:
+
+```dart
+final result = await apiManager.loginDirectusUserWithOtp("will@acn.com", "will-password", "123456");
 ```
 
 All future request of this `apiManager` instance will include this user token.

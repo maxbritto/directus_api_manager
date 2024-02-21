@@ -131,6 +131,7 @@ void main() {
       expect(request.method, "GET");
       expect(request.headers["Authorization"], "Bearer $defaultAccessToken");
     });
+
     test('Get list of items with filter that includes special characters', () {
       final sut = makeAuthenticatedDirectusAPI();
       final request = sut.prepareGetListOfItemsRequest(
@@ -192,6 +193,7 @@ void main() {
       expect(jsonParsedBody["pageCount"], 10);
       expect(jsonParsedBody["creationDate"], "2022-01-02T03:04:05.000");
     });
+
     test('New user request', () {
       final sut = makeAuthenticatedDirectusAPI();
       final request = sut.prepareCreateNewItemRequest(
@@ -243,12 +245,14 @@ void main() {
       expect(request.url.toString(), "http://api.com/items/articles/abc-123");
       expect(request.method, "DELETE");
     });
+
     test('Delete Item ok responses', () {
       final sut = makeAuthenticatedDirectusAPI();
 
       expect(sut.parseGenericBoolResponse(Response("", 200)), true);
       expect(sut.parseGenericBoolResponse(Response("", 299)), true);
     });
+
     test('Delete Item denied responses', () {
       final sut = makeAuthenticatedDirectusAPI();
 
@@ -272,6 +276,7 @@ void main() {
       expect(request.body, jsonEncode(["abc-123", "def-456"]));
     });
   });
+
   group('DirectusAPI Users management', () {
     test('Correct initialization', () {
       expect(DirectusAPI("http://api.com").baseURL, "http://api.com");
@@ -289,6 +294,20 @@ void main() {
       final jsonParsedBody = jsonDecode(request.body);
       expect(jsonParsedBody["email"], "will@acn.com");
       expect(jsonParsedBody["password"], "mc!avoy");
+    });
+
+    test('Login request with OneTimePassword', () {
+      final sut = DirectusAPI("http://api.com");
+      final request = sut.prepareLoginRequest("will@acn.com", "mc!avoy",
+          oneTimePassword: "123456");
+      expect(request.url.toString(), "http://api.com/auth/login");
+      expect(request.method, "POST");
+      expect(
+          request.headers["Content-Type"], "application/json; charset=utf-8");
+      final jsonParsedBody = jsonDecode(request.body);
+      expect(jsonParsedBody["email"], "will@acn.com");
+      expect(jsonParsedBody["password"], "mc!avoy");
+      expect(jsonParsedBody["otp"], "123456");
     });
 
     test('Invite request', () {
@@ -314,6 +333,7 @@ void main() {
       """, 200);
       final loginResponse = sut.parseLoginResponse(response);
       expect(loginResponse.type, DirectusLoginResultType.success);
+      expect(loginResponse.message, isNull);
       expect(sut.accessToken, "ABCD.1234.ABCD");
       expect(sut.refreshToken, "REFRESH.TOKEN.5678");
       expect(savedToken, "REFRESH.TOKEN.5678",
@@ -330,6 +350,20 @@ void main() {
       """, 401);
       final loginResponse = sut.parseLoginResponse(response);
       expect(loginResponse.type, DirectusLoginResultType.invalidCredentials);
+      expect(loginResponse.message, "Invalid user credentials.\n");
+      expect(sut.accessToken, isNull);
+      expect(sut.refreshToken, isNull);
+      expect(sut.shouldRefreshToken, false);
+    });
+
+    test('Login with invalid OneTimePassword response', () {
+      final sut = DirectusAPI("http://api.com");
+      final response = Response("""
+      {"errors":[{"message":"Invalid user OTP.","extensions":{"code":"INVALID_OTP"}}]}
+      """, 401);
+      final loginResponse = sut.parseLoginResponse(response);
+      expect(loginResponse.type, DirectusLoginResultType.invalidOTP);
+      expect(loginResponse.message, "Invalid user OTP.\n");
       expect(sut.accessToken, isNull);
       expect(sut.refreshToken, isNull);
       expect(sut.shouldRefreshToken, false);
@@ -348,7 +382,7 @@ void main() {
       expect(sut.shouldRefreshToken, false);
     });
 
-    test('Error during Login response', () {
+    test('Error during Login response - bad json', () {
       final sut = DirectusAPI("http://api.com");
       final response = Response("""
       {"data":{"weird_json":"ABCD.1234.ABCD","fake_key":900000,"tok_tok":"REFRESH.TOKEN.5678"}}
@@ -366,6 +400,7 @@ void main() {
       final request = await sut.prepareRefreshTokenRequest();
       expect(request, isNull, reason: "No refresh token is available");
     });
+
     test('Valid Refresh Token request', () async {
       final sut = makeAuthenticatedDirectusAPI();
       final request = await sut.prepareRefreshTokenRequest();
@@ -567,6 +602,7 @@ void main() {
       expect(jsonParsedBody.containsKey("score"), false,
           reason: "Only modified properties should be sent");
     });
+
     test('Update User request with no modification', () {
       final sut = makeAuthenticatedDirectusAPI();
       final user = DirectusUser({
@@ -588,6 +624,7 @@ void main() {
       final jsonParsedBody = jsonDecode(request.body) as Map;
       expect(jsonParsedBody, isEmpty);
     });
+
     test('Request user password reset', () {
       final sut = makeAuthenticatedDirectusAPI();
 
@@ -599,6 +636,7 @@ void main() {
       final jsonParsedBody = jsonDecode(request.body) as Map;
       expect(jsonParsedBody["email"], "will@acn.com");
     });
+
     test('Request user password reset with reset url', () {
       final sut = makeAuthenticatedDirectusAPI();
 
@@ -612,6 +650,7 @@ void main() {
       expect(jsonParsedBody["email"], "will@acn.com");
       expect(jsonParsedBody["reset_url"], "https://my-custom-reset-url.com");
     });
+
     test('Request user password change', () {
       final sut = makeAuthenticatedDirectusAPI();
 
@@ -651,6 +690,7 @@ void main() {
       final uploadedFileData = multipartRequest.files[0];
       expect(uploadedFileData.filename, "file.txt");
     });
+
     test("contentType", () {
       final sut = makeAuthenticatedDirectusAPI();
       final request = sut.prepareNewFileUploadRequest(
@@ -659,6 +699,7 @@ void main() {
       final multipartRequest = request as MultipartRequest;
       expect(multipartRequest.files[0].contentType.mimeType, "image/jpg");
     });
+
     test("wildcard contentType", () {
       final sut = makeAuthenticatedDirectusAPI();
       final request = sut.prepareNewFileUploadRequest(
@@ -667,6 +708,7 @@ void main() {
       final multipartRequest = request as MultipartRequest;
       expect(multipartRequest.files[0].contentType.mimeType, "image/*");
     });
+
     test("Title", () {
       final sut = makeAuthenticatedDirectusAPI();
       final request = sut.prepareNewFileUploadRequest(
@@ -675,6 +717,7 @@ void main() {
       final multipartRequest = request as MultipartRequest;
       expect(multipartRequest.fields["title"], "File title");
     });
+
     test("Folder", () {
       final sut = makeAuthenticatedDirectusAPI();
       final request = sut.prepareNewFileUploadRequest(
@@ -683,6 +726,7 @@ void main() {
       final multipartRequest = request as MultipartRequest;
       expect(multipartRequest.fields["folder"], "Folder");
     });
+
     test("File import from URL", () {
       final sut = makeAuthenticatedDirectusAPI();
       final request = sut.prepareFileImportRequest(
