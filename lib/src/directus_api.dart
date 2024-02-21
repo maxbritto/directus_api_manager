@@ -71,9 +71,7 @@ abstract class IDirectusAPI {
   BaseRequest? prepareLogoutRequest();
   bool parseLogoutResponse(Response response);
 
-  Request prepareLoginRequest(String username, String password);
-  Request prepareLoginRequestWithOtp(
-      String username, String password, String otp);
+  Request prepareLoginRequest(String username, String password, String? oneTimePassword);
   DirectusLoginResult parseLoginResponse(Response response);
 
   Request prepareUserInviteRequest(String email, String roleId);
@@ -152,24 +150,14 @@ class DirectusAPI implements IDirectusAPI {
   }
 
   @override
-  Request prepareLoginRequest(String username, String password) {
+  Request prepareLoginRequest(String username, String password, [String? oneTimePassword]) {
     final request = Request("POST", Uri.parse("$_baseURL/auth/login"));
     final credentials = {};
     credentials["email"] = username;
     credentials["password"] = password;
-    request.body = jsonEncode(credentials);
-    request.addJsonHeaders();
-    return request;
-  }
-
-  @override
-  Request prepareLoginRequestWithOtp(
-      String username, String password, String otp) {
-    final request = Request("POST", Uri.parse("$_baseURL/auth/login"));
-    final credentials = {};
-    credentials["email"] = username;
-    credentials["password"] = password;
-    credentials["otp"] = otp;
+    if (oneTimePassword != null) {
+      credentials["otp"] = oneTimePassword;
+    }
     request.body = jsonEncode(credentials);
     request.addJsonHeaders();
     return request;

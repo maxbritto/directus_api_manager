@@ -131,29 +131,15 @@ class DirectusApiManager implements IDirectusApiManager {
     return tokenRefreshed;
   }
 
-  /// Logs in a user with the given [username] and [password].
+  /// Logs in a user with the given [username], [password] and optional [oneTimePassword].
   /// Returns a Future [DirectusLoginResult] object that contains the result of the login attempt.
   @override
   Future<DirectusLoginResult> loginDirectusUser(
-      String username, String password) {
+      String username, String password, [String? oneTimePassword]) {
     discardCurrentUserCache();
     return _sendRequest(
         prepareRequest: () {
-          return _api.prepareLoginRequest(username, password);
-        },
-        dependsOnToken: false,
-        parseResponse: (response) => _api.parseLoginResponse(response));
-  }
-
-  /// Logs in a user with the given [username], [password] and [otp].
-  /// Returns a Future [DirectusLoginResult] object that contains the result of the login attempt.
-  @override
-  Future<DirectusLoginResult> loginDirectusUserWithOtp(
-      String username, String password, String otp) {
-    discardCurrentUserCache();
-    return _sendRequest(
-        prepareRequest: () {
-          return _api.prepareLoginRequestWithOtp(username, password, otp);
+          return _api.prepareLoginRequest(username, password, oneTimePassword);
         },
         dependsOnToken: false,
         parseResponse: (response) => _api.parseLoginResponse(response));

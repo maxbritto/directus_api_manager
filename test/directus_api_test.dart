@@ -144,7 +144,7 @@ void main() {
               operator: FilterOperator.between,
               value: [r"$NOW", r"$NOW(+2 weeks)"]));
       expect(request.url.toString(),
-          r'http://api.com/items/article?fields=*&filter=%7B+%22date%22%3A+%7B+%22_between%22%3A+%5B%22%24NOW%22%2C%22%24NOW%28%2B2+weeks%29%22%5D+%7D%7D');
+          r'http://api.com/items/article?fields=*&filter=%7B+%22date%22%3A+%7B+%22_between%22%3A+%5B%22%24NOW%22%2C+%22%24NOW%28%2B2+weeks%29%22%5D+%7D%7D');
       expect(request.method, "GET");
       expect(request.headers["Authorization"], "Bearer $defaultAccessToken");
     });
@@ -299,9 +299,9 @@ void main() {
       expect(jsonParsedBody["password"], "mc!avoy");
     });
 
-    test('Login request with otp', () {
+    test('Login request with OneTimePassword', () {
       final sut = DirectusAPI("http://api.com");
-      final request = sut.prepareLoginRequestWithOtp("will@acn.com", "mc!avoy", "123456");
+      final request = sut.prepareLoginRequest("will@acn.com", "mc!avoy", "123456");
       expect(request.url.toString(), "http://api.com/auth/login");
       expect(request.method, "POST");
       expect(
@@ -358,7 +358,7 @@ void main() {
       expect(sut.shouldRefreshToken, false);
     });
 
-    test('Login with invalid OTP response', () {
+    test('Login with invalid OneTimePassword response', () {
       final sut = DirectusAPI("http://api.com");
       final response = Response("""
       {"errors":[{"message":"Invalid user OTP.","extensions":{"code":"INVALID_OTP"}}]}

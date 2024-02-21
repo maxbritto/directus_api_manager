@@ -201,20 +201,13 @@ class MockDirectusApi with MockMixin implements IDirectusAPI {
   }
 
   @override
-  Request prepareLoginRequest(String username, String password) {
+  Request prepareLoginRequest(String username, String password, String? oneTimePassword) {
     addCalledFunction(named: "prepareLoginRequest");
     addReceivedObject(username, name: "username");
     addReceivedObject(password, name: "password");
-    return nextReturnedRequest;
-  }
-
-  @override
-  Request prepareLoginRequestWithOtp(
-      String username, String password, String otp) {
-    addCalledFunction(named: "prepareLoginRequestWithOtp");
-    addReceivedObject(username, name: "username");
-    addReceivedObject(password, name: "password");
-    addReceivedObject(otp, name: "otp");
+    if (oneTimePassword != null) {
+      addReceivedObject(oneTimePassword, name: "otp");
+    }
     return nextReturnedRequest;
   }
 
