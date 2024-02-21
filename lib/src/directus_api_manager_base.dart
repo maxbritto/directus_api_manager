@@ -135,11 +135,11 @@ class DirectusApiManager implements IDirectusApiManager {
   /// Returns a Future [DirectusLoginResult] object that contains the result of the login attempt.
   @override
   Future<DirectusLoginResult> loginDirectusUser(
-      String username, String password, [String? oneTimePassword]) {
+      String username, String password, {String? oneTimePassword}) {
     discardCurrentUserCache();
     return _sendRequest(
         prepareRequest: () {
-          return _api.prepareLoginRequest(username, password, oneTimePassword);
+          return _api.prepareLoginRequest(username, password, oneTimePassword: oneTimePassword);
         },
         dependsOnToken: false,
         parseResponse: (response) => _api.parseLoginResponse(response));

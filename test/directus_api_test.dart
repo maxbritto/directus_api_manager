@@ -18,7 +18,6 @@ void main() {
   }
 
   group("DirectusAPI Getter", () {
-
     test("Get access token", () {
       final sut = makeAuthenticatedDirectusAPI();
       expect(sut.accessToken, "ABCD.1234.ABCD");
@@ -27,7 +26,6 @@ void main() {
   });
 
   group("DirectusAPI Data Management", () {
-
     test('Get list of items request', () {
       final sut = makeAuthenticatedDirectusAPI();
       final request = sut.prepareGetListOfItemsRequest(
@@ -280,7 +278,6 @@ void main() {
   });
 
   group('DirectusAPI Users management', () {
-
     test('Correct initialization', () {
       expect(DirectusAPI("http://api.com").baseURL, "http://api.com");
       expect(DirectusAPI("http://api.com/").baseURL, "http://api.com",
@@ -301,7 +298,8 @@ void main() {
 
     test('Login request with OneTimePassword', () {
       final sut = DirectusAPI("http://api.com");
-      final request = sut.prepareLoginRequest("will@acn.com", "mc!avoy", "123456");
+      final request = sut.prepareLoginRequest("will@acn.com", "mc!avoy",
+          oneTimePassword: "123456");
       expect(request.url.toString(), "http://api.com/auth/login");
       expect(request.method, "POST");
       expect(
@@ -682,7 +680,6 @@ void main() {
   });
 
   group("DirectusAPI : Files", () {
-
     test("prepareNewFileUploadRequest", () {
       final sut = makeAuthenticatedDirectusAPI();
       final request = sut.prepareNewFileUploadRequest(

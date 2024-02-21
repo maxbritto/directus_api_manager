@@ -1,3 +1,9 @@
+## 1.7.3 - 2024/02/21
+
+This version add a new feature:
+
+-    add One Time Password login capability
+
 ## 1.7.1 - 2023/09/03
 Bug Fix :
 

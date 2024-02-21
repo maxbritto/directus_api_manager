@@ -4,7 +4,7 @@ import 'package:http/http.dart';
 
 abstract class IDirectusApiManager {
   Future<DirectusLoginResult> loginDirectusUser(
-      String username, String password, String? oneTimePassword);
+      String username, String password, {String? oneTimePassword});
   Future<bool> logoutDirectusUser();
   Future<bool> hasLoggedInUser();
   Future<DirectusUser?> currentDirectusUser({String fields = "*"});
