@@ -33,7 +33,7 @@ abstract class IDirectusApiManager {
           {String? fields, required Iterable<Type> objectList});
 
   Future<Type> updateItem<Type extends DirectusData>(
-      {required Type objectToUpdate, String? fields, bool forceSaving = false});
+      {required Type objectToUpdate, String? fields, bool force = false});
   Future<bool> deleteItem<Type extends DirectusData>(
       {required String objectId, bool mustBeAuthenticated = true});
   Future<bool> deleteMultipleItems<Type extends DirectusData>(
