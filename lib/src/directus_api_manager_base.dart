@@ -135,11 +135,13 @@ class DirectusApiManager implements IDirectusApiManager {
   /// Returns a Future [DirectusLoginResult] object that contains the result of the login attempt.
   @override
   Future<DirectusLoginResult> loginDirectusUser(
-      String username, String password, {String? oneTimePassword}) {
+      String username, String password,
+      {String? oneTimePassword}) {
     discardCurrentUserCache();
     return _sendRequest(
         prepareRequest: () {
-          return _api.prepareLoginRequest(username, password, oneTimePassword: oneTimePassword);
+          return _api.prepareLoginRequest(username, password,
+              oneTimePassword: oneTimePassword);
         },
         dependsOnToken: false,
         parseResponse: (response) => _api.parseLoginResponse(response));
@@ -389,17 +391,21 @@ class DirectusApiManager implements IDirectusApiManager {
 
   @override
   Future<Type> updateItem<Type extends DirectusData>(
-      {required Type objectToUpdate, String? fields}) {
+      {required Type objectToUpdate,
+      String? fields,
+      bool forceSaving = false}) {
     final specificClass = _metadataGenerator.getClassMirrorForType(Type);
     final collectionMetadata = _collectionMetadataFromClass(specificClass);
     try {
-      if (objectToUpdate.needsSaving) {
+      if (objectToUpdate.needsSaving || forceSaving) {
         return _sendRequest(
             prepareRequest: () => _api.prepareUpdateItemRequest(
                 endpointName: collectionMetadata.endpointName,
                 endpointPrefix: collectionMetadata.endpointPrefix,
                 itemId: objectToUpdate.id!,
-                objectData: objectToUpdate.updatedProperties,
+                objectData: forceSaving
+                    ? objectToUpdate.getRawData()
+                    : objectToUpdate.updatedProperties,
                 fields: fields ?? collectionMetadata.defaultFields),
             parseResponse: (response) {
               final parsedJson = _api.parseUpdateItemResponse(response);
