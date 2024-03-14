@@ -4,7 +4,8 @@ import 'package:http/http.dart';
 
 abstract class IDirectusApiManager {
   Future<DirectusLoginResult> loginDirectusUser(
-      String username, String password, {String? oneTimePassword});
+      String username, String password,
+      {String? oneTimePassword});
   Future<bool> logoutDirectusUser();
   Future<bool> hasLoggedInUser();
   Future<DirectusUser?> currentDirectusUser({String fields = "*"});
@@ -32,7 +33,7 @@ abstract class IDirectusApiManager {
           {String? fields, required Iterable<Type> objectList});
 
   Future<Type> updateItem<Type extends DirectusData>(
-      {required Type objectToUpdate, String? fields});
+      {required Type objectToUpdate, String? fields, bool forceSaving = false});
   Future<bool> deleteItem<Type extends DirectusData>(
       {required String objectId, bool mustBeAuthenticated = true});
   Future<bool> deleteMultipleItems<Type extends DirectusData>(
