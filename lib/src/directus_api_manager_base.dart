@@ -207,6 +207,7 @@ class DirectusApiManager implements IDirectusApiManager {
         offset: offset);
   }
 
+  @Deprecated("Use [updateItem] instead")
   Future<DirectusUser> updateDirectusUser(
       {required DirectusUser updatedUser, String fields = "*"}) {
     return updateItem(objectToUpdate: updatedUser, fields: fields);
