@@ -405,7 +405,7 @@ class DirectusApiManager implements IDirectusApiManager {
                 endpointPrefix: collectionMetadata.endpointPrefix,
                 itemId: objectToUpdate.id!,
                 objectData: forceSaving
-                    ? objectToUpdate.getRawData()
+                    ? objectToUpdate.toMap()
                     : objectToUpdate.updatedProperties,
                 fields: fields ?? collectionMetadata.defaultFields),
             parseResponse: (response) {
