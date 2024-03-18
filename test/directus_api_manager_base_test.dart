@@ -510,7 +510,7 @@ main() {
       final newItem = DirectusItemTest({"id": "element1", "name": "name 1"});
 
       final item = await sut.updateItem<DirectusItemTest>(
-          objectToUpdate: newItem, forceSaving: true);
+          objectToUpdate: newItem, force: true);
       expect(mockDirectusApi.calledFunctions,
           contains("prepareUpdateItemRequest"));
       expect(mockDirectusApi.receivedObjects["endpointName"], "itemTest");

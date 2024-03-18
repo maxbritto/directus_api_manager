@@ -155,9 +155,7 @@ class MockDirectusApiManager extends IDirectusApiManager with MockMixin {
 
   @override
   Future<Type> updateItem<Type extends DirectusData>(
-      {required Type objectToUpdate,
-      String? fields,
-      bool forceSaving = false}) {
+      {required Type objectToUpdate, String? fields, bool force = false}) {
     addCalledFunction(named: "updateItem");
     addReceivedObject(objectToUpdate, name: "objectToUpdate");
     addReceivedObject(fields, name: "fields");

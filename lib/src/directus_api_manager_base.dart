@@ -390,22 +390,26 @@ class DirectusApiManager implements IDirectusApiManager {
         });
   }
 
+  /// Update the item with the given [objectToUpdate]. You have to specify a Type which extends DirectusData.
+  ///
+  /// By default it will return an object of the same type as the one you provided with the default fields you specified in the [CollectionMetadata] annotation. You change the fields by providing a [fields] parameter.
+  ///
+  ///If [force] is true, the update will be done even if the object does not need saving,
+  ///otherwise it will only send the modified data for this object.
   @override
   Future<Type> updateItem<Type extends DirectusData>(
-      {required Type objectToUpdate,
-      String? fields,
-      bool forceSaving = false}) {
+      {required Type objectToUpdate, String? fields, bool force = false}) {
     final specificClass = _metadataGenerator.getClassMirrorForType(Type);
     final collectionMetadata = _collectionMetadataFromClass(specificClass);
     try {
-      if (objectToUpdate.needsSaving || forceSaving) {
+      if (objectToUpdate.needsSaving || force) {
         return _sendRequest(
             prepareRequest: () => _api.prepareUpdateItemRequest(
                 endpointName: collectionMetadata.endpointName,
                 endpointPrefix: collectionMetadata.endpointPrefix,
                 itemId: objectToUpdate.id!,
-                objectData: forceSaving
-                    ? objectToUpdate.toMap()
+                objectData: force
+                    ? objectToUpdate.getRawData()
                     : objectToUpdate.updatedProperties,
                 fields: fields ?? collectionMetadata.defaultFields),
             parseResponse: (response) {
