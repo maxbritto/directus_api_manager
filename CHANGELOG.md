@@ -1,3 +1,9 @@
+## 1.7.5 - 2024/03/19
+
+This version add a new feature:
+
+-    allow to specify the fields that can be updated if there is difference with the fields that can be seen.
+
 ## 1.7.4 - 2024/03/14
 
 This version add a new feature:

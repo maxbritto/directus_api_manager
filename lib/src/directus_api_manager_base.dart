@@ -398,24 +398,50 @@ class DirectusApiManager implements IDirectusApiManager {
   ///otherwise it will only send the modified data for this object.
   @override
   Future<Type> updateItem<Type extends DirectusData>(
-      {required Type objectToUpdate, String? fields, bool force = false}) {
+      {required Type objectToUpdate,
+      String? fields,
+      bool force = false}) async {
     final specificClass = _metadataGenerator.getClassMirrorForType(Type);
     final collectionMetadata = _collectionMetadataFromClass(specificClass);
     try {
       if (objectToUpdate.needsSaving || force) {
-        return _sendRequest(
+        final Map<String, dynamic> objectData = force
+            ? objectToUpdate.getRawData()
+            : objectToUpdate.updatedProperties;
+
+        // Remove field that are not in the default update fields if necessary
+        if (collectionMetadata.defaultUpdateFields != null &&
+            collectionMetadata.defaultUpdateFields! != "*") {
+          for (final field in objectData.keys.toList()) {
+            if (!collectionMetadata.defaultUpdateFields!.contains(field) &&
+                field != "id") {
+              objectData.remove(field);
+            }
+          }
+        }
+
+        final Map<String, dynamic> updatedData = await _sendRequest(
             prepareRequest: () => _api.prepareUpdateItemRequest(
                 endpointName: collectionMetadata.endpointName,
                 endpointPrefix: collectionMetadata.endpointPrefix,
                 itemId: objectToUpdate.id!,
-                objectData: force
-                    ? objectToUpdate.toMap()
-                    : objectToUpdate.updatedProperties,
-                fields: fields ?? collectionMetadata.defaultFields),
+                objectData: objectData,
+                fields: fields ??
+                    collectionMetadata.defaultUpdateFields ??
+                    collectionMetadata.defaultFields),
             parseResponse: (response) {
               final parsedJson = _api.parseUpdateItemResponse(response);
-              return specificClass.newInstance('', [parsedJson]) as Type;
+              return parsedJson;
             });
+
+        // Merge the updated data with the original data
+        final Map<String, dynamic> fullUpdatedData = {
+          ...objectData,
+          ...updatedData
+        };
+
+        // Return a new object with the updated data
+        return specificClass.newInstance('', [fullUpdatedData]) as Type;
       }
     } catch (error) {
       if (objectToUpdate.id == null) {
