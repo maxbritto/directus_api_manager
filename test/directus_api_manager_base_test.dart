@@ -525,8 +525,8 @@ main() {
     });
 
     test("UpdateItem with forbiden fields for saving", () async {
-      mockDirectusApi.addNextReturnFutureObject(
-          {"id": "element1", "name": "name 1", "canBeChanged": true});
+      mockDirectusApi
+          .addNextReturnFutureObject({"id": "element1", "name": "name 1"});
       final newItem = DirectusItemTestWithUpdateField(
           {"id": "element1", "name": "name 1", "canBeChanged": true});
 
@@ -545,6 +545,7 @@ main() {
       expect(item, isA<DirectusItemTestWithUpdateField>());
       expect(item.id, "element1");
       expect(item.name, "name 1");
+      expect(item.canBeChanged, true);
     });
 
     test("deleteItem", () async {

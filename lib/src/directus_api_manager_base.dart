@@ -406,8 +406,8 @@ class DirectusApiManager implements IDirectusApiManager {
     try {
       if (objectToUpdate.needsSaving || force) {
         final Map<String, dynamic> objectData = force
-            ? objectToUpdate.getRawData()
-            : objectToUpdate.updatedProperties;
+            ? Map.from(objectToUpdate.getRawData())
+            : Map.from(objectToUpdate.updatedProperties);
 
         // Remove field that are not in the default update fields if necessary
         if (collectionMetadata.defaultUpdateFields != null &&
@@ -436,7 +436,7 @@ class DirectusApiManager implements IDirectusApiManager {
 
         // Merge the updated data with the original data
         final Map<String, dynamic> fullUpdatedData = {
-          ...objectData,
+          ...objectToUpdate.getRawData(),
           ...updatedData
         };
 
