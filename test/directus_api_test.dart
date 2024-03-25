@@ -142,7 +142,7 @@ void main() {
               operator: FilterOperator.between,
               value: [r"$NOW", r"$NOW(+2 weeks)"]));
       expect(request.url.toString(),
-          r'http://api.com/items/article?fields=*&filter=%7B+%22date%22%3A+%7B+%22_between%22%3A+%5B%22%24NOW%22%2C+%22%24NOW%28%2B2+weeks%29%22%5D+%7D%7D');
+          r'http://api.com/items/article?fields=*&filter=%7B+%22date%22%3A+%7B+%22_between%22%3A+%5B%22%24NOW%22%2C%22%24NOW%28%2B2+weeks%29%22%5D+%7D%7D');
       expect(request.method, "GET");
       expect(request.headers["Authorization"], "Bearer $defaultAccessToken");
     });

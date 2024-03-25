@@ -504,6 +504,50 @@ main() {
       expect(item, isA<DirectusItemTest>());
     });
 
+    test("updateItem force saving", () async {
+      mockDirectusApi
+          .addNextReturnFutureObject({"id": "element1", "name": "name 1"});
+      final newItem = DirectusItemTest({"id": "element1", "name": "name 1"});
+
+      final item = await sut.updateItem<DirectusItemTest>(
+          objectToUpdate: newItem, force: true);
+      expect(mockDirectusApi.calledFunctions,
+          contains("prepareUpdateItemRequest"));
+      expect(mockDirectusApi.receivedObjects["endpointName"], "itemTest");
+      expect(mockDirectusApi.receivedObjects["objectData"],
+          {'id': 'element1', 'name': 'name 1'},
+          reason: "As force saving is true, all fields should be sent");
+
+      expect(
+          mockDirectusApi.calledFunctions, contains("parseUpdateItemResponse"));
+      expect(item, isNotNull);
+      expect(item, isA<DirectusItemTest>());
+    });
+
+    test("UpdateItem with forbiden fields for saving", () async {
+      mockDirectusApi
+          .addNextReturnFutureObject({"id": "element1", "name": "name 1"});
+      final newItem = DirectusItemTestWithUpdateField(
+          {"id": "element1", "name": "name 1", "canBeChanged": true});
+
+      final item = await sut.updateItem<DirectusItemTestWithUpdateField>(
+          objectToUpdate: newItem, force: true);
+      expect(mockDirectusApi.calledFunctions,
+          contains("prepareUpdateItemRequest"));
+      expect(mockDirectusApi.receivedObjects["endpointName"], "itemTest");
+      expect(mockDirectusApi.receivedObjects["objectData"],
+          {'id': 'element1', 'name': 'name 1'},
+          reason: "the field canBeChanged should not be sent");
+
+      expect(
+          mockDirectusApi.calledFunctions, contains("parseUpdateItemResponse"));
+      expect(item, isNotNull);
+      expect(item, isA<DirectusItemTestWithUpdateField>());
+      expect(item.id, "element1");
+      expect(item.name, "name 1");
+      expect(item.canBeChanged, true);
+    });
+
     test("deleteItem", () async {
       mockDirectusApi.addNextReturnFutureObject(true);
       final item = await sut.deleteItem<DirectusItemTest>(objectId: "element1");

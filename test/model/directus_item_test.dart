@@ -10,6 +10,17 @@ class DirectusItemTest extends DirectusItem {
   DirectusItemTest.newItem() : super.newItem();
 }
 
+@DirectusCollection()
+@CollectionMetadata(endpointName: "itemTest", defaultUpdateFields: "id,name")
+class DirectusItemTestWithUpdateField extends DirectusItem {
+  DirectusItemTestWithUpdateField(Map<String, dynamic> rawReceivedData)
+      : super(rawReceivedData);
+  DirectusItemTestWithUpdateField.newItem() : super.newItem();
+
+  String get name => getValue(forKey: "name");
+  bool get canBeChanged => getValue(forKey: "canBeChanged");
+}
+
 main() {
   group('DirectusItem', () {
     test('New Item', () {

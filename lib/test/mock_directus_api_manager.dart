@@ -104,7 +104,8 @@ class MockDirectusApiManager extends IDirectusApiManager with MockMixin {
 
   @override
   Future<DirectusLoginResult> loginDirectusUser(
-      String username, String password, {String? oneTimePassword}) {
+      String username, String password,
+      {String? oneTimePassword}) {
     addCalledFunction(named: "loginDirectusUser");
     addReceivedObject(username, name: "username");
     addReceivedObject(password, name: "password");
@@ -154,7 +155,7 @@ class MockDirectusApiManager extends IDirectusApiManager with MockMixin {
 
   @override
   Future<Type> updateItem<Type extends DirectusData>(
-      {required Type objectToUpdate, String? fields}) {
+      {required Type objectToUpdate, String? fields, bool force = false}) {
     addCalledFunction(named: "updateItem");
     addReceivedObject(objectToUpdate, name: "objectToUpdate");
     addReceivedObject(fields, name: "fields");

@@ -1,3 +1,15 @@
+## 1.7.5 - 2024/03/19
+
+This version add a new feature:
+
+-    allow to specify the fields that can be updated if there is difference with the fields that can be seen.
+
+## 1.7.4 - 2024/03/14
+
+This version add a new feature:
+
+-    allow to force item update even if the object has no change
+
 ## 1.7.3 - 2024/02/21
 
 This version add a new feature:
@@ -5,6 +17,7 @@ This version add a new feature:
 -    add One Time Password login capability
 
 ## 1.7.1 - 2023/09/03
+
 Bug Fix :
 
 -    the multi delete items function was not building the request url correctly.
@@ -53,7 +66,6 @@ This version add the DirectusFile class as an extension of DirectusData. This al
 ### Additional Changed
 
 -    DirectusFile class as some getters and setters for the default fields of the directus_files table
-
 
 ## 1.0.0
 

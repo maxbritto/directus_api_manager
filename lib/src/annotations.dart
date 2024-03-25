@@ -11,12 +11,14 @@ class CollectionMetadata {
   final String endpointPrefix;
   final String defaultFields;
   final String? webSocketEndPoint;
+  final String? defaultUpdateFields;
 
   const CollectionMetadata(
       {required this.endpointName,
       this.defaultFields = "*",
       this.endpointPrefix = "/items/",
-      this.webSocketEndPoint});
+      this.webSocketEndPoint,
+      this.defaultUpdateFields});
 
   String get webSocketEndpoint => webSocketEndPoint ?? endpointName;
 }

@@ -135,11 +135,13 @@ class DirectusApiManager implements IDirectusApiManager {
   /// Returns a Future [DirectusLoginResult] object that contains the result of the login attempt.
   @override
   Future<DirectusLoginResult> loginDirectusUser(
-      String username, String password, {String? oneTimePassword}) {
+      String username, String password,
+      {String? oneTimePassword}) {
     discardCurrentUserCache();
     return _sendRequest(
         prepareRequest: () {
-          return _api.prepareLoginRequest(username, password, oneTimePassword: oneTimePassword);
+          return _api.prepareLoginRequest(username, password,
+              oneTimePassword: oneTimePassword);
         },
         dependsOnToken: false,
         parseResponse: (response) => _api.parseLoginResponse(response));
@@ -205,6 +207,7 @@ class DirectusApiManager implements IDirectusApiManager {
         offset: offset);
   }
 
+  @Deprecated("Use [updateItem] instead")
   Future<DirectusUser> updateDirectusUser(
       {required DirectusUser updatedUser, String fields = "*"}) {
     return updateItem(objectToUpdate: updatedUser, fields: fields);
@@ -387,24 +390,58 @@ class DirectusApiManager implements IDirectusApiManager {
         });
   }
 
+  /// Update the item with the given [objectToUpdate]. You have to specify a Type which extends DirectusData.
+  ///
+  /// By default it will return an object of the same type as the one you provided with the default fields you specified in the [CollectionMetadata] annotation. You change the fields by providing a [fields] parameter.
+  ///
+  ///If [force] is true, the update will be done even if the object does not need saving,
+  ///otherwise it will only send the modified data for this object.
   @override
   Future<Type> updateItem<Type extends DirectusData>(
-      {required Type objectToUpdate, String? fields}) {
+      {required Type objectToUpdate,
+      String? fields,
+      bool force = false}) async {
     final specificClass = _metadataGenerator.getClassMirrorForType(Type);
     final collectionMetadata = _collectionMetadataFromClass(specificClass);
     try {
-      if (objectToUpdate.needsSaving) {
-        return _sendRequest(
+      if (objectToUpdate.needsSaving || force) {
+        final Map<String, dynamic> objectData = force
+            ? Map.from(objectToUpdate.getRawData())
+            : Map.from(objectToUpdate.updatedProperties);
+
+        // Remove field that are not in the default update fields if necessary
+        if (collectionMetadata.defaultUpdateFields != null &&
+            collectionMetadata.defaultUpdateFields! != "*") {
+          for (final field in objectData.keys.toList()) {
+            if (!collectionMetadata.defaultUpdateFields!.contains(field) &&
+                field != "id") {
+              objectData.remove(field);
+            }
+          }
+        }
+
+        final Map<String, dynamic> updatedData = await _sendRequest(
             prepareRequest: () => _api.prepareUpdateItemRequest(
                 endpointName: collectionMetadata.endpointName,
                 endpointPrefix: collectionMetadata.endpointPrefix,
                 itemId: objectToUpdate.id!,
-                objectData: objectToUpdate.updatedProperties,
-                fields: fields ?? collectionMetadata.defaultFields),
+                objectData: objectData,
+                fields: fields ??
+                    collectionMetadata.defaultUpdateFields ??
+                    collectionMetadata.defaultFields),
             parseResponse: (response) {
               final parsedJson = _api.parseUpdateItemResponse(response);
-              return specificClass.newInstance('', [parsedJson]) as Type;
+              return parsedJson;
             });
+
+        // Merge the updated data with the original data
+        final Map<String, dynamic> fullUpdatedData = {
+          ...objectToUpdate.getRawData(),
+          ...updatedData
+        };
+
+        // Return a new object with the updated data
+        return specificClass.newInstance('', [fullUpdatedData]) as Type;
       }
     } catch (error) {
       if (objectToUpdate.id == null) {
