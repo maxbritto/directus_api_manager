@@ -52,6 +52,24 @@ main() {
       expect(sut.webSocketBaseUrl, "wss://api.com/websocket");
     });
 
+    test("Base Url must return", () {
+      final mockClient = MockHTTPClient();
+      DirectusApiManager sut =
+          DirectusApiManager(baseURL: "http://api.com", httpClient: mockClient);
+      expect(sut.baseUrl, "http://api.com");
+
+      sut = DirectusApiManager(
+          baseURL: "http://api.com/", httpClient: mockClient);
+      expect(sut.baseUrl, "http://api.com");
+
+      sut = DirectusApiManager(
+          baseURL: "https://api.com", httpClient: mockClient);
+      expect(sut.baseUrl, "https://api.com");
+      sut = DirectusApiManager(
+          baseURL: "https://api.com/", httpClient: mockClient);
+      expect(sut.baseUrl, "https://api.com");
+    });
+
     test("URL for websocket with invalid url", () {
       final mockClient = MockHTTPClient();
       DirectusApiManager sut =

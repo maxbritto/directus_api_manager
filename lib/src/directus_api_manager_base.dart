@@ -47,6 +47,9 @@ class DirectusApiManager implements IDirectusApiManager {
     throw Exception("Invalid base URL");
   }
 
+  @override
+  String get baseUrl => _api.baseUrl;
+
   /// Creates a new DirectusApiManager instance.
   /// [baseURL] : The base URL of the Directus instance
   /// [httpClient] : The HTTP client to use. If not provided, a new [Client] will be created.
