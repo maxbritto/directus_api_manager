@@ -1,5 +1,4 @@
 import 'package:directus_api_manager/directus_api_manager.dart';
-import 'package:directus_api_manager/src/model/directus_data.dart';
 import 'package:http/http.dart';
 
 abstract class IDirectusApiManager {
@@ -62,4 +61,5 @@ abstract class IDirectusApiManager {
   String? get refreshToken;
   Future<bool> tryAndRefreshToken();
   String get webSocketBaseUrl;
+  String get baseUrl;
 }

@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:directus_api_manager/directus_api_manager.dart';
-import 'package:directus_api_manager/src/model/directus_data.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 class DirectusWebSocket {

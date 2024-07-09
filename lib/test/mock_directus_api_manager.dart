@@ -205,4 +205,7 @@ class MockDirectusApiManager extends IDirectusApiManager with MockMixin {
 
   @override
   String get webSocketBaseUrl => throw UnimplementedError();
+
+  @override
+  String get baseUrl => "http://api.com:8055";
 }

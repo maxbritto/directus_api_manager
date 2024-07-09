@@ -1,3 +1,10 @@
+## 1.7.6 - 2024/07/09
+
+This version add a new feature:
+
+-    expose the DirectusData class
+-    expose the baseUrl variable
+
 ## 1.7.5 - 2024/03/19
 
 This version add a new feature:
