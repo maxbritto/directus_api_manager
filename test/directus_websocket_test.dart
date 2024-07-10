@@ -149,5 +149,20 @@ main() {
           ]);
       expect(() => sut.listenSocket(message), throwsException);
     });
+
+    test("Add subscription", () {
+      sut.addSubscription(DirectusWebSocketSubscription<DirectusItemTest>(
+          uid: "itemTest2", onCreate: onCreate));
+      expect(sut.subscriptionDataList.length, 2);
+      expect(sut.subscriptionDataList.last.uid, "itemTest2");
+    });
+
+    test("Remove subscription", () {
+      sut.addSubscription(DirectusWebSocketSubscription<DirectusItemTest>(
+          uid: "itemTest2", onCreate: onCreate));
+      expect(sut.subscriptionDataList.length, 2);
+      sut.removeSubscription(uid: "itemTest2");
+      expect(sut.subscriptionDataList.length, 1);
+    });
   });
 }

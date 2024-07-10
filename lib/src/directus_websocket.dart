@@ -115,4 +115,17 @@ class DirectusWebSocket {
 
     return "refresh token request sent";
   }
+
+  addSubscription(DirectusWebSocketSubscription subscription) {
+    subscriptionDataList.add(subscription);
+    _channel.sink.add(subscription.toJson());
+  }
+
+  removeSubscription({required String uid}) {
+    subscriptionDataList.removeWhere((element) => element.uid == uid);
+    _channel.sink.add(jsonEncode({
+      "type": "unsubscribe",
+      "uid": uid,
+    }));
+  }
 }
