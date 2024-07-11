@@ -83,6 +83,11 @@ class DirectusWebSocket {
           return onDelete(data);
         }
       }
+
+      if (data["event"] == "unsubscribe") {
+        subscriptionDataList
+            .removeWhere((element) => element.uid == data["uid"]);
+      }
     }
   }
 
@@ -122,7 +127,6 @@ class DirectusWebSocket {
   }
 
   removeSubscription({required String uid}) {
-    subscriptionDataList.removeWhere((element) => element.uid == uid);
     _channel.sink.add(jsonEncode({
       "type": "unsubscribe",
       "uid": uid,
