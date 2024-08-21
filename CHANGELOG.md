@@ -1,3 +1,9 @@
+## 1.7.7 - 2024/07/10
+
+This version add a new feature:
+
+-    Add addSubscription and removeSubscription to make the use of websocket more easy
+
 ## 1.7.6 - 2024/07/09
 
 This version add a new feature:
