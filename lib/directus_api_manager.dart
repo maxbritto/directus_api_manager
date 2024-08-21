@@ -12,6 +12,7 @@ export 'src/model/directus_login_result.dart';
 export 'src/model/directus_item.dart';
 export 'src/model/directus_item_creation_result.dart';
 export 'src/model/directus_api_error.dart';
+export 'src/model/directus_geometry_type.dart';
 export 'src/directus_websocket.dart';
 export 'src/directus_websocket_subscription.dart';
 
