@@ -1,3 +1,11 @@
+## 1.7.7 - 2024/08/21
+
+This version add a new feature:
+
+- adds the "DirectusGeometryType" class to manage the geometry type of Postgres databases.
+- Currently it can load any geometry type from a JSON object 
+- Currently it exposes convenience constructor and properties for the Point type used in regular geometry (x,y) or in map context (longitude, latitude)
+
 ## 1.7.6 - 2024/07/09
 
 This version add a new feature:

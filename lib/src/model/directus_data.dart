@@ -1,4 +1,5 @@
 import 'package:directus_api_manager/directus_api_manager.dart';
+import 'package:directus_api_manager/src/model/directus_geometry_type.dart';
 
 abstract class DirectusData {
   final Map<String, dynamic> _rawReceivedData;
@@ -144,6 +145,27 @@ abstract class DirectusData {
     } else {
       setValue(null, forKey: forKey);
     }
+  }
+
+  /// Returns a DirectusGeometryType for a given property.
+  /// Only use this property if you are certain your property will be filled for every object in the collection
+  /// If you are not certain, use [getOptionalDirectusGeometryType] instead
+  DirectusGeometryType getDirectusGeometryType({required String forKey}) {
+    final dynamic value = getOptionalDirectusGeometryType(forKey: forKey);
+    assert(value != null);
+    return value;
+  }
+
+  /// Returns a DirectusGeometryType if the value is a Map that can be converted to a DirectusGeometryType
+  /// This property can be used if you are not certain your property will be filled for every object in the collection
+  /// If the property is not a Map, null will be returned
+  DirectusGeometryType? getOptionalDirectusGeometryType(
+      {required String forKey}) {
+    final dynamic value = getValue(forKey: forKey);
+    if (value is Map<String, dynamic>) {
+      return DirectusGeometryType.fromJSON(value);
+    }
+    return null;
   }
 
   /// returns a map of all the properties of the item merged with the ones that have been updated

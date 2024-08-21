@@ -1,5 +1,6 @@
 import 'package:directus_api_manager/src/model/directus_data.dart';
 import 'package:directus_api_manager/src/model/directus_file.dart';
+import 'package:directus_api_manager/src/model/directus_geometry_type.dart';
 import 'package:test/expect.dart';
 import 'package:test/scaffolding.dart';
 
@@ -260,6 +261,48 @@ main() {
       sut.setOptionalDateTime(null, forKey: "creationDate");
       saveDateTime = sut.getOptionalDateTime(forKey: "creationDate");
       expect(saveDateTime, isNull);
+    });
+
+    test("getDirectusGeometryType", () {
+      final sut = TestDirectusData({
+        "id": "abc",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [2.345, 40.393837]
+        }
+      });
+      final geometry = sut.getDirectusGeometryType(forKey: "geometry");
+      expect(geometry, isA<DirectusGeometryType>());
+      expect(geometry.type, "Point");
+      expect(geometry.pointLatitude, 40.393837);
+      expect(geometry.pointLongitude, 2.345);
+    });
+
+    test("getOptionalDirectusGeometryType with null value", () {
+      final sut = TestDirectusData({"id": "abc"});
+      final geometry = sut.getOptionalDirectusGeometryType(forKey: "geometry");
+      expect(geometry, isNull);
+    });
+
+    test("getOptionalDirectusGeometryType with wrong value", () {
+      final sut = TestDirectusData({"id": "abc", "geometry": 123});
+      final geometry = sut.getOptionalDirectusGeometryType(forKey: "geometry");
+      expect(geometry, isNull);
+    });
+
+    test("getOptionalDirectusGeometryType with valid value", () {
+      final sut = TestDirectusData({
+        "id": "abc",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [2.345, 40.393837]
+        }
+      });
+      final geometry = sut.getOptionalDirectusGeometryType(forKey: "geometry");
+      expect(geometry, isA<DirectusGeometryType>());
+      expect(geometry?.type, "Point");
+      expect(geometry?.pointLatitude, 40.393837);
+      expect(geometry?.pointLongitude, 2.345);
     });
 
     test("toMap", () {
