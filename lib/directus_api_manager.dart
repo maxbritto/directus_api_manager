@@ -15,5 +15,8 @@ export 'src/model/directus_api_error.dart';
 export 'src/model/directus_geometry_type.dart';
 export 'src/directus_websocket.dart';
 export 'src/directus_websocket_subscription.dart';
+export 'src/cache/cache_entry.dart';
+export 'src/cache/json_cache_interface.dart';
 
 export 'test/mock_directus_api_manager.dart';
+export 'test/mock_cache_engine.dart';

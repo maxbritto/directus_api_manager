@@ -1,6 +1,12 @@
+## 1.8.0 - 2024/09/27
+
+New feature: local cache and basic offline mode support 🔥
+
+This version offers a ready to use cache engine based on json files. It is disabled by default, check the readme for more information on how to enable and use it in your projects.
+
 ## 1.7.7 - 2024/08/21
 
-This version add a new feature:
+This version adds a new feature:
 
 - adds the "DirectusGeometryType" class to manage the geometry type of Postgres databases.
 - Currently it can load any geometry type from a JSON object 
@@ -8,26 +14,26 @@ This version add a new feature:
 
 ## 1.7.6 - 2024/07/09
 
-This version add a new feature:
+This version adds a new feature:
 
 -    expose the DirectusData class
 -    expose the baseUrl variable
 
 ## 1.7.5 - 2024/03/19
 
-This version add a new feature:
+This version adds a new feature:
 
 -    allow to specify the fields that can be updated if there is difference with the fields that can be seen.
 
 ## 1.7.4 - 2024/03/14
 
-This version add a new feature:
+This version adds a new feature:
 
 -    allow to force item update even if the object has no change
 
 ## 1.7.3 - 2024/02/21
 
-This version add a new feature:
+This version adds a new feature:
 
 -    add One Time Password login capability
 

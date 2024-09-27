@@ -13,15 +13,18 @@ main() {
     late DirectusApiManager sut;
     late MockHTTPClient mockClient;
     late MockDirectusApi mockDirectusApi;
+    late MockCacheEngine mockCacheEngine;
 
     setUp(() {
       mockClient = MockHTTPClient();
       mockClient.addStreamResponse(body: "", statusCode: 200);
       mockDirectusApi = MockDirectusApi();
+      mockCacheEngine = MockCacheEngine();
       sut = DirectusApiManager(
         baseURL: "http://api.com",
         httpClient: mockClient,
         api: mockDirectusApi,
+        cacheEngine: mockCacheEngine,
       );
     });
 
@@ -592,6 +595,121 @@ main() {
       expect(mockDirectusApi.calledFunctions,
           contains("parseGenericBoolResponse"));
       expect(item, isTrue);
+    });
+
+    group("Cache engine", () {
+      test("getSpecificItem should save by default responses", () async {
+        mockDirectusApi
+            .addNextReturnFutureObject({"id": "element1", "name": "element1"});
+        await sut.getSpecificItem<DirectusItemTest>(id: "element1");
+        expect(mockCacheEngine.calledFunctions, contains("setCacheEntry"));
+      });
+
+      test("getSpecificItem should not save responses if cache is disabled",
+          () async {
+        mockDirectusApi
+            .addNextReturnFutureObject({"id": "element1", "name": "element1"});
+        await sut.getSpecificItem<DirectusItemTest>(
+            id: "element1", canSaveResponseToCache: false);
+        expect(
+            mockCacheEngine.calledFunctions, isNot(contains("setCacheEntry")));
+      });
+
+      test(
+          "getSpecificItem should load from cache if allowed, available and unexpired",
+          () async {
+        mockCacheEngine.addNextReturnFutureObject(
+            makeCacheEntry(validUntil: DateTime.now().add(Duration(days: 1))));
+        await sut.getSpecificItem<DirectusItemTest>(
+            id: "element1", canUseCacheForResponse: true);
+        expect(mockDirectusApi.calledFunctions,
+            contains("prepareGetSpecificItemRequest"));
+        expect(mockCacheEngine.calledFunctions, contains("getCacheEntry"));
+        expect(mockClient.calledFunctions, isNot(contains("send")),
+            reason: "No network call should be made");
+        expect(mockDirectusApi.calledFunctions,
+            contains("parseGetSpecificItemResponse"),
+            reason: "We should still have a response to parse (from cache)");
+      });
+
+      test(
+          "getSpecificItem should not load from cache if allowed, available but expired",
+          () async {
+        mockCacheEngine.addNextReturnFutureObject(makeCacheEntry(
+            validUntil: DateTime.now().subtract(Duration(days: 2))));
+        mockDirectusApi
+            .addNextReturnFutureObject({"id": "element1", "name": "element1"});
+        await sut.getSpecificItem<DirectusItemTest>(
+            id: "element1",
+            canUseCacheForResponse: true,
+            maxCacheAge: const Duration(days: 1));
+        expect(mockDirectusApi.calledFunctions,
+            contains("prepareGetSpecificItemRequest"));
+        expect(mockCacheEngine.calledFunctions, contains("getCacheEntry"));
+        expect(mockClient.calledFunctions, contains("send"),
+            reason: "A network call should be made");
+        expect(mockDirectusApi.calledFunctions,
+            contains("parseGetSpecificItemResponse"),
+            reason: "We should still have a response to parse (from network)");
+      });
+
+      test(
+          "getSpecificItem should not load from cache if allowed, but not available",
+          () async {
+        mockCacheEngine.addNextReturnFutureObject(null);
+        mockDirectusApi
+            .addNextReturnFutureObject({"id": "element1", "name": "element1"});
+        await sut.getSpecificItem<DirectusItemTest>(
+            id: "element1", canUseCacheForResponse: true);
+        expect(mockDirectusApi.calledFunctions,
+            contains("prepareGetSpecificItemRequest"));
+        expect(mockCacheEngine.calledFunctions, contains("getCacheEntry"));
+        expect(mockClient.calledFunctions, contains("send"),
+            reason: "A network call should be made");
+        expect(mockDirectusApi.calledFunctions,
+            contains("parseGetSpecificItemResponse"),
+            reason: "We should still have a response to parse (from network)");
+      });
+
+      test("getSpecificItem should not load from cache if not allowed",
+          () async {
+        mockCacheEngine.addNextReturnFutureObject(
+            makeCacheEntry(validUntil: DateTime.now().add(Duration(days: 1))));
+        mockDirectusApi
+            .addNextReturnFutureObject({"id": "element1", "name": "element1"});
+        await sut.getSpecificItem<DirectusItemTest>(
+            id: "element1", canUseCacheForResponse: false);
+        expect(mockDirectusApi.calledFunctions,
+            contains("prepareGetSpecificItemRequest"));
+        expect(
+            mockCacheEngine.calledFunctions, isNot(contains("getCacheEntry")));
+        expect(mockClient.calledFunctions, contains("send"),
+            reason: "A network call should be made");
+        expect(mockDirectusApi.calledFunctions,
+            contains("parseGetSpecificItemResponse"),
+            reason: "We should still have a response to parse (from network)");
+      });
+
+      test(
+          "getSpecificItem should use cache when allowed only as fallback and network failed",
+          () async {
+        mockCacheEngine.addNextReturnFutureObject(
+            makeCacheEntry(validUntil: DateTime(2000)));
+        mockClient.resetAllTestValues();
+        mockClient.addNextReturnFutureObject(Exception("Network error"));
+        await sut.getSpecificItem<DirectusItemTest>(
+            id: "element1",
+            canUseCacheForResponse: false,
+            canUseOldCachedResponseAsFallback: true);
+        expect(mockClient.calledFunctions, contains("send"),
+            reason: "A network call should be made");
+        expect(mockCacheEngine.calledFunctions, contains("getCacheEntry"),
+            reason:
+                "after a failed network call, we should try to get the cache");
+        expect(mockDirectusApi.calledFunctions,
+            contains("parseGetSpecificItemResponse"),
+            reason: "We should still have a response to parse (from cache)");
+      });
     });
   });
 }

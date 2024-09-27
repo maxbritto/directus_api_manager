@@ -223,6 +223,56 @@ DirectusWebSocketSubscription<DirectusDataExtension>(
             value: "folder_id"));
 ```
 
+## Cache system
+
+### Enabling and configuring the Cache system
+
+This api comes with a caching system that can be enabled by providing an instance of `ILocalDirectusCacheInterface` when creating your `DirectusApiManager` instance.
+
+A ready to use implementation is provided with the `JsonCacheEngine` class. It will store the data in a folder of your choosing using json files.
+Example : 
+
+```dart
+import 'package:path_provider/path_provider.dart';
+
+void main() async {
+  final directory = await getApplicationCacheDirectory();
+  final apiManager = DirectusApiManager(baseURL: "http://0.0.0.0:8055/", cacheEngine: JsonCacheEngine(cacheFolderPath: "${directory.path}/directus_api_cache"));
+  // ...
+}
+```
+You can decide to replace the json file implementation by creating and supplying your own implementation which implements the `ILocalDirectusCacheInterface` class.
+
+### Using the Cache system for your requests
+
+All read requests (get, find, currentUser, etc.) now have optional parameters to configure the cache. By default, most of those will save responses but will only use those if the next request fails.
+If you want to also replace future responses by a local cache read, you can set the `canUseCacheForResponse` parameter to `true` and tweak the `maxCacheAge` parameter to set the maximum age of the cache (defaults to 1 day). This will prevent calling the directus server if a valid cache exists for the same request.
+
+```dart
+await sut.getSpecificItem<DirectusItemTest>(
+    id: "element1",
+    canUseCacheForResponse: true,
+    maxCacheAge: const Duration(days: 1));
+```
+
+If you want to disable the cache completely for a request, you can set the `canSaveResponseToCache` parameter to `false`.
+
+```dart
+await sut.getSpecificItem<DirectusItemTest>(
+    id: "element1",
+    canSaveResponseToCache: false);
+```
+
+By default, an expired cache can still be used if the real network request fails. If you want to disable this behavior, you can set the `canUseOldCachedResponseAsFallback` parameter to `false`.
+
+```dart
+await sut.getSpecificItem<DirectusItemTest>(
+    id: "element1",
+    canUseOldCachedResponseAsFallback: false);
+```
+
+Those parameters are available for all read based requests.
+
 ## Additional information
 
 ### Install
