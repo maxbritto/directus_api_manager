@@ -117,7 +117,7 @@ class DirectusApiManager implements IDirectusApiManager {
     CacheEntry? cacheEntry;
     final cacheEngine = this.cacheEngine;
     if (cacheEngine != null) {
-      cacheEntryKey = requestIdentifier ?? "${request.method} ${request.url}";
+      cacheEntryKey = requestIdentifier ?? "${r.method} ${r.url}";
       if (canUseCacheForResponse) {
         cacheEntry = await cacheEngine.getCacheEntry(key: cacheEntryKey);
       }
