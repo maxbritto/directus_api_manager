@@ -73,8 +73,7 @@ class PlayerDirectusModel extends DirectusItem {
     setValue(nickname, forKey: "nickname");
   }
 
-  PlayerDirectusModel(Map<String, dynamic> rawReceivedData)
-      : super(rawReceivedData);
+  PlayerDirectusModel(super.rawReceivedData);
 
   String get nickname => getValue(forKey: "nickname");
   int? get bestScore => getValue(forKey: "best_score");

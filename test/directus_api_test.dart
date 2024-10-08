@@ -30,9 +30,11 @@ void main() {
       final sut = makeAuthenticatedDirectusAPI();
       final request = sut.prepareGetListOfItemsRequest(
           endpointName: "article", endpointPrefix: "/items/", fields: "*.*");
-      expect(request.url.toString(), "http://api.com/items/article?fields=*.*");
-      expect(request.method, "GET");
-      expect(request.headers["Authorization"], "Bearer $defaultAccessToken");
+      expect(request.request.url.toString(),
+          "http://api.com/items/article?fields=*.*");
+      expect(request.request.method, "GET");
+      expect(request.request.headers["Authorization"],
+          "Bearer $defaultAccessToken");
     });
 
     test('Get list of items with filter request', () {
@@ -42,10 +44,11 @@ void main() {
           endpointPrefix: "/items/",
           filter: PropertyFilter(
               field: "title", operator: FilterOperator.equals, value: "A"));
-      expect(request.url.toString(),
+      expect(request.request.url.toString(),
           'http://api.com/items/article?fields=*&filter=%7B+%22title%22%3A+%7B+%22_eq%22%3A+%22A%22+%7D%7D');
-      expect(request.method, "GET");
-      expect(request.headers["Authorization"], "Bearer $defaultAccessToken");
+      expect(request.request.method, "GET");
+      expect(request.request.headers["Authorization"],
+          "Bearer $defaultAccessToken");
     });
 
     test('Get list of items with sort and filter request', () {
@@ -59,10 +62,11 @@ void main() {
           ],
           filter: PropertyFilter(
               field: "title", operator: FilterOperator.equals, value: "A"));
-      expect(request.url.toString(),
+      expect(request.request.url.toString(),
           'http://api.com/items/article?fields=*&filter=%7B+%22title%22%3A+%7B+%22_eq%22%3A+%22A%22+%7D%7D&sort=-score,level');
-      expect(request.method, "GET");
-      expect(request.headers["Authorization"], "Bearer $defaultAccessToken");
+      expect(request.request.method, "GET");
+      expect(request.request.headers["Authorization"],
+          "Bearer $defaultAccessToken");
     });
 
     test('Get list of items with sort request', () {
@@ -74,20 +78,22 @@ void main() {
             SortProperty("score", ascending: false),
             SortProperty("level")
           ]);
-      expect(request.url.toString(),
+      expect(request.request.url.toString(),
           'http://api.com/items/article?fields=*&sort=-score,level');
-      expect(request.method, "GET");
-      expect(request.headers["Authorization"], "Bearer $defaultAccessToken");
+      expect(request.request.method, "GET");
+      expect(request.request.headers["Authorization"],
+          "Bearer $defaultAccessToken");
     });
 
     test('Get list of items with limit request', () {
       final sut = makeAuthenticatedDirectusAPI();
       final request = sut.prepareGetListOfItemsRequest(
           endpointName: "article", endpointPrefix: "/items/", limit: 10);
-      expect(request.url.toString(),
+      expect(request.request.url.toString(),
           'http://api.com/items/article?fields=*&limit=10');
-      expect(request.method, "GET");
-      expect(request.headers["Authorization"], "Bearer $defaultAccessToken");
+      expect(request.request.method, "GET");
+      expect(request.request.headers["Authorization"],
+          "Bearer $defaultAccessToken");
     });
 
     test('Get list of items with filter and limit request', () {
@@ -98,20 +104,22 @@ void main() {
           filter: PropertyFilter(
               field: "title", operator: FilterOperator.equals, value: "A"),
           limit: 10);
-      expect(request.url.toString(),
+      expect(request.request.url.toString(),
           'http://api.com/items/article?fields=*&filter=%7B+%22title%22%3A+%7B+%22_eq%22%3A+%22A%22+%7D%7D&limit=10');
-      expect(request.method, "GET");
-      expect(request.headers["Authorization"], "Bearer $defaultAccessToken");
+      expect(request.request.method, "GET");
+      expect(request.request.headers["Authorization"],
+          "Bearer $defaultAccessToken");
     });
 
     test('Get list of items with offset request', () {
       final sut = makeAuthenticatedDirectusAPI();
       final request = sut.prepareGetListOfItemsRequest(
           endpointName: "article", endpointPrefix: "/items/", offset: 10);
-      expect(request.url.toString(),
+      expect(request.request.url.toString(),
           'http://api.com/items/article?fields=*&offset=10');
-      expect(request.method, "GET");
-      expect(request.headers["Authorization"], "Bearer $defaultAccessToken");
+      expect(request.request.method, "GET");
+      expect(request.request.headers["Authorization"],
+          "Bearer $defaultAccessToken");
     });
 
     test('Get list of items with filter, sort and limit request', () {
@@ -126,10 +134,11 @@ void main() {
             SortProperty("level")
           ],
           limit: 10);
-      expect(request.url.toString(),
+      expect(request.request.url.toString(),
           'http://api.com/items/article?fields=*&filter=%7B+%22title%22%3A+%7B+%22_eq%22%3A+%22A%22+%7D%7D&limit=10&sort=-score,level');
-      expect(request.method, "GET");
-      expect(request.headers["Authorization"], "Bearer $defaultAccessToken");
+      expect(request.request.method, "GET");
+      expect(request.request.headers["Authorization"],
+          "Bearer $defaultAccessToken");
     });
 
     test('Get list of items with filter that includes special characters', () {
@@ -141,20 +150,26 @@ void main() {
               field: "date",
               operator: FilterOperator.between,
               value: [r"$NOW", r"$NOW(+2 weeks)"]));
-      expect(request.url.toString(),
+      expect(request.request.url.toString(),
           r'http://api.com/items/article?fields=*&filter=%7B+%22date%22%3A+%7B+%22_between%22%3A+%5B%22%24NOW%22%2C%22%24NOW%28%2B2+weeks%29%22%5D+%7D%7D');
-      expect(request.method, "GET");
-      expect(request.headers["Authorization"], "Bearer $defaultAccessToken");
+      expect(request.request.method, "GET");
+      expect(request.request.headers["Authorization"],
+          "Bearer $defaultAccessToken");
     });
 
     test('Get specific item request', () {
       final sut = makeAuthenticatedDirectusAPI();
       final request = sut.prepareGetSpecificItemRequest(
-          endpointName: "article", itemId: "123", endpointPrefix: "/items/");
-      expect(
-          request.url.toString(), "http://api.com/items/article/123?fields=*");
-      expect(request.method, "GET");
-      expect(request.headers["Authorization"], "Bearer $defaultAccessToken");
+          endpointName: "article",
+          itemId: "123",
+          endpointPrefix: "/items/",
+          tags: ["tag1", "tag2"]);
+      expect(request.request.url.toString(),
+          "http://api.com/items/article/123?fields=*");
+      expect(request.request.method, "GET");
+      expect(request.request.headers["Authorization"],
+          "Bearer $defaultAccessToken");
+      expect(request.tags, ["tag1", "tag2"]);
     });
 
     test('Get specific item request with deep fields', () {
@@ -165,10 +180,11 @@ void main() {
         itemId: "123",
         fields: "*.*",
       );
-      expect(request.url.toString(),
+      expect(request.request.url.toString(),
           "http://api.com/items/article/123?fields=*.*");
-      expect(request.method, "GET");
-      expect(request.headers["Authorization"], "Bearer $defaultAccessToken");
+      expect(request.request.method, "GET");
+      expect(request.request.headers["Authorization"],
+          "Bearer $defaultAccessToken");
     });
 
     test('New Item request', () {
@@ -182,13 +198,14 @@ void main() {
             "creationDate": DateTime(2022, 1, 2, 3, 4, 5)
           },
           fields: "*.*");
-      expect(
-          request.url.toString(), "http://api.com/items/articles?fields=*.*");
-      expect(request.method, "POST");
-      expect(
-          request.headers["Content-Type"], "application/json; charset=utf-8");
-      expect(request.headers["Authorization"], "Bearer $defaultAccessToken");
-      final jsonParsedBody = jsonDecode(request.body);
+      expect(request.request.url.toString(),
+          "http://api.com/items/articles?fields=*.*");
+      expect(request.request.method, "POST");
+      expect(request.request.headers["Content-Type"],
+          "application/json; charset=utf-8");
+      expect(request.request.headers["Authorization"],
+          "Bearer $defaultAccessToken");
+      final jsonParsedBody = jsonDecode(request.request.body);
       expect(jsonParsedBody["title"], "Let's dance");
       expect(jsonParsedBody["pageCount"], 10);
       expect(jsonParsedBody["creationDate"], "2022-01-02T03:04:05.000");
@@ -204,11 +221,12 @@ void main() {
             "last_name": "Doe",
             "email": "will@acn.com"
           });
-      expect(request.url.toString(), "http://api.com/users?fields=*");
-      expect(request.method, "POST");
-      expect(
-          request.headers["Content-Type"], "application/json; charset=utf-8");
-      expect(request.headers["Authorization"], "Bearer $defaultAccessToken");
+      expect(request.request.url.toString(), "http://api.com/users?fields=*");
+      expect(request.request.method, "POST");
+      expect(request.request.headers["Content-Type"],
+          "application/json; charset=utf-8");
+      expect(request.request.headers["Authorization"],
+          "Bearer $defaultAccessToken");
     });
 
     test('Update Item request', () {
@@ -223,13 +241,14 @@ void main() {
             "creationDate": DateTime(2022, 1, 2, 3, 4, 5)
           },
           fields: "*.*");
-      expect(request.url.toString(),
+      expect(request.request.url.toString(),
           "http://api.com/items/articles/abc-123?fields=*.*");
-      expect(request.method, "PATCH");
-      expect(
-          request.headers["Content-Type"], "application/json; charset=utf-8");
-      expect(request.headers["Authorization"], "Bearer $defaultAccessToken");
-      final jsonParsedBody = jsonDecode(request.body);
+      expect(request.request.method, "PATCH");
+      expect(request.request.headers["Content-Type"],
+          "application/json; charset=utf-8");
+      expect(request.request.headers["Authorization"],
+          "Bearer $defaultAccessToken");
+      final jsonParsedBody = jsonDecode(request.request.body);
       expect(jsonParsedBody["title"], "Let's dance");
       expect(jsonParsedBody["pageCount"], 9);
       expect(jsonParsedBody["creationDate"], "2022-01-02T03:04:05.000");
@@ -242,8 +261,9 @@ void main() {
           endpointPrefix: "/items/",
           itemId: "abc-123",
           mustBeAuthenticated: false);
-      expect(request.url.toString(), "http://api.com/items/articles/abc-123");
-      expect(request.method, "DELETE");
+      expect(request.request.url.toString(),
+          "http://api.com/items/articles/abc-123");
+      expect(request.request.method, "DELETE");
     });
 
     test('Delete Item ok responses', () {
@@ -268,12 +288,12 @@ void main() {
           endpointName: "articles",
           endpointPrefix: "/items/",
           itemIdList: ["abc-123", "def-456"],
-          mustBeAuthenticated: false) as Request;
-      expect(request.url.toString(), "http://api.com/items/articles");
-      expect(request.method, "DELETE");
-      expect(
-          request.headers["Content-Type"], "application/json; charset=utf-8");
-      expect(request.body, jsonEncode(["abc-123", "def-456"]));
+          mustBeAuthenticated: false);
+      expect(request.request.url.toString(), "http://api.com/items/articles");
+      expect(request.request.method, "DELETE");
+      expect(request.request.headers["Content-Type"],
+          "application/json; charset=utf-8");
+      expect(request.request.body, jsonEncode(["abc-123", "def-456"]));
     });
   });
 
@@ -287,11 +307,11 @@ void main() {
     test('Login request', () {
       final sut = DirectusAPI("http://api.com");
       final request = sut.prepareLoginRequest("will@acn.com", "mc!avoy");
-      expect(request.url.toString(), "http://api.com/auth/login");
-      expect(request.method, "POST");
-      expect(
-          request.headers["Content-Type"], "application/json; charset=utf-8");
-      final jsonParsedBody = jsonDecode(request.body);
+      expect(request.request.url.toString(), "http://api.com/auth/login");
+      expect(request.request.method, "POST");
+      expect(request.request.headers["Content-Type"],
+          "application/json; charset=utf-8");
+      final jsonParsedBody = jsonDecode(request.request.body);
       expect(jsonParsedBody["email"], "will@acn.com");
       expect(jsonParsedBody["password"], "mc!avoy");
     });
@@ -300,11 +320,11 @@ void main() {
       final sut = DirectusAPI("http://api.com");
       final request = sut.prepareLoginRequest("will@acn.com", "mc!avoy",
           oneTimePassword: "123456");
-      expect(request.url.toString(), "http://api.com/auth/login");
-      expect(request.method, "POST");
-      expect(
-          request.headers["Content-Type"], "application/json; charset=utf-8");
-      final jsonParsedBody = jsonDecode(request.body);
+      expect(request.request.url.toString(), "http://api.com/auth/login");
+      expect(request.request.method, "POST");
+      expect(request.request.headers["Content-Type"],
+          "application/json; charset=utf-8");
+      final jsonParsedBody = jsonDecode(request.request.body);
       expect(jsonParsedBody["email"], "will@acn.com");
       expect(jsonParsedBody["password"], "mc!avoy");
       expect(jsonParsedBody["otp"], "123456");
@@ -314,11 +334,11 @@ void main() {
       final sut = DirectusAPI("http://api.com");
       final request =
           sut.prepareUserInviteRequest("will@acn.com", "abc-user-role-123");
-      expect(request.url.toString(), "http://api.com/users/invite");
-      expect(request.method, "POST");
-      expect(
-          request.headers["Content-Type"], "application/json; charset=utf-8");
-      final jsonParsedBody = jsonDecode(request.body);
+      expect(request.request.url.toString(), "http://api.com/users/invite");
+      expect(request.request.method, "POST");
+      expect(request.request.headers["Content-Type"],
+          "application/json; charset=utf-8");
+      final jsonParsedBody = jsonDecode(request.request.body);
       expect(jsonParsedBody["email"], "will@acn.com");
       expect(jsonParsedBody["role"], "abc-user-role-123");
     });
@@ -397,20 +417,22 @@ void main() {
 
     test('Impossible Refresh Token request', () async {
       final sut = DirectusAPI("http://api.com");
-      final request = await sut.prepareRefreshTokenRequest();
-      expect(request, isNull, reason: "No refresh token is available");
+      final request = sut.prepareRefreshTokenRequest();
+      expect(await request.request, isNull,
+          reason: "No refresh token is available");
     });
 
     test('Valid Refresh Token request', () async {
       final sut = makeAuthenticatedDirectusAPI();
-      final request = await sut.prepareRefreshTokenRequest();
+      final preparedRequest = sut.prepareRefreshTokenRequest();
+      final request = await preparedRequest.request;
       expect(request, isNotNull,
           reason: "User did log in, so refresh should be available");
-      expect(request?.url.toString(), "http://api.com/auth/refresh");
-      expect(request?.method, "POST");
+      expect(request.url.toString(), "http://api.com/auth/refresh");
+      expect(request.method, "POST");
       expect(
-          request?.headers["Content-Type"], "application/json; charset=utf-8");
-      final jsonParsedBody = jsonDecode(request!.body);
+          request.headers["Content-Type"], "application/json; charset=utf-8");
+      final jsonParsedBody = jsonDecode(request.body);
       expect(jsonParsedBody["refresh_token"], defaultRefreshToken);
     });
 
@@ -419,15 +441,16 @@ void main() {
           DirectusAPI("http://api.com", loadRefreshTokenCallback: () async {
         return "LOADED.TOKEN.REFRESH";
       });
-      final request = await sut.prepareRefreshTokenRequest();
+      final preparedRequest = sut.prepareRefreshTokenRequest();
+      final request = await preparedRequest.request;
       expect(request, isNotNull,
           reason:
               "A refresh token is available in the cache, so the request can be made");
-      expect(request?.url.toString(), "http://api.com/auth/refresh");
-      expect(request?.method, "POST");
+      expect(request.url.toString(), "http://api.com/auth/refresh");
+      expect(request.method, "POST");
       expect(
-          request?.headers["Content-Type"], "application/json; charset=utf-8");
-      final jsonParsedBody = jsonDecode(request!.body);
+          request.headers["Content-Type"], "application/json; charset=utf-8");
+      final jsonParsedBody = jsonDecode(request.body);
       expect(jsonParsedBody["refresh_token"], "LOADED.TOKEN.REFRESH");
     });
 
@@ -436,8 +459,8 @@ void main() {
           DirectusAPI("http://api.com", loadRefreshTokenCallback: () async {
         return null;
       });
-      final request = await sut.prepareRefreshTokenRequest();
-      expect(request, isNull,
+      final preparedRequest = sut.prepareRefreshTokenRequest();
+      expect(await preparedRequest.request, isNull,
           reason:
               "No refresh token is available in the cache, so the request cannot be made");
     });
@@ -506,11 +529,11 @@ void main() {
       final request = sut.prepareLogoutRequest();
       expect(request, isNotNull,
           reason: "Use did login first, should be able to logout");
-      expect(request?.url.toString(), "http://api.com/auth/logout");
-      expect(request?.method, "POST");
-      expect(
-          request?.headers["Content-Type"], "application/json; charset=utf-8");
-      final jsonParsedBody = jsonDecode(request!.body);
+      expect(request?.request.url.toString(), "http://api.com/auth/logout");
+      expect(request?.request.method, "POST");
+      expect(request?.request.headers["Content-Type"],
+          "application/json; charset=utf-8");
+      final jsonParsedBody = jsonDecode(request?.request.body);
       expect(jsonParsedBody["refresh_token"], defaultRefreshToken);
     });
 
@@ -529,27 +552,32 @@ void main() {
       final sut = makeAuthenticatedDirectusAPI();
       final request = sut.prepareGetSpecificItemRequest(
           endpointName: "users", itemId: "123", endpointPrefix: "/");
-      expect(request.url.toString(), "http://api.com/users/123?fields=*");
-      expect(request.method, "GET");
-      expect(request.headers["Authorization"], "Bearer $defaultAccessToken");
+      expect(
+          request.request.url.toString(), "http://api.com/users/123?fields=*");
+      expect(request.request.method, "GET");
+      expect(request.request.headers["Authorization"],
+          "Bearer $defaultAccessToken");
     });
 
     test('Get current user request', () {
       final sut = makeAuthenticatedDirectusAPI();
       final request = sut.prepareGetCurrentUserRequest();
-      expect(request.url.toString(), "http://api.com/users/me?fields=*");
-      expect(request.method, "GET");
-      expect(request.headers["Authorization"], "Bearer $defaultAccessToken");
+      expect(
+          request.request.url.toString(), "http://api.com/users/me?fields=*");
+      expect(request.request.method, "GET");
+      expect(request.request.headers["Authorization"],
+          "Bearer $defaultAccessToken");
     });
 
     test('Get current user request with fields', () {
       final sut = makeAuthenticatedDirectusAPI();
       final request =
           sut.prepareGetCurrentUserRequest(fields: "*,field1.*,field2.*");
-      expect(request.url.toString(),
+      expect(request.request.url.toString(),
           "http://api.com/users/me?fields=*,field1.*,field2.*");
-      expect(request.method, "GET");
-      expect(request.headers["Authorization"], "Bearer $defaultAccessToken");
+      expect(request.request.method, "GET");
+      expect(request.request.headers["Authorization"],
+          "Bearer $defaultAccessToken");
     });
 
     test('Get list of users request', () {
@@ -565,10 +593,11 @@ void main() {
           fields: "*.*",
           sortBy: [SortProperty("id", ascending: false)],
           offset: 4);
-      expect(request.url.toString(),
+      expect(request.request.url.toString(),
           "http://api.com/users?fields=*.*&filter=%7B+%22firstName%22%3A+%7B+%22_eq%22%3A+%22jordan%22+%7D%7D&limit=10&sort=-id&offset=4");
-      expect(request.method, "GET");
-      expect(request.headers["Authorization"], "Bearer $defaultAccessToken");
+      expect(request.request.method, "GET");
+      expect(request.request.headers["Authorization"],
+          "Bearer $defaultAccessToken");
     });
 
     test('Update User request with modification', () {
@@ -588,11 +617,12 @@ void main() {
           itemId: user.id!,
           fields: "*.*");
 
-      expect(request.url.toString(),
+      expect(request.request.url.toString(),
           "http://api.com/users/123-abc-456?fields=*.*");
-      expect(request.method, "PATCH");
-      expect(request.headers["Authorization"], "Bearer $defaultAccessToken");
-      final jsonParsedBody = jsonDecode(request.body) as Map;
+      expect(request.request.method, "PATCH");
+      expect(request.request.headers["Authorization"],
+          "Bearer $defaultAccessToken");
+      final jsonParsedBody = jsonDecode(request.request.body) as Map;
       expect(jsonParsedBody["first_name"], "Will 2");
       expect(jsonParsedBody["birthDate"], "2022-01-02T03:04:05.000");
       expect(jsonParsedBody.containsKey("email"), false,
@@ -617,11 +647,12 @@ void main() {
           objectData: user.updatedProperties,
           itemId: user.id!,
           fields: "*.*");
-      expect(request.url.toString(),
+      expect(request.request.url.toString(),
           "http://api.com/users/123-abc-456?fields=*.*");
-      expect(request.method, "PATCH");
-      expect(request.headers["Authorization"], "Bearer $defaultAccessToken");
-      final jsonParsedBody = jsonDecode(request.body) as Map;
+      expect(request.request.method, "PATCH");
+      expect(request.request.headers["Authorization"],
+          "Bearer $defaultAccessToken");
+      final jsonParsedBody = jsonDecode(request.request.body) as Map;
       expect(jsonParsedBody, isEmpty);
     });
 
@@ -629,11 +660,12 @@ void main() {
       final sut = makeAuthenticatedDirectusAPI();
 
       final request = sut.preparePasswordResetRequest(email: "will@acn.com");
-      expect(request.url.toString(), "http://api.com/auth/password/request");
-      expect(request.method, "POST");
-      expect(
-          request.headers["Content-Type"], "application/json; charset=utf-8");
-      final jsonParsedBody = jsonDecode(request.body) as Map;
+      expect(request.request.url.toString(),
+          "http://api.com/auth/password/request");
+      expect(request.request.method, "POST");
+      expect(request.request.headers["Content-Type"],
+          "application/json; charset=utf-8");
+      final jsonParsedBody = jsonDecode(request.request.body) as Map;
       expect(jsonParsedBody["email"], "will@acn.com");
     });
 
@@ -642,11 +674,12 @@ void main() {
 
       final request = sut.preparePasswordResetRequest(
           email: "will@acn.com", resetUrl: "https://my-custom-reset-url.com");
-      expect(request.url.toString(), "http://api.com/auth/password/request");
-      expect(request.method, "POST");
-      expect(
-          request.headers["Content-Type"], "application/json; charset=utf-8");
-      final jsonParsedBody = jsonDecode(request.body) as Map;
+      expect(request.request.url.toString(),
+          "http://api.com/auth/password/request");
+      expect(request.request.method, "POST");
+      expect(request.request.headers["Content-Type"],
+          "application/json; charset=utf-8");
+      final jsonParsedBody = jsonDecode(request.request.body) as Map;
       expect(jsonParsedBody["email"], "will@acn.com");
       expect(jsonParsedBody["reset_url"], "https://my-custom-reset-url.com");
     });
@@ -656,11 +689,12 @@ void main() {
 
       final request = sut.preparePasswordChangeRequest(
           newPassword: "new-password", token: "token-abc");
-      expect(request.url.toString(), "http://api.com/auth/password/reset");
-      expect(request.method, "POST");
       expect(
-          request.headers["Content-Type"], "application/json; charset=utf-8");
-      final jsonParsedBody = jsonDecode(request.body) as Map;
+          request.request.url.toString(), "http://api.com/auth/password/reset");
+      expect(request.request.method, "POST");
+      expect(request.request.headers["Content-Type"],
+          "application/json; charset=utf-8");
+      final jsonParsedBody = jsonDecode(request.request.body) as Map;
       expect(jsonParsedBody["password"], "new-password");
       expect(jsonParsedBody["token"], "token-abc");
     });
@@ -673,17 +707,20 @@ void main() {
           itemId: "123-abc-456",
           mustBeAuthenticated: true);
 
-      expect(request.url.toString(), "http://api.com/users/123-abc-456");
-      expect(request.method, "DELETE");
-      expect(request.headers["Authorization"], "Bearer $defaultAccessToken");
+      expect(
+          request.request.url.toString(), "http://api.com/users/123-abc-456");
+      expect(request.request.method, "DELETE");
+      expect(request.request.headers["Authorization"],
+          "Bearer $defaultAccessToken");
     });
   });
 
   group("DirectusAPI : Files", () {
     test("prepareNewFileUploadRequest", () {
       final sut = makeAuthenticatedDirectusAPI();
-      final request = sut.prepareNewFileUploadRequest(
+      final preparedRequest = sut.prepareNewFileUploadRequest(
           fileBytes: [1, 2, 3], filename: "file.txt");
+      final request = preparedRequest.request;
       expect(request, isA<MultipartRequest>());
       final multipartRequest = request as MultipartRequest;
       expect(multipartRequest.files.length, 1);
@@ -693,8 +730,9 @@ void main() {
 
     test("contentType", () {
       final sut = makeAuthenticatedDirectusAPI();
-      final request = sut.prepareNewFileUploadRequest(
+      final preparedRequest = sut.prepareNewFileUploadRequest(
           fileBytes: [1, 2, 3], contentType: "image/jpg", filename: "file.txt");
+      final request = preparedRequest.request;
       expect(request, isA<MultipartRequest>());
       final multipartRequest = request as MultipartRequest;
       expect(multipartRequest.files[0].contentType.mimeType, "image/jpg");
@@ -702,8 +740,9 @@ void main() {
 
     test("wildcard contentType", () {
       final sut = makeAuthenticatedDirectusAPI();
-      final request = sut.prepareNewFileUploadRequest(
+      final preparedRequest = sut.prepareNewFileUploadRequest(
           fileBytes: [1, 2, 3], contentType: "image/*", filename: "file.txt");
+      final request = preparedRequest.request;
       expect(request, isA<MultipartRequest>());
       final multipartRequest = request as MultipartRequest;
       expect(multipartRequest.files[0].contentType.mimeType, "image/*");
@@ -711,8 +750,9 @@ void main() {
 
     test("Title", () {
       final sut = makeAuthenticatedDirectusAPI();
-      final request = sut.prepareNewFileUploadRequest(
+      final preparedRequest = sut.prepareNewFileUploadRequest(
           fileBytes: [1, 2, 3], title: "File title", filename: "file.txt");
+      final request = preparedRequest.request;
       expect(request, isA<MultipartRequest>());
       final multipartRequest = request as MultipartRequest;
       expect(multipartRequest.fields["title"], "File title");
@@ -720,8 +760,9 @@ void main() {
 
     test("Folder", () {
       final sut = makeAuthenticatedDirectusAPI();
-      final request = sut.prepareNewFileUploadRequest(
+      final preparedRequest = sut.prepareNewFileUploadRequest(
           fileBytes: [1, 2, 3], folder: "Folder", filename: "file.txt");
+      final request = preparedRequest.request;
       expect(request, isA<MultipartRequest>());
       final multipartRequest = request as MultipartRequest;
       expect(multipartRequest.fields["folder"], "Folder");
@@ -732,11 +773,11 @@ void main() {
       final request = sut.prepareFileImportRequest(
           url: "https://www.purplegiraffe.fr/image.png", title: "File title");
 
-      expect(request.url.toString(), "http://api.com/files/import");
-      expect(request.method, "POST");
-      expect(
-          request.headers["Content-Type"], "application/json; charset=utf-8");
-      final json = jsonDecode(request.body);
+      expect(request.request.url.toString(), "http://api.com/files/import");
+      expect(request.request.method, "POST");
+      expect(request.request.headers["Content-Type"],
+          "application/json; charset=utf-8");
+      final json = jsonDecode(request.request.body);
       expect(json["url"], "https://www.purplegiraffe.fr/image.png");
       expect(json["data"]["title"], "File title");
     });
@@ -748,11 +789,11 @@ void main() {
           title: "File title",
           folder: "Folder");
 
-      expect(request.url.toString(), "http://api.com/files/import");
-      expect(request.method, "POST");
-      expect(
-          request.headers["Content-Type"], "application/json; charset=utf-8");
-      final json = jsonDecode(request.body);
+      expect(request.request.url.toString(), "http://api.com/files/import");
+      expect(request.request.method, "POST");
+      expect(request.request.headers["Content-Type"],
+          "application/json; charset=utf-8");
+      final json = jsonDecode(request.request.body);
       expect(json["url"], "https://www.purplegiraffe.fr/image.png");
       expect(json["data"]["title"], "File title");
       expect(json["data"]["folder"], "Folder");
@@ -762,8 +803,8 @@ void main() {
       final sut = makeAuthenticatedDirectusAPI();
       final request = sut.prepareFileDeleteRequest(fileId: "a");
 
-      expect(request.url.toString(), "http://api.com/files/a");
-      expect(request.method, "DELETE");
+      expect(request.request.url.toString(), "http://api.com/files/a");
+      expect(request.request.method, "DELETE");
     });
   });
 }

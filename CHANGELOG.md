@@ -1,4 +1,8 @@
-## 1.8.1 - 2024/09/27
+## 1.8.2 - 2024/10/08
+
+Added an automatic cache invalidation when updating or deleting any specific item.
+
+## 1.8.1 - 2024/10/08
 
 Bug Fix: Updating the current user was not invalidating the current user caches (variable and cache engine)
 

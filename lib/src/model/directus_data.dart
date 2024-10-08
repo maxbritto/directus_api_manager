@@ -1,5 +1,4 @@
 import 'package:directus_api_manager/directus_api_manager.dart';
-import 'package:directus_api_manager/src/model/directus_geometry_type.dart';
 
 abstract class DirectusData {
   final Map<String, dynamic> _rawReceivedData;

@@ -1,6 +1,7 @@
-import 'package:directus_api_manager/directus_api_manager.dart';
 import 'package:directus_api_manager/src/cache/cache_entry.dart';
 import 'package:extension_dart_tools/extension_tools.dart';
+
+import '../src/directus_api_manager_base.dart';
 
 class MockCacheEngine with MockMixin implements ILocalDirectusCacheInterface {
   @override
@@ -16,8 +17,23 @@ class MockCacheEngine with MockMixin implements ILocalDirectusCacheInterface {
   }
 
   @override
-  Future<void> setCacheEntry({required CacheEntry cacheEntry}) {
-    addCall(named: 'setCacheEntry', arguments: {'cacheEntry': cacheEntry});
+  Future<void> setCacheEntry(
+      {required CacheEntry cacheEntry, required List<String> tags}) {
+    addCall(
+        named: 'setCacheEntry',
+        arguments: {'cacheEntry': cacheEntry, 'tags': tags});
+    return Future.value();
+  }
+
+  @override
+  Future<void> clearCache() {
+    addCall(named: 'clearCache');
+    return Future.value();
+  }
+
+  @override
+  Future<void> removeCacheEntriesWithTag({required String tag}) {
+    addCall(named: 'removeCacheEntriesWithTag', arguments: {'tag': tag});
     return Future.value();
   }
 }
