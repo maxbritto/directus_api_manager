@@ -18,6 +18,8 @@ import 'model/directus_login_result.dart';
 import 'model/directus_user.dart';
 import 'sort_property.dart';
 
+import 'package:meta/meta.dart';
+
 abstract class ILocalDirectusCacheInterface {
   Future<CacheEntry?> getCacheEntry({required String key});
   Future<void> setCacheEntry({required CacheEntry cacheEntry});
@@ -34,7 +36,8 @@ class DirectusApiManager implements IDirectusApiManager {
   /// Or you can create your own engine by extending [ILocalDirectusCacheInterface] an providing an instance of your engine in this property
   final ILocalDirectusCacheInterface? cacheEngine;
 
-  DirectusUser? _currentUser;
+  @visibleForTesting
+  DirectusUser? cachedCurrentUser;
 
   @override
   bool get shouldRefreshToken => _api.shouldRefreshToken;
@@ -210,6 +213,7 @@ class DirectusApiManager implements IDirectusApiManager {
   }
 
   Future? _currentUserLock;
+  static const String _currentUserRequestIdentifier = "currentDirectusUser";
 
   /// Returns all the information about the currently logged in user.
   /// Returns null if no user is logged in.
@@ -229,8 +233,9 @@ class DirectusApiManager implements IDirectusApiManager {
     _currentUserLock = completer.future;
 
     try {
-      if (_currentUser == null && await hasLoggedInUser()) {
-        _currentUser = await _sendRequest(
+      if (cachedCurrentUser == null && await hasLoggedInUser()) {
+        cachedCurrentUser = await _sendRequest(
+            requestIdentifier: _currentUserRequestIdentifier,
             canSaveResponseToCache: canSaveResponseToCache,
             canUseCacheForResponse: canUseCacheForResponse,
             canUseOldCachedResponseAsFallback:
@@ -249,11 +254,12 @@ class DirectusApiManager implements IDirectusApiManager {
 
     _currentUserLock = null;
     completer.complete();
-    return _currentUser;
+    return cachedCurrentUser;
   }
 
   void discardCurrentUserCache() {
-    _currentUser = null;
+    cachedCurrentUser = null;
+    clearCacheWithKey(_currentUserRequestIdentifier);
   }
 
   /// Fetches the Directus user with the given [userId].
@@ -365,7 +371,7 @@ class DirectusApiManager implements IDirectusApiManager {
           parseResponse: (response) => _api.parseLogoutResponse(response));
     } catch (_) {}
     if (wasLoggedOut) {
-      _currentUser = null;
+      cachedCurrentUser = null;
     }
     return wasLoggedOut;
   }
@@ -559,7 +565,15 @@ class DirectusApiManager implements IDirectusApiManager {
         };
 
         // Return a new object with the updated data
-        return specificClass.newInstance('', [fullUpdatedData]) as Type;
+        final updatedObject =
+            specificClass.newInstance('', [fullUpdatedData]) as Type;
+        if (updatedObject is DirectusUser) {
+          final currentUser = cachedCurrentUser;
+          if (currentUser != null && currentUser.id == updatedObject.id) {
+            discardCurrentUserCache();
+            cachedCurrentUser = updatedObject;
+          }
+        }
       }
     } catch (error) {
       if (objectToUpdate.id == null) {
@@ -701,6 +715,8 @@ class DirectusApiManager implements IDirectusApiManager {
   String? get currentAuthToken => _api.currentAuthToken;
 
   Future<void> clearCacheWithKey(String cacheEntryKey) async {
-    await cacheEngine?.removeCacheEntry(key: cacheEntryKey);
+    try {
+      await cacheEngine?.removeCacheEntry(key: cacheEntryKey);
+    } catch (_) {}
   }
 }

@@ -174,9 +174,12 @@ main() {
       const successLoginResponse = """
     {"data":{"access_token":"ABCD.1234.ABCD","expires":900000,"refresh_token":"REFRESH.TOKEN.5678"}}
     """;
+
       mockClient.addStreamResponse(body: successLoginResponse);
-      final sut =
-          DirectusApiManager(baseURL: "http://api.com", httpClient: mockClient);
+      final sut = DirectusApiManager(
+          baseURL: "http://api.com",
+          httpClient: mockClient,
+          cacheEngine: mockCacheEngine);
       await sut.loginDirectusUser("l", "p");
       expect(await sut.hasLoggedInUser(), true);
       const userJson = """
@@ -207,9 +210,15 @@ main() {
           reason:
               "First call to currentDirectusUser() should trigger a fetch for user data");
       mockClient.calledFunctions.clear();
+      expect(mockCacheEngine.calledFunctions, contains("setCacheEntry"),
+          reason:
+              "First call to currentDirectusUser should cache the user data");
 
       sut.discardCurrentUserCache();
       mockClient.addStreamResponse(body: userJson);
+      expect(mockCacheEngine.calledFunctions, contains("removeCacheEntry"),
+          reason: "Discarding the cache should remove the user data");
+      expect(mockCacheEngine.receivedObjects["key"], "currentDirectusUser");
       currentUser = await sut.currentDirectusUser();
       expect(currentUser, isNotNull);
       expect(currentUser?.email, "will@acn.com");
@@ -567,6 +576,28 @@ main() {
       expect(item.id, "element1");
       expect(item.name, "name 1");
       expect(item.canBeChanged, true);
+    });
+
+    test("updateItem with the current directus user", () async {
+      mockDirectusApi.addNextReturnFutureObject(
+          {"id": "user-123", "email": "will@acn.com"});
+      final user = await sut.currentDirectusUser();
+      expect(user, isNotNull);
+      expect(sut.cachedCurrentUser, user);
+
+      final updatedUser =
+          DirectusUser({"id": "user-123", "email": "will@acn.com"});
+      updatedUser.email = "updated@acn.com";
+
+      mockClient.addStreamResponse(body: "", statusCode: 200);
+      mockDirectusApi.addNextReturnFutureObject(
+          {"id": "user-123", "email": "updated@acn.com"});
+      await sut.updateItem<DirectusUser>(objectToUpdate: updatedUser);
+      expect(sut.cachedCurrentUser?.email, "updated@acn.com",
+          reason: "The cached user should be updated");
+      expect(mockCacheEngine.calledFunctions, contains("removeCacheEntry"),
+          reason: "The cache for the current user should be removed");
+      expect(mockCacheEngine.receivedObjects["key"], "currentDirectusUser");
     });
 
     test("deleteItem", () async {

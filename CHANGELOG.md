@@ -1,3 +1,7 @@
+## 1.8.1 - 2024/09/27
+
+Bug Fix: Updating the current user was not invalidating the current user caches (variable and cache engine)
+
 ## 1.8.0 - 2024/09/27
 
 New feature: local cache and basic offline mode support 🔥
