@@ -70,7 +70,7 @@ class JsonCacheEngine implements ILocalDirectusCacheInterface {
   Future<void> removeCacheEntry({required String key}) async {
     final filePath = await _getFilePath(key: key);
     final file = File(filePath);
-    if (!file.existsSync()) {
+    if (file.existsSync()) {
       await file.delete();
     }
   }
@@ -105,10 +105,16 @@ class JsonCacheEngine implements ILocalDirectusCacheInterface {
       final file = File(filePath);
       if (file.existsSync()) {
         final content = await file.readAsString();
-        final json = jsonDecode(content);
-        tagsFileContent = _TagsFileContent(taggedEntries: json);
+        final Map<String, dynamic> json = jsonDecode(content);
+        final convertedMap = json.map((key, list) =>
+            MapEntry<String, List<String>>(
+                key,
+                (list as List)
+                    .map<String>((e) => e is String ? e : e.toString())
+                    .toList()));
+        tagsFileContent = _TagsFileContent(taggedEntries: convertedMap);
       } else {
-        tagsFileContent = const _TagsFileContent.empty();
+        tagsFileContent = _TagsFileContent.empty();
       }
     }
     return tagsFileContent;
@@ -119,7 +125,7 @@ class _TagsFileContent {
   final Map<String, List<String>> taggedEntries;
 
   const _TagsFileContent({required this.taggedEntries});
-  const _TagsFileContent.empty() : taggedEntries = const {};
+  _TagsFileContent.empty() : taggedEntries = <String, List<String>>{};
 
   void addEntry({required String tag, required String key}) {
     final existingEntriesForTag = taggedEntries[tag];
@@ -131,7 +137,7 @@ class _TagsFileContent {
   }
 
   List<String> getEntriesWithTag({required String tag}) {
-    return taggedEntries[tag] ?? const [];
+    return taggedEntries[tag] ?? <String>[];
   }
 
   void removeAllEntriesWithTag({required String tag}) {
