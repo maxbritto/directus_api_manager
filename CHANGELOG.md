@@ -1,5 +1,6 @@
 ## 1.9.0 - 2024/11/04
 - Added a new API for registering a new user (which is different from creating a user object in Directus). See https://docs.directus.io/reference/authentication.html#register
+- Improved update return : now returns the server returned object and not the one sent to the server.
 
 
 ## 1.8.2 - 2024/10/08

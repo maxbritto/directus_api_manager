@@ -521,6 +521,7 @@ class DirectusApiManager implements IDirectusApiManager {
       bool force = false}) async {
     final specificClass = _metadataGenerator.getClassMirrorForType(Type);
     final collectionMetadata = _collectionMetadataFromClass(specificClass);
+    Type? updatedObjectReturnedFromServer;
     try {
       if (objectToUpdate.needsSaving || force) {
         final Map<String, dynamic> objectData = force
@@ -560,13 +561,14 @@ class DirectusApiManager implements IDirectusApiManager {
         };
 
         // Return a new object with the updated data
-        final updatedObject =
+        updatedObjectReturnedFromServer =
             specificClass.newInstance('', [fullUpdatedData]) as Type;
-        if (updatedObject is DirectusUser) {
+        if (updatedObjectReturnedFromServer is DirectusUser) {
           final currentUser = cachedCurrentUser;
-          if (currentUser != null && currentUser.id == updatedObject.id) {
+          if (currentUser != null &&
+              currentUser.id == updatedObjectReturnedFromServer.id) {
             discardCurrentUserCache();
-            cachedCurrentUser = updatedObject;
+            cachedCurrentUser = updatedObjectReturnedFromServer;
           }
         }
         if (cacheEngine != null) {
@@ -575,12 +577,11 @@ class DirectusApiManager implements IDirectusApiManager {
         }
       }
     } catch (error) {
-      if (objectToUpdate.id == null) {
-        throw (Exception("Item ID can not be null"));
-      }
+      log("Error while updating item: $error");
+      rethrow;
     }
 
-    return Future.value(objectToUpdate);
+    return Future.value(updatedObjectReturnedFromServer ?? objectToUpdate);
   }
 
   @override
