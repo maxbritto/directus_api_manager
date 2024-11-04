@@ -1,3 +1,7 @@
+## 1.9.0 - 2024/11/04
+- Added a new API for registering a new user (which is different from creating a user object in Directus). See https://docs.directus.io/reference/authentication.html#register
+
+
 ## 1.8.2 - 2024/10/08
 
 Added an automatic cache invalidation when updating or deleting any specific item.

@@ -208,4 +208,19 @@ class MockDirectusApiManager extends IDirectusApiManager with MockMixin {
 
   @override
   String get baseUrl => "http://api.com:8055";
+
+  @override
+  Future<bool> registerDirectusUser(
+      {required String email,
+      required String password,
+      String? firstname,
+      String? lastname}) {
+    addCall(named: "registerDirectusUser", arguments: {
+      "email": email,
+      "password": password,
+      "firstname": firstname,
+      "lastname": lastname
+    });
+    return Future.value(popNextReturnedObject());
+  }
 }

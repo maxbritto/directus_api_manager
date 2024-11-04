@@ -732,4 +732,20 @@ class DirectusApiManager implements IDirectusApiManager {
       await cacheEngine?.removeCacheEntry(key: cacheEntryKey);
     } catch (_) {}
   }
+
+  @override
+  Future<bool> registerDirectusUser(
+      {required String email,
+      required String password,
+      String? firstname,
+      String? lastname}) {
+    return _sendRequest(
+        canSaveResponseToCache: false,
+        prepareRequest: () => _api.prepareRegisterUserRequest(
+            email: email,
+            password: password,
+            firstname: firstname,
+            lastname: lastname),
+        parseResponse: _api.parseGenericBoolResponse);
+  }
 }

@@ -305,6 +305,25 @@ main() {
       expect(await sut.hasLoggedInUser(), true);
     });
 
+    test("registerDirectusUser", () async {
+      mockDirectusApi.addNextReturnFutureObject(true);
+      final result = await sut.registerDirectusUser(
+          email: "will@acn.com",
+          password: "password",
+          firstname: "Will",
+          lastname: "McAvoy");
+      expect(mockDirectusApi.calledFunctions,
+          contains("prepareRegisterUserRequest"));
+      expect(mockDirectusApi.receivedObjects["email"], "will@acn.com");
+      expect(mockDirectusApi.receivedObjects["password"], "password");
+      expect(mockDirectusApi.receivedObjects["firstname"], "Will");
+      expect(mockDirectusApi.receivedObjects["lastname"], "McAvoy");
+
+      expect(mockDirectusApi.calledFunctions,
+          contains("parseGenericBoolResponse"));
+      expect(result, isTrue);
+    });
+
     test('Empty manager with NOT successfull refresh token load', () async {
       final mockClient = MockHTTPClient();
       final sut = DirectusApiManager(

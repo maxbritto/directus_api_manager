@@ -211,6 +211,24 @@ void main() {
       expect(jsonParsedBody["creationDate"], "2022-01-02T03:04:05.000");
     });
 
+    test("register user request", () {
+      final sut = DirectusAPI("http://api.com");
+      final request = sut.prepareRegisterUserRequest(
+          email: "will@acn.com",
+          password: "mc!avoy",
+          firstname: "Will",
+          lastname: "McAvoy");
+      expect(request.request.url.toString(), "http://api.com/users/register");
+      expect(request.request.method, "POST");
+      expect(request.request.headers["Content-Type"],
+          "application/json; charset=utf-8");
+      final jsonParsedBody = jsonDecode(request.request.body);
+      expect(jsonParsedBody["email"], "will@acn.com");
+      expect(jsonParsedBody["password"], "mc!avoy");
+      expect(jsonParsedBody["first_name"], "Will");
+      expect(jsonParsedBody["last_name"], "McAvoy");
+    });
+
     test('New user request', () {
       final sut = makeAuthenticatedDirectusAPI();
       final request = sut.prepareCreateNewItemRequest(

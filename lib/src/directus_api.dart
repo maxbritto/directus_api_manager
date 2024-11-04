@@ -98,6 +98,12 @@ abstract class IDirectusAPI {
       {required String email, String? resetUrl});
   PreparedRequest preparePasswordChangeRequest(
       {required String token, required String newPassword});
+
+  PreparedRequest prepareRegisterUserRequest(
+      {required String email,
+      required String password,
+      String? firstname,
+      String? lastname});
 }
 
 class DirectusAPI implements IDirectusAPI {
@@ -595,6 +601,23 @@ class DirectusAPI implements IDirectusAPI {
       {required String token, required String newPassword}) {
     final request = Request("POST", Uri.parse("$_baseURL/auth/password/reset"));
     request.body = jsonEncode({"token": token, "password": newPassword});
+    request.addJsonHeaders();
+    return PreparedRequest(request: request);
+  }
+
+  @override
+  PreparedRequest prepareRegisterUserRequest(
+      {required String email,
+      required String password,
+      String? firstname,
+      String? lastname}) {
+    final request = Request("POST", Uri.parse("$_baseURL/users/register"));
+    request.body = jsonEncode({
+      "email": email,
+      "password": password,
+      if (firstname != null) "first_name": firstname,
+      if (lastname != null) "last_name": lastname
+    });
     request.addJsonHeaders();
     return PreparedRequest(request: request);
   }
