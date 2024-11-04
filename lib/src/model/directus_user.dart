@@ -7,8 +7,8 @@ import 'package:directus_api_manager/src/model/directus_data.dart';
     endpointPrefix: "/",
     webSocketEndPoint: "directus_users")
 class DirectusUser extends DirectusData {
-  String get email => getValue(forKey: "email");
-  set email(String value) => setValue(value, forKey: "email");
+  String? get email => getValue(forKey: "email");
+  set email(String? value) => setValue(value, forKey: "email");
 
   set password(String value) => setValue(value, forKey: "password");
 
@@ -29,16 +29,12 @@ class DirectusUser extends DirectusData {
 
   /// Creates a new [DirectusUser]
   ///
-  /// [_rawReceivedData] must contain at least an `"id"` and an `"email"` properties. Throws [Exception] if they are missing.
+  /// [_rawReceivedData] must contain at least an `"id"`. Throws [Exception] if it is missing.
   ///
   /// Can support official properties listed here : https://docs.directus.io/reference/system/users/#the-user-object
   ///
   /// You can add any other custom property that you have added to your *directus_user* model on your server.
-  DirectusUser(Map<String, dynamic> rawReceivedData) : super(rawReceivedData) {
-    if (rawReceivedData.containsKey("email") == false) {
-      throw Exception("email is required");
-    }
-  }
+  DirectusUser(super.rawReceivedData);
 
   DirectusUser.newDirectusUser(
       {required String email,
