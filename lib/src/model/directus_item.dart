@@ -4,4 +4,5 @@ abstract class DirectusItem extends DirectusData {
   // Creates a new [DirectusItem]
   DirectusItem(super.rawReceivedData);
   DirectusItem.newItem() : super.newDirectusData();
+  DirectusItem.withId(dynamic id) : super.withId(id);
 }

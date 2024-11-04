@@ -11,6 +11,11 @@ abstract class DirectusData {
   }
 
   DirectusData.newDirectusData([this._rawReceivedData = const {}]);
+  DirectusData.withId(dynamic id) : this({"id": id});
+
+  /// This field is used to store the id of the user that created the item.
+  String? get userCreated => getValue(forKey: 'user_created');
+  set userCreated(String? value) => setValue(value, forKey: 'user_created');
 
   /// Returns the id of the item
   /// We respect directus recommandations of having an [id] field for each collection.
