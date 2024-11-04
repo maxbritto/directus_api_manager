@@ -1,6 +1,9 @@
 ## 1.9.0 - 2024/11/04
 - Added a new API for registering a new user (which is different from creating a user object in Directus). See https://docs.directus.io/reference/authentication.html#register
 - Improved update return : now returns the server returned object and not the one sent to the server.
+- User email field is now optional to better reflect what actually happens in Directus. When reading an user object, directus will return the fields the current user has access, if the user doesn't have access to the "email" field then the value will be null.
+- Added more convenience init and properties on directus_item and directus_data
+
 
 
 ## 1.8.2 - 2024/10/08
