@@ -4,8 +4,6 @@
 - User email field is now optional to better reflect what actually happens in Directus. When reading an user object, directus will return the fields the current user has access, if the user doesn't have access to the "email" field then the value will be null.
 - Added more convenience init and properties on directus_item and directus_data
 
-
-
 ## 1.8.2 - 2024/10/08
 
 Added an automatic cache invalidation when updating or deleting any specific item.
@@ -27,6 +25,7 @@ This version adds a new feature:
 - adds the "DirectusGeometryType" class to manage the geometry type of Postgres databases.
 - Currently it can load any geometry type from a JSON object 
 - Currently it exposes convenience constructor and properties for the Point type used in regular geometry (x,y) or in map context (longitude, latitude)
+- Add addSubscription and removeSubscription to make the use of websocket more easy
 
 ## 1.7.6 - 2024/07/09
 
