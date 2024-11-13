@@ -18,12 +18,12 @@ class DirectusFile extends DirectusData {
   String? get description => getValue(forKey: "description");
   Map<String, dynamic>? get metadata => getValue(forKey: "metadata");
 
-  DirectusFile(Map<String, dynamic> rawReceivedData) : super(rawReceivedData);
+  DirectusFile(super.rawReceivedData);
   DirectusFile.fromId(String id, {String? title})
       : super({"id": id, "title": title});
 
   @Deprecated("message: Use DirectusFile instead")
-  DirectusFile.fromJSON(Map<String, dynamic> jsonData) : super(jsonData);
+  DirectusFile.fromJSON(super.jsonData);
 
   /// Builds an URL to download this file
   /// `DirectusFile.baseUrl` must have been filled at least once before calling this function.

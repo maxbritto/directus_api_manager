@@ -11,6 +11,11 @@ abstract class DirectusData {
   }
 
   DirectusData.newDirectusData([this._rawReceivedData = const {}]);
+  DirectusData.withId(dynamic id) : this({"id": id});
+
+  /// This field is used to store the id of the user that created the item.
+  String? get userCreated => getValue(forKey: 'user_created');
+  set userCreated(String? value) => setValue(value, forKey: 'user_created');
 
   /// Returns the id of the item
   /// We respect directus recommandations of having an [id] field for each collection.
@@ -144,6 +149,27 @@ abstract class DirectusData {
     } else {
       setValue(null, forKey: forKey);
     }
+  }
+
+  /// Returns a DirectusGeometryType for a given property.
+  /// Only use this property if you are certain your property will be filled for every object in the collection
+  /// If you are not certain, use [getOptionalDirectusGeometryType] instead
+  DirectusGeometryType getDirectusGeometryType({required String forKey}) {
+    final dynamic value = getOptionalDirectusGeometryType(forKey: forKey);
+    assert(value != null);
+    return value;
+  }
+
+  /// Returns a DirectusGeometryType if the value is a Map that can be converted to a DirectusGeometryType
+  /// This property can be used if you are not certain your property will be filled for every object in the collection
+  /// If the property is not a Map, null will be returned
+  DirectusGeometryType? getOptionalDirectusGeometryType(
+      {required String forKey}) {
+    final dynamic value = getValue(forKey: forKey);
+    if (value is Map<String, dynamic>) {
+      return DirectusGeometryType.fromJSON(value);
+    }
+    return null;
   }
 
   /// returns a map of all the properties of the item merged with the ones that have been updated

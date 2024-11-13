@@ -5,6 +5,7 @@ import 'package:http/http.dart';
 import 'package:reflectable/reflectable.dart';
 
 import 'annotations.dart';
+import 'cache/cache_entry.dart';
 import 'directus_api.dart';
 import 'filter.dart';
 import 'idirectus_api_manager.dart';
@@ -17,12 +18,36 @@ import 'model/directus_login_result.dart';
 import 'model/directus_user.dart';
 import 'sort_property.dart';
 
+import 'package:meta/meta.dart';
+
+abstract class ILocalDirectusCacheInterface {
+  Future<CacheEntry?> getCacheEntry({required String key});
+  Future<void> setCacheEntry(
+      {required CacheEntry cacheEntry, required List<String> tags});
+  Future<void> removeCacheEntry({required String key});
+  Future<void> removeCacheEntriesWithTag({required String tag});
+  Future<void> clearCache();
+}
+
+class PreparedRequest {
+  final dynamic request;
+  final List<String> tags;
+
+  PreparedRequest({required this.request, this.tags = const []});
+}
+
 class DirectusApiManager implements IDirectusApiManager {
   final Client _client;
   final IDirectusAPI _api;
   final MetadataGenerator _metadataGenerator = MetadataGenerator();
 
-  DirectusUser? _currentUser;
+  /// Fill this property to aumtomatically have a configurable local cache
+  /// You can use the already provided [JsonCacheEngine] to have an already implemented cache.
+  /// Or you can create your own engine by extending [ILocalDirectusCacheInterface] an providing an instance of your engine in this property
+  final ILocalDirectusCacheInterface? cacheEngine;
+
+  @visibleForTesting
+  DirectusUser? cachedCurrentUser;
 
   @override
   bool get shouldRefreshToken => _api.shouldRefreshToken;
@@ -58,6 +83,7 @@ class DirectusApiManager implements IDirectusApiManager {
   DirectusApiManager(
       {required String baseURL,
       Client? httpClient,
+      this.cacheEngine,
       IDirectusAPI? api,
       Future<void> Function(String)? saveRefreshTokenCallback,
       Future<String?> Function()? loadRefreshTokenCallback})
@@ -78,13 +104,19 @@ class DirectusApiManager implements IDirectusApiManager {
   ///
   /// Throws an exception if [prepareRequest] returns null or not a [BaseRequest] object
   Future<ResponseType> _sendRequest<ResponseType>(
-      {required dynamic Function() prepareRequest,
+      {required PreparedRequest Function() prepareRequest,
       required ResponseType Function(Response) parseResponse,
-      bool dependsOnToken = true}) async {
+      bool dependsOnToken = true,
+      String? requestIdentifier,
+      bool canUseCacheForResponse = false,
+      bool canSaveResponseToCache = true,
+      bool canUseOldCachedResponseAsFallback = true,
+      Duration maxCacheAge = const Duration(days: 1)}) async {
     if (dependsOnToken && _api.shouldRefreshToken) {
       await tryAndRefreshToken();
     }
-    final request = prepareRequest();
+    final preparedRequest = prepareRequest();
+    final request = preparedRequest.request;
     BaseRequest r;
     if (request is Future<BaseRequest> || request is Future<BaseRequest?>) {
       r = await request;
@@ -94,8 +126,48 @@ class DirectusApiManager implements IDirectusApiManager {
       print("_sendRequest error. Received request : $request");
       throw Exception("No valid request to send");
     }
-    final streamedResponse = await _client.send(r);
-    final response = await Response.fromStream(streamedResponse);
+    Response? response;
+    String? cacheEntryKey;
+    CacheEntry? cacheEntry;
+    final cacheEngine = this.cacheEngine;
+    if (cacheEngine != null) {
+      cacheEntryKey = requestIdentifier ?? "${r.method} ${r.url}";
+      if (canUseCacheForResponse) {
+        cacheEntry = await cacheEngine.getCacheEntry(key: cacheEntryKey);
+      }
+    }
+    if (cacheEntry != null && cacheEntry.validUntil.isAfter(DateTime.now())) {
+      response = cacheEntry.toResponse();
+    } else {
+      try {
+        final streamedResponse = await _client.send(r);
+        response = await Response.fromStream(streamedResponse);
+
+        if (canSaveResponseToCache &&
+            cacheEngine != null &&
+            cacheEntryKey != null) {
+          await cacheEngine.setCacheEntry(
+              cacheEntry: CacheEntry.fromResponse(response,
+                  key: cacheEntryKey, maxCacheAge: maxCacheAge),
+              tags: preparedRequest.tags);
+        }
+      } catch (e) {
+        if (canUseOldCachedResponseAsFallback) {
+          if (cacheEntryKey != null) {
+            cacheEntry ??= await cacheEngine?.getCacheEntry(key: cacheEntryKey);
+          }
+          if (cacheEntry != null) {
+            response = cacheEntry.toResponse();
+          }
+        } else if (e is DirectusApiError) {
+          rethrow;
+        }
+        if (response == null) {
+          throw DirectusApiError(
+              response: response, customMessage: e.toString());
+        }
+      }
+    }
     return parseResponse(response);
   }
 
@@ -103,7 +175,8 @@ class DirectusApiManager implements IDirectusApiManager {
 
   @override
   Future<bool> hasLoggedInUser() async {
-    return await _api.prepareRefreshTokenRequest() != null;
+    final preparedRequest = _api.prepareRefreshTokenRequest();
+    return await preparedRequest.request != null;
   }
 
   Future? _refreshTokenLock;
@@ -120,7 +193,8 @@ class DirectusApiManager implements IDirectusApiManager {
     try {
       try {
         tokenRefreshed = await _sendRequest(
-            prepareRequest: () async => await _api.prepareRefreshTokenRequest(),
+            canSaveResponseToCache: false,
+            prepareRequest: _api.prepareRefreshTokenRequest,
             dependsOnToken: false,
             parseResponse: (response) =>
                 _api.parseRefreshTokenResponse(response));
@@ -147,16 +221,23 @@ class DirectusApiManager implements IDirectusApiManager {
               oneTimePassword: oneTimePassword);
         },
         dependsOnToken: false,
+        canSaveResponseToCache: false,
         parseResponse: (response) => _api.parseLoginResponse(response));
   }
 
   Future? _currentUserLock;
+  static const String _currentUserRequestIdentifier = "currentDirectusUser";
 
   /// Returns all the information about the currently logged in user.
   /// Returns null if no user is logged in.
   /// [fields] : A comma separated list of fields to return. If not provided, all fields will be returned.
   @override
-  Future<DirectusUser?> currentDirectusUser({String fields = "*"}) async {
+  Future<DirectusUser?> currentDirectusUser(
+      {String fields = "*",
+      bool canUseCacheForResponse = false,
+      bool canSaveResponseToCache = true,
+      bool canUseOldCachedResponseAsFallback = true,
+      Duration maxCacheAge = const Duration(days: 1)}) async {
     final completer = Completer();
     final lock = _currentUserLock;
     if (lock != null) {
@@ -165,8 +246,14 @@ class DirectusApiManager implements IDirectusApiManager {
     _currentUserLock = completer.future;
 
     try {
-      if (_currentUser == null && await hasLoggedInUser()) {
-        _currentUser = await _sendRequest(
+      if (cachedCurrentUser == null && await hasLoggedInUser()) {
+        cachedCurrentUser = await _sendRequest(
+            requestIdentifier: _currentUserRequestIdentifier,
+            canSaveResponseToCache: canSaveResponseToCache,
+            canUseCacheForResponse: canUseCacheForResponse,
+            canUseOldCachedResponseAsFallback:
+                canUseOldCachedResponseAsFallback,
+            maxCacheAge: maxCacheAge,
             prepareRequest: () =>
                 _api.prepareGetCurrentUserRequest(fields: fields),
             parseResponse: (response) {
@@ -180,11 +267,12 @@ class DirectusApiManager implements IDirectusApiManager {
 
     _currentUserLock = null;
     completer.complete();
-    return _currentUser;
+    return cachedCurrentUser;
   }
 
   void discardCurrentUserCache() {
-    _currentUser = null;
+    cachedCurrentUser = null;
+    clearCacheWithKey(_currentUserRequestIdentifier);
   }
 
   /// Fetches the Directus user with the given [userId].
@@ -226,6 +314,7 @@ class DirectusApiManager implements IDirectusApiManager {
   @override
   Future<bool> requestPasswordReset({required String email, String? resetUrl}) {
     return _sendRequest(
+        canSaveResponseToCache: false,
         prepareRequest: () =>
             _api.preparePasswordResetRequest(email: email, resetUrl: resetUrl),
         parseResponse: _api.parseGenericBoolResponse);
@@ -239,6 +328,7 @@ class DirectusApiManager implements IDirectusApiManager {
   Future<bool> confirmPasswordReset(
       {required String token, required String password}) {
     return _sendRequest(
+        canSaveResponseToCache: false,
         prepareRequest: () => _api.preparePasswordChangeRequest(
             token: token, newPassword: password),
         parseResponse: _api.parseGenericBoolResponse);
@@ -265,17 +355,18 @@ class DirectusApiManager implements IDirectusApiManager {
 
   @override
   Future<bool> logoutDirectusUser() async {
-    discardCurrentUserCache();
-    var wasLoggedOut = false;
-    try {
-      wasLoggedOut = await _sendRequest(
-          prepareRequest: () => _api.prepareLogoutRequest(),
-          dependsOnToken: false,
-          parseResponse: (response) => _api.parseLogoutResponse(response));
-    } catch (_) {}
-    if (wasLoggedOut) {
-      _currentUser = null;
+    final logoutRequest = _api.prepareLogoutRequest();
+    var wasLoggedOut = true;
+    if (logoutRequest != null) {
+      try {
+        wasLoggedOut = await _sendRequest(
+            canSaveResponseToCache: false,
+            prepareRequest: () => logoutRequest,
+            dependsOnToken: false,
+            parseResponse: (response) => _api.parseLogoutResponse(response));
+      } catch (_) {}
     }
+    discardCurrentUserCache();
     return wasLoggedOut;
   }
 
@@ -293,10 +384,20 @@ class DirectusApiManager implements IDirectusApiManager {
       List<SortProperty>? sortBy,
       String? fields,
       int? limit,
-      int? offset}) {
+      int? offset,
+      String? requestIdentifier,
+      bool canUseCacheForResponse = false,
+      bool canSaveResponseToCache = true,
+      bool canUseOldCachedResponseAsFallback = true,
+      Duration maxCacheAge = const Duration(days: 1)}) {
     final collectionClass = _metadataGenerator.getClassMirrorForType(Type);
     final collectionMetadata = _collectionMetadataFromClass(collectionClass);
     return _sendRequest(
+        requestIdentifier: requestIdentifier,
+        canUseCacheForResponse: canUseCacheForResponse,
+        canSaveResponseToCache: canSaveResponseToCache,
+        canUseOldCachedResponseAsFallback: canUseOldCachedResponseAsFallback,
+        maxCacheAge: maxCacheAge,
         prepareRequest: () => _api.prepareGetListOfItemsRequest(
             endpointName: collectionMetadata.endpointName,
             endpointPrefix: collectionMetadata.endpointPrefix,
@@ -312,15 +413,27 @@ class DirectusApiManager implements IDirectusApiManager {
 
   @override
   Future<Type?> getSpecificItem<Type extends DirectusData>(
-      {required String id, String? fields}) {
+      {required String id,
+      String? fields,
+      String? requestIdentifier,
+      bool canUseCacheForResponse = false,
+      bool canSaveResponseToCache = true,
+      bool canUseOldCachedResponseAsFallback = true,
+      Duration maxCacheAge = const Duration(days: 1)}) {
     final specificClass = _metadataGenerator.getClassMirrorForType(Type);
     final collectionMetadata = _collectionMetadataFromClass(specificClass);
     return _sendRequest(
+        requestIdentifier: requestIdentifier,
+        canUseCacheForResponse: canUseCacheForResponse,
+        canSaveResponseToCache: canSaveResponseToCache,
+        canUseOldCachedResponseAsFallback: canUseOldCachedResponseAsFallback,
+        maxCacheAge: maxCacheAge,
         prepareRequest: () => _api.prepareGetSpecificItemRequest(
             endpointName: collectionMetadata.endpointName,
             endpointPrefix: collectionMetadata.endpointPrefix,
             itemId: id,
-            fields: fields ?? collectionMetadata.defaultFields),
+            fields: fields ?? collectionMetadata.defaultFields,
+            tags: ["${collectionMetadata.endpointName}/$id"]),
         parseResponse: (response) {
           Type? item;
           try {
@@ -342,6 +455,7 @@ class DirectusApiManager implements IDirectusApiManager {
     final specificClass = _metadataGenerator.getClassMirrorForType(Type);
     final collectionMetadata = _collectionMetadataFromClass(specificClass);
     return _sendRequest(
+        canSaveResponseToCache: false,
         prepareRequest: () => _api.prepareCreateNewItemRequest(
             endpointName: collectionMetadata.endpointName,
             endpointPrefix: collectionMetadata.endpointPrefix,
@@ -365,6 +479,7 @@ class DirectusApiManager implements IDirectusApiManager {
     final List<Map<String, dynamic>> objectListData =
         objectList.map(((object) => object.mapForObjectCreation())).toList();
     return _sendRequest(
+        canSaveResponseToCache: false,
         prepareRequest: () => _api.prepareCreateNewItemRequest(
             endpointName: collectionMetadata.endpointName,
             endpointPrefix: collectionMetadata.endpointPrefix,
@@ -406,6 +521,7 @@ class DirectusApiManager implements IDirectusApiManager {
       bool force = false}) async {
     final specificClass = _metadataGenerator.getClassMirrorForType(Type);
     final collectionMetadata = _collectionMetadataFromClass(specificClass);
+    Type? updatedObjectReturnedFromServer;
     try {
       if (objectToUpdate.needsSaving || force) {
         final Map<String, dynamic> objectData = force
@@ -424,6 +540,7 @@ class DirectusApiManager implements IDirectusApiManager {
         }
 
         final Map<String, dynamic> updatedData = await _sendRequest(
+            canSaveResponseToCache: false,
             prepareRequest: () => _api.prepareUpdateItemRequest(
                 endpointName: collectionMetadata.endpointName,
                 endpointPrefix: collectionMetadata.endpointPrefix,
@@ -444,30 +561,48 @@ class DirectusApiManager implements IDirectusApiManager {
         };
 
         // Return a new object with the updated data
-        return specificClass.newInstance('', [fullUpdatedData]) as Type;
+        updatedObjectReturnedFromServer =
+            specificClass.newInstance('', [fullUpdatedData]) as Type;
+        if (updatedObjectReturnedFromServer is DirectusUser) {
+          final currentUser = cachedCurrentUser;
+          if (currentUser != null &&
+              currentUser.id == updatedObjectReturnedFromServer.id) {
+            discardCurrentUserCache();
+            cachedCurrentUser = updatedObjectReturnedFromServer;
+          }
+        }
+        if (cacheEngine != null) {
+          await cacheEngine?.removeCacheEntriesWithTag(
+              tag: "${collectionMetadata.endpointName}/${objectToUpdate.id}");
+        }
       }
     } catch (error) {
-      if (objectToUpdate.id == null) {
-        throw (Exception("Item ID can not be null"));
-      }
+      log("Error while updating item: $error");
+      rethrow;
     }
 
-    return Future.value(objectToUpdate);
+    return Future.value(updatedObjectReturnedFromServer ?? objectToUpdate);
   }
 
   @override
   Future<bool> deleteItem<Type extends DirectusData>(
-      {required String objectId, bool mustBeAuthenticated = true}) {
+      {required String objectId, bool mustBeAuthenticated = true}) async {
     final specificClass = _metadataGenerator.getClassMirrorForType(Type);
     final collectionMetadata = _collectionMetadataFromClass(specificClass);
     try {
-      return _sendRequest(
+      final wasDeleted = await _sendRequest(
+          canSaveResponseToCache: false,
           prepareRequest: () => _api.prepareDeleteItemRequest(
               endpointName: collectionMetadata.endpointName,
               endpointPrefix: collectionMetadata.endpointPrefix,
               itemId: objectId,
               mustBeAuthenticated: mustBeAuthenticated),
           parseResponse: (response) => _api.parseGenericBoolResponse(response));
+      if (cacheEngine != null) {
+        await cacheEngine?.removeCacheEntriesWithTag(
+            tag: "${collectionMetadata.endpointName}/$objectId");
+      }
+      return wasDeleted;
     } catch (error) {
       return Future.value(false);
     }
@@ -476,19 +611,27 @@ class DirectusApiManager implements IDirectusApiManager {
   @override
   Future<bool> deleteMultipleItems<Type extends DirectusData>(
       {required Iterable<dynamic> objectIdsToDelete,
-      bool mustBeAuthenticated = true}) {
+      bool mustBeAuthenticated = true}) async {
     if (objectIdsToDelete.isEmpty) {
       throw Exception("objectIdsToDelete can not be empty");
     }
     final specificClass = _metadataGenerator.getClassMirrorForType(Type);
     final collectionMetadata = _collectionMetadataFromClass(specificClass);
-    return _sendRequest(
+    final wereDeleted = await _sendRequest(
+        canSaveResponseToCache: false,
         prepareRequest: () => _api.prepareDeleteMultipleItemRequest(
             endpointName: collectionMetadata.endpointName,
             endpointPrefix: collectionMetadata.endpointPrefix,
             itemIdList: objectIdsToDelete.toList(),
             mustBeAuthenticated: mustBeAuthenticated),
         parseResponse: (response) => _api.parseGenericBoolResponse(response));
+    if (cacheEngine != null) {
+      for (final objectId in objectIdsToDelete) {
+        await cacheEngine?.removeCacheEntriesWithTag(
+            tag: "${collectionMetadata.endpointName}/$objectId");
+      }
+    }
+    return wereDeleted;
   }
 
   @Deprecated("Use [deleteItem] instead")
@@ -505,6 +648,7 @@ class DirectusApiManager implements IDirectusApiManager {
   Future<DirectusFile> uploadFileFromUrl(
       {required String remoteUrl, String? title, String? folder}) async {
     return _sendRequest(
+        canSaveResponseToCache: false,
         prepareRequest: () => _api.prepareFileImportRequest(
             url: remoteUrl, title: title, folder: folder),
         parseResponse: (response) => _api.parseFileUploadResponse(response));
@@ -519,6 +663,7 @@ class DirectusApiManager implements IDirectusApiManager {
       String? folder,
       String storage = "local"}) {
     return _sendRequest(
+        canSaveResponseToCache: false,
         prepareRequest: () => _api.prepareNewFileUploadRequest(
             fileBytes: fileBytes,
             filename: filename,
@@ -536,6 +681,7 @@ class DirectusApiManager implements IDirectusApiManager {
       required String filename,
       String? contentType}) {
     return _sendRequest(
+        canSaveResponseToCache: false,
         prepareRequest: () => _api.prepareUpdateFileRequest(
             fileId: fileId,
             filename: filename,
@@ -547,6 +693,7 @@ class DirectusApiManager implements IDirectusApiManager {
   @override
   Future<bool> deleteFile({required String fileId}) {
     return _sendRequest(
+        canSaveResponseToCache: false,
         prepareRequest: () => _api.prepareFileDeleteRequest(fileId: fileId),
         parseResponse: (response) => _api.parseGenericBoolResponse(response));
   }
@@ -554,11 +701,23 @@ class DirectusApiManager implements IDirectusApiManager {
   @override
   Future<T> sendRequestToEndpoint<T>(
       {required BaseRequest Function() prepareRequest,
-      required T Function(Response) jsonConverter}) {
+      required T Function(Response) jsonConverter,
+      String? requestIdentifier,
+      bool canUseCacheForResponse = false,
+      bool canSaveResponseToCache = true,
+      bool canUseOldCachedResponseAsFallback = true,
+      Duration maxCacheAge = const Duration(days: 1)}) {
     return _sendRequest(
+        requestIdentifier: requestIdentifier,
+        canUseCacheForResponse: canUseCacheForResponse,
+        canSaveResponseToCache: canSaveResponseToCache,
+        canUseOldCachedResponseAsFallback: canUseOldCachedResponseAsFallback,
+        maxCacheAge: maxCacheAge,
         prepareRequest: () {
           final request = prepareRequest();
-          return _api.authenticateRequest(request);
+          return PreparedRequest(
+              request: _api.authenticateRequest(request),
+              tags: ["customRequest"]);
         },
         parseResponse: (response) => jsonConverter(response));
   }
@@ -568,4 +727,26 @@ class DirectusApiManager implements IDirectusApiManager {
   }
 
   String? get currentAuthToken => _api.currentAuthToken;
+
+  Future<void> clearCacheWithKey(String cacheEntryKey) async {
+    try {
+      await cacheEngine?.removeCacheEntry(key: cacheEntryKey);
+    } catch (_) {}
+  }
+
+  @override
+  Future<bool> registerDirectusUser(
+      {required String email,
+      required String password,
+      String? firstname,
+      String? lastname}) {
+    return _sendRequest(
+        canSaveResponseToCache: false,
+        prepareRequest: () => _api.prepareRegisterUserRequest(
+            email: email,
+            password: password,
+            firstname: firstname,
+            lastname: lastname),
+        parseResponse: _api.parseGenericBoolResponse);
+  }
 }

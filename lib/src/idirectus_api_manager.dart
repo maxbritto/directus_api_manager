@@ -6,6 +6,11 @@ abstract class IDirectusApiManager {
       String username, String password,
       {String? oneTimePassword});
   Future<bool> logoutDirectusUser();
+  Future<bool> registerDirectusUser(
+      {required String email,
+      required String password,
+      String? firstname,
+      String? lastname});
   Future<bool> hasLoggedInUser();
   Future<DirectusUser?> currentDirectusUser({String fields = "*"});
 

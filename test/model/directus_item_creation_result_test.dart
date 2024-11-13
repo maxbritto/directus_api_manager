@@ -9,8 +9,7 @@ import 'directus_item_creation_result_test.reflectable.dart';
 @DirectusCollection()
 @CollectionMetadata(endpointName: "itemCollection")
 class DirectusItemUseCase extends DirectusItem {
-  DirectusItemUseCase(Map<String, dynamic> rawReceivedData)
-      : super(rawReceivedData);
+  DirectusItemUseCase(super.rawReceivedData);
   DirectusItemUseCase.newItem() : super.newItem();
   factory DirectusItemUseCase.fromDirectus(dynamic rawReceivedData) {
     return DirectusItemUseCase(rawReceivedData);

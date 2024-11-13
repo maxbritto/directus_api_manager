@@ -1,12 +1,9 @@
+import 'package:directus_api_manager/directus_api_manager.dart';
 import 'package:directus_api_manager/src/directus_api.dart';
 import 'package:extension_dart_tools/extension_tools.dart';
 import 'package:http/src/response.dart';
 import 'package:http/src/request.dart';
 import 'package:http/src/base_request.dart';
-import 'package:directus_api_manager/src/sort_property.dart';
-import 'package:directus_api_manager/src/model/directus_login_result.dart';
-import 'package:directus_api_manager/src/model/directus_file.dart';
-import 'package:directus_api_manager/src/filter.dart';
 
 class MockDirectusApi with MockMixin implements IDirectusAPI {
   @override
@@ -23,7 +20,8 @@ class MockDirectusApi with MockMixin implements IDirectusAPI {
     return popNextReturnedObject();
   }
 
-  Request nextReturnedRequest = Request("GET", Uri.parse("http://localhost"));
+  PreparedRequest nextReturnedRequest =
+      PreparedRequest(request: Request("GET", Uri.parse("http://localhost")));
 
   @override
   String? currentAuthToken;
@@ -102,7 +100,7 @@ class MockDirectusApi with MockMixin implements IDirectusAPI {
   }
 
   @override
-  Request prepareCreateNewItemRequest(
+  PreparedRequest prepareCreateNewItemRequest(
       {required String endpointName,
       required String endpointPrefix,
       required dynamic objectData,
@@ -115,7 +113,7 @@ class MockDirectusApi with MockMixin implements IDirectusAPI {
   }
 
   @override
-  BaseRequest prepareDeleteItemRequest(
+  PreparedRequest prepareDeleteItemRequest(
       {required String endpointName,
       required String itemId,
       required String endpointPrefix,
@@ -129,7 +127,7 @@ class MockDirectusApi with MockMixin implements IDirectusAPI {
   }
 
   @override
-  BaseRequest prepareDeleteMultipleItemRequest(
+  PreparedRequest prepareDeleteMultipleItemRequest(
       {required String endpointName,
       required String endpointPrefix,
       required List<dynamic> itemIdList,
@@ -142,14 +140,14 @@ class MockDirectusApi with MockMixin implements IDirectusAPI {
   }
 
   @override
-  BaseRequest prepareFileDeleteRequest({required String fileId}) {
+  PreparedRequest prepareFileDeleteRequest({required String fileId}) {
     addCalledFunction(named: "prepareFileDeleteRequest");
     addReceivedObject(fileId, name: "fileId");
     return nextReturnedRequest;
   }
 
   @override
-  Request prepareFileImportRequest(
+  PreparedRequest prepareFileImportRequest(
       {required String url, String? title, String? folder}) {
     addCalledFunction(named: "prepareFileImportRequest");
     addReceivedObject(url, name: "url");
@@ -159,14 +157,14 @@ class MockDirectusApi with MockMixin implements IDirectusAPI {
   }
 
   @override
-  BaseRequest prepareGetCurrentUserRequest({String fields = "*"}) {
+  PreparedRequest prepareGetCurrentUserRequest({String fields = "*"}) {
     addCalledFunction(named: "prepareGetCurrentUserRequest");
     addReceivedObject(fields, name: "fields");
     return nextReturnedRequest;
   }
 
   @override
-  BaseRequest prepareGetListOfItemsRequest(
+  PreparedRequest prepareGetListOfItemsRequest(
       {required String endpointName,
       required String endpointPrefix,
       String fields = "*",
@@ -187,21 +185,24 @@ class MockDirectusApi with MockMixin implements IDirectusAPI {
   }
 
   @override
-  BaseRequest prepareGetSpecificItemRequest(
+  PreparedRequest prepareGetSpecificItemRequest(
       {String fields = "*",
       required String endpointPrefix,
       required String endpointName,
-      required String itemId}) {
+      required String itemId,
+      List<String> tags = const []}) {
     addCalledFunction(named: "prepareGetSpecificItemRequest");
     addReceivedObject(endpointName, name: "endpointName");
     addReceivedObject(endpointPrefix, name: "endpointPrefix");
     addReceivedObject(itemId, name: "itemId");
     addReceivedObject(fields, name: "fields");
+    addReceivedObject(tags, name: "tags");
     return nextReturnedRequest;
   }
 
   @override
-  Request prepareLoginRequest(String username, String password, {String? oneTimePassword}) {
+  PreparedRequest prepareLoginRequest(String username, String password,
+      {String? oneTimePassword}) {
     addCalledFunction(named: "prepareLoginRequest");
     addReceivedObject(username, name: "username");
     addReceivedObject(password, name: "password");
@@ -212,13 +213,13 @@ class MockDirectusApi with MockMixin implements IDirectusAPI {
   }
 
   @override
-  BaseRequest? prepareLogoutRequest() {
+  PreparedRequest? prepareLogoutRequest() {
     addCalledFunction(named: "prepareLogoutRequest");
     return nextReturnedRequest;
   }
 
   @override
-  BaseRequest prepareNewFileUploadRequest(
+  PreparedRequest prepareNewFileUploadRequest(
       {required List<int> fileBytes,
       String? title,
       String? contentType,
@@ -236,7 +237,7 @@ class MockDirectusApi with MockMixin implements IDirectusAPI {
   }
 
   @override
-  Request preparePasswordChangeRequest(
+  PreparedRequest preparePasswordChangeRequest(
       {required String token, required String newPassword}) {
     addCalledFunction(named: "preparePasswordChangeRequest");
     addReceivedObject(token, name: "token");
@@ -245,7 +246,7 @@ class MockDirectusApi with MockMixin implements IDirectusAPI {
   }
 
   @override
-  Request preparePasswordResetRequest(
+  PreparedRequest preparePasswordResetRequest(
       {required String email, String? resetUrl}) {
     addCalledFunction(named: "preparePasswordResetRequest");
     addReceivedObject(email, name: "email");
@@ -254,13 +255,13 @@ class MockDirectusApi with MockMixin implements IDirectusAPI {
   }
 
   @override
-  Future<Request?> prepareRefreshTokenRequest() {
+  PreparedRequest prepareRefreshTokenRequest() {
     addCalledFunction(named: "prepareRefreshTokenRequest");
-    return Future.value(nextReturnedRequest);
+    return nextReturnedRequest;
   }
 
   @override
-  BaseRequest prepareUpdateFileRequest(
+  PreparedRequest prepareUpdateFileRequest(
       {required fileId,
       List<int>? fileBytes,
       String? title,
@@ -276,7 +277,7 @@ class MockDirectusApi with MockMixin implements IDirectusAPI {
   }
 
   @override
-  Request prepareUpdateItemRequest(
+  PreparedRequest prepareUpdateItemRequest(
       {required String endpointName,
       required String endpointPrefix,
       required String itemId,
@@ -291,7 +292,7 @@ class MockDirectusApi with MockMixin implements IDirectusAPI {
   }
 
   @override
-  Request prepareUserInviteRequest(String email, String roleId) {
+  PreparedRequest prepareUserInviteRequest(String email, String roleId) {
     addCalledFunction(named: "prepareUserInviteRequest");
     addReceivedObject(email, name: "email");
     addReceivedObject(roleId, name: "roleId");
@@ -312,4 +313,18 @@ class MockDirectusApi with MockMixin implements IDirectusAPI {
 
   @override
   set refreshToken(String? value) {}
+
+  @override
+  PreparedRequest prepareRegisterUserRequest(
+      {required String email,
+      required String password,
+      String? firstname,
+      String? lastname}) {
+    addCalledFunction(named: "prepareRegisterUserRequest");
+    addReceivedObject(email, name: "email");
+    addReceivedObject(password, name: "password");
+    addReceivedObject(firstname, name: "firstname");
+    addReceivedObject(lastname, name: "lastname");
+    return nextReturnedRequest;
+  }
 }

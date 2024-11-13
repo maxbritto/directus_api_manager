@@ -13,15 +13,18 @@ main() {
     late DirectusApiManager sut;
     late MockHTTPClient mockClient;
     late MockDirectusApi mockDirectusApi;
+    late MockCacheEngine mockCacheEngine;
 
     setUp(() {
       mockClient = MockHTTPClient();
       mockClient.addStreamResponse(body: "", statusCode: 200);
       mockDirectusApi = MockDirectusApi();
+      mockCacheEngine = MockCacheEngine();
       sut = DirectusApiManager(
         baseURL: "http://api.com",
         httpClient: mockClient,
         api: mockDirectusApi,
+        cacheEngine: mockCacheEngine,
       );
     });
 
@@ -171,9 +174,12 @@ main() {
       const successLoginResponse = """
     {"data":{"access_token":"ABCD.1234.ABCD","expires":900000,"refresh_token":"REFRESH.TOKEN.5678"}}
     """;
+
       mockClient.addStreamResponse(body: successLoginResponse);
-      final sut =
-          DirectusApiManager(baseURL: "http://api.com", httpClient: mockClient);
+      final sut = DirectusApiManager(
+          baseURL: "http://api.com",
+          httpClient: mockClient,
+          cacheEngine: mockCacheEngine);
       await sut.loginDirectusUser("l", "p");
       expect(await sut.hasLoggedInUser(), true);
       const userJson = """
@@ -204,9 +210,15 @@ main() {
           reason:
               "First call to currentDirectusUser() should trigger a fetch for user data");
       mockClient.calledFunctions.clear();
+      expect(mockCacheEngine.calledFunctions, contains("setCacheEntry"),
+          reason:
+              "First call to currentDirectusUser should cache the user data");
 
       sut.discardCurrentUserCache();
       mockClient.addStreamResponse(body: userJson);
+      expect(mockCacheEngine.calledFunctions, contains("removeCacheEntry"),
+          reason: "Discarding the cache should remove the user data");
+      expect(mockCacheEngine.receivedObjects["key"], "currentDirectusUser");
       currentUser = await sut.currentDirectusUser();
       expect(currentUser, isNotNull);
       expect(currentUser?.email, "will@acn.com");
@@ -291,6 +303,25 @@ main() {
             Future.delayed(Duration(milliseconds: 100), () => "SAVED.TOKEN"),
       );
       expect(await sut.hasLoggedInUser(), true);
+    });
+
+    test("registerDirectusUser", () async {
+      mockDirectusApi.addNextReturnFutureObject(true);
+      final result = await sut.registerDirectusUser(
+          email: "will@acn.com",
+          password: "password",
+          firstname: "Will",
+          lastname: "McAvoy");
+      expect(mockDirectusApi.calledFunctions,
+          contains("prepareRegisterUserRequest"));
+      expect(mockDirectusApi.receivedObjects["email"], "will@acn.com");
+      expect(mockDirectusApi.receivedObjects["password"], "password");
+      expect(mockDirectusApi.receivedObjects["firstname"], "Will");
+      expect(mockDirectusApi.receivedObjects["lastname"], "McAvoy");
+
+      expect(mockDirectusApi.calledFunctions,
+          contains("parseGenericBoolResponse"));
+      expect(result, isTrue);
     });
 
     test('Empty manager with NOT successfull refresh token load', () async {
@@ -566,6 +597,28 @@ main() {
       expect(item.canBeChanged, true);
     });
 
+    test("updateItem with the current directus user", () async {
+      mockDirectusApi.addNextReturnFutureObject(
+          {"id": "user-123", "email": "will@acn.com"});
+      final user = await sut.currentDirectusUser();
+      expect(user, isNotNull);
+      expect(sut.cachedCurrentUser, user);
+
+      final updatedUser =
+          DirectusUser({"id": "user-123", "email": "will@acn.com"});
+      updatedUser.email = "updated@acn.com";
+
+      mockClient.addStreamResponse(body: "", statusCode: 200);
+      mockDirectusApi.addNextReturnFutureObject(
+          {"id": "user-123", "email": "updated@acn.com"});
+      await sut.updateItem<DirectusUser>(objectToUpdate: updatedUser);
+      expect(sut.cachedCurrentUser?.email, "updated@acn.com",
+          reason: "The cached user should be updated");
+      expect(mockCacheEngine.calledFunctions, contains("removeCacheEntry"),
+          reason: "The cache for the current user should be removed");
+      expect(mockCacheEngine.receivedObjects["key"], "currentDirectusUser");
+    });
+
     test("deleteItem", () async {
       mockDirectusApi.addNextReturnFutureObject(true);
       final item = await sut.deleteItem<DirectusItemTest>(objectId: "element1");
@@ -592,6 +645,121 @@ main() {
       expect(mockDirectusApi.calledFunctions,
           contains("parseGenericBoolResponse"));
       expect(item, isTrue);
+    });
+
+    group("Cache engine", () {
+      test("getSpecificItem should save by default responses", () async {
+        mockDirectusApi
+            .addNextReturnFutureObject({"id": "element1", "name": "element1"});
+        await sut.getSpecificItem<DirectusItemTest>(id: "element1");
+        expect(mockCacheEngine.calledFunctions, contains("setCacheEntry"));
+      });
+
+      test("getSpecificItem should not save responses if cache is disabled",
+          () async {
+        mockDirectusApi
+            .addNextReturnFutureObject({"id": "element1", "name": "element1"});
+        await sut.getSpecificItem<DirectusItemTest>(
+            id: "element1", canSaveResponseToCache: false);
+        expect(
+            mockCacheEngine.calledFunctions, isNot(contains("setCacheEntry")));
+      });
+
+      test(
+          "getSpecificItem should load from cache if allowed, available and unexpired",
+          () async {
+        mockCacheEngine.addNextReturnFutureObject(
+            makeCacheEntry(validUntil: DateTime.now().add(Duration(days: 1))));
+        await sut.getSpecificItem<DirectusItemTest>(
+            id: "element1", canUseCacheForResponse: true);
+        expect(mockDirectusApi.calledFunctions,
+            contains("prepareGetSpecificItemRequest"));
+        expect(mockCacheEngine.calledFunctions, contains("getCacheEntry"));
+        expect(mockClient.calledFunctions, isNot(contains("send")),
+            reason: "No network call should be made");
+        expect(mockDirectusApi.calledFunctions,
+            contains("parseGetSpecificItemResponse"),
+            reason: "We should still have a response to parse (from cache)");
+      });
+
+      test(
+          "getSpecificItem should not load from cache if allowed, available but expired",
+          () async {
+        mockCacheEngine.addNextReturnFutureObject(makeCacheEntry(
+            validUntil: DateTime.now().subtract(Duration(days: 2))));
+        mockDirectusApi
+            .addNextReturnFutureObject({"id": "element1", "name": "element1"});
+        await sut.getSpecificItem<DirectusItemTest>(
+            id: "element1",
+            canUseCacheForResponse: true,
+            maxCacheAge: const Duration(days: 1));
+        expect(mockDirectusApi.calledFunctions,
+            contains("prepareGetSpecificItemRequest"));
+        expect(mockCacheEngine.calledFunctions, contains("getCacheEntry"));
+        expect(mockClient.calledFunctions, contains("send"),
+            reason: "A network call should be made");
+        expect(mockDirectusApi.calledFunctions,
+            contains("parseGetSpecificItemResponse"),
+            reason: "We should still have a response to parse (from network)");
+      });
+
+      test(
+          "getSpecificItem should not load from cache if allowed, but not available",
+          () async {
+        mockCacheEngine.addNextReturnFutureObject(null);
+        mockDirectusApi
+            .addNextReturnFutureObject({"id": "element1", "name": "element1"});
+        await sut.getSpecificItem<DirectusItemTest>(
+            id: "element1", canUseCacheForResponse: true);
+        expect(mockDirectusApi.calledFunctions,
+            contains("prepareGetSpecificItemRequest"));
+        expect(mockCacheEngine.calledFunctions, contains("getCacheEntry"));
+        expect(mockClient.calledFunctions, contains("send"),
+            reason: "A network call should be made");
+        expect(mockDirectusApi.calledFunctions,
+            contains("parseGetSpecificItemResponse"),
+            reason: "We should still have a response to parse (from network)");
+      });
+
+      test("getSpecificItem should not load from cache if not allowed",
+          () async {
+        mockCacheEngine.addNextReturnFutureObject(
+            makeCacheEntry(validUntil: DateTime.now().add(Duration(days: 1))));
+        mockDirectusApi
+            .addNextReturnFutureObject({"id": "element1", "name": "element1"});
+        await sut.getSpecificItem<DirectusItemTest>(
+            id: "element1", canUseCacheForResponse: false);
+        expect(mockDirectusApi.calledFunctions,
+            contains("prepareGetSpecificItemRequest"));
+        expect(
+            mockCacheEngine.calledFunctions, isNot(contains("getCacheEntry")));
+        expect(mockClient.calledFunctions, contains("send"),
+            reason: "A network call should be made");
+        expect(mockDirectusApi.calledFunctions,
+            contains("parseGetSpecificItemResponse"),
+            reason: "We should still have a response to parse (from network)");
+      });
+
+      test(
+          "getSpecificItem should use cache when allowed only as fallback and network failed",
+          () async {
+        mockCacheEngine.addNextReturnFutureObject(
+            makeCacheEntry(validUntil: DateTime(2000)));
+        mockClient.resetAllTestValues();
+        mockClient.addNextReturnFutureObject(Exception("Network error"));
+        await sut.getSpecificItem<DirectusItemTest>(
+            id: "element1",
+            canUseCacheForResponse: false,
+            canUseOldCachedResponseAsFallback: true);
+        expect(mockClient.calledFunctions, contains("send"),
+            reason: "A network call should be made");
+        expect(mockCacheEngine.calledFunctions, contains("getCacheEntry"),
+            reason:
+                "after a failed network call, we should try to get the cache");
+        expect(mockDirectusApi.calledFunctions,
+            contains("parseGetSpecificItemResponse"),
+            reason: "We should still have a response to parse (from cache)");
+      });
     });
   });
 }

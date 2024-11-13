@@ -1,11 +1,6 @@
 import 'dart:convert';
-import 'dart:developer';
 
-import 'package:directus_api_manager/src/filter.dart';
-import 'package:directus_api_manager/src/model/directus_api_error.dart';
-import 'package:directus_api_manager/src/model/directus_file.dart';
-import 'package:directus_api_manager/src/model/directus_login_result.dart';
-import 'package:directus_api_manager/src/sort_property.dart';
+import 'package:directus_api_manager/directus_api_manager.dart';
 import 'package:http/http.dart';
 import 'package:http_parser/http_parser.dart';
 
@@ -19,9 +14,9 @@ abstract class IDirectusAPI {
   String get baseUrl;
 
   BaseRequest authenticateRequest(BaseRequest request);
-  BaseRequest prepareGetCurrentUserRequest({String fields = "*"});
+  PreparedRequest prepareGetCurrentUserRequest({String fields = "*"});
 
-  BaseRequest prepareGetListOfItemsRequest(
+  PreparedRequest prepareGetListOfItemsRequest(
       {required String endpointName,
       required String endpointPrefix,
       String fields = "*",
@@ -31,21 +26,22 @@ abstract class IDirectusAPI {
       int? offset});
   Iterable<dynamic> parseGetListOfItemsResponse(Response response);
 
-  BaseRequest prepareGetSpecificItemRequest(
+  PreparedRequest prepareGetSpecificItemRequest(
       {String fields = "*",
       required String endpointPrefix,
       required String endpointName,
-      required String itemId});
+      required String itemId,
+      required List<String> tags});
   dynamic parseGetSpecificItemResponse(Response response);
 
-  Request prepareCreateNewItemRequest(
+  PreparedRequest prepareCreateNewItemRequest(
       {required String endpointName,
       required String endpointPrefix,
       required dynamic objectData,
       String fields = "*"});
   dynamic parseCreateNewItemResponse(Response response);
 
-  Request prepareUpdateItemRequest(
+  PreparedRequest prepareUpdateItemRequest(
       {required String endpointName,
       required String endpointPrefix,
       required String itemId,
@@ -53,42 +49,42 @@ abstract class IDirectusAPI {
       String fields = "*"});
   dynamic parseUpdateItemResponse(Response response);
 
-  BaseRequest prepareDeleteItemRequest(
+  PreparedRequest prepareDeleteItemRequest(
       {required String endpointName,
       required String itemId,
       required String endpointPrefix,
       bool mustBeAuthenticated = false});
-  BaseRequest prepareDeleteMultipleItemRequest(
+  PreparedRequest prepareDeleteMultipleItemRequest(
       {required String endpointName,
       required String endpointPrefix,
       required List<dynamic> itemIdList,
       required bool mustBeAuthenticated});
   bool parseGenericBoolResponse(Response response);
 
-  Future<Request?> prepareRefreshTokenRequest();
+  PreparedRequest prepareRefreshTokenRequest();
   bool parseRefreshTokenResponse(Response response);
 
-  BaseRequest? prepareLogoutRequest();
+  PreparedRequest? prepareLogoutRequest();
   bool parseLogoutResponse(Response response);
 
-  Request prepareLoginRequest(
-      String username, String password, {String? oneTimePassword});
+  PreparedRequest prepareLoginRequest(String username, String password,
+      {String? oneTimePassword});
   DirectusLoginResult parseLoginResponse(Response response);
 
-  Request prepareUserInviteRequest(String email, String roleId);
+  PreparedRequest prepareUserInviteRequest(String email, String roleId);
   bool parseUserInviteResponse(Response response);
 
-  Request prepareFileImportRequest(
+  PreparedRequest prepareFileImportRequest(
       {required String url, String? title, String? folder});
-  BaseRequest prepareFileDeleteRequest({required String fileId});
-  BaseRequest prepareNewFileUploadRequest(
+  PreparedRequest prepareFileDeleteRequest({required String fileId});
+  PreparedRequest prepareNewFileUploadRequest(
       {required List<int> fileBytes,
       String? title,
       String? contentType,
       required String filename,
       String? folder,
       String storage = "local"});
-  BaseRequest prepareUpdateFileRequest(
+  PreparedRequest prepareUpdateFileRequest(
       {required fileId,
       List<int>? fileBytes,
       String? title,
@@ -98,10 +94,16 @@ abstract class IDirectusAPI {
 
   String convertPathToFullURL({required String path});
 
-  Request preparePasswordResetRequest(
+  PreparedRequest preparePasswordResetRequest(
       {required String email, String? resetUrl});
-  Request preparePasswordChangeRequest(
+  PreparedRequest preparePasswordChangeRequest(
       {required String token, required String newPassword});
+
+  PreparedRequest prepareRegisterUserRequest(
+      {required String email,
+      required String password,
+      String? firstname,
+      String? lastname});
 }
 
 class DirectusAPI implements IDirectusAPI {
@@ -151,7 +153,7 @@ class DirectusAPI implements IDirectusAPI {
   }
 
   @override
-  Request prepareLoginRequest(String username, String password,
+  PreparedRequest prepareLoginRequest(String username, String password,
       {String? oneTimePassword}) {
     final request = Request("POST", Uri.parse("$_baseURL/auth/login"));
     final credentials = {};
@@ -162,7 +164,7 @@ class DirectusAPI implements IDirectusAPI {
     }
     request.body = jsonEncode(credentials);
     request.addJsonHeaders();
-    return request;
+    return PreparedRequest(request: request);
   }
 
   String? _extractErrorMessageFromResponse(Response response) {
@@ -227,17 +229,21 @@ class DirectusAPI implements IDirectusAPI {
   }
 
   @override
-  Future<Request?> prepareRefreshTokenRequest() async {
-    Request? request;
+  PreparedRequest prepareRefreshTokenRequest() {
+    final preparedRequest = PreparedRequest(request: Future<Request?>(() async {
+      Request? request;
 
-    if (_refreshToken == null) {
-      final loadTokenFunction = _loadRefreshTokenCallback;
-      if (loadTokenFunction != null) {
-        _refreshToken = await loadTokenFunction();
+      if (_refreshToken == null) {
+        final loadTokenFunction = _loadRefreshTokenCallback;
+        if (loadTokenFunction != null) {
+          _refreshToken = await loadTokenFunction();
+        }
       }
-    }
-    request = _prepareStokedRefreshTokenRequest();
-    return request;
+      request = _prepareStokedRefreshTokenRequest();
+      return request;
+    }));
+
+    return preparedRequest;
   }
 
   Request? _prepareStokedRefreshTokenRequest() {
@@ -278,15 +284,17 @@ class DirectusAPI implements IDirectusAPI {
   }
 
   @override
-  Request? prepareLogoutRequest() {
-    Request? logoutRequest;
+  PreparedRequest? prepareLogoutRequest() {
     Request? tokenRefreshRequest = _prepareStokedRefreshTokenRequest();
     if (tokenRefreshRequest != null) {
+      Request? logoutRequest;
       logoutRequest = Request("POST", Uri.parse("$_baseURL/auth/logout"));
       logoutRequest.body = tokenRefreshRequest.body;
       logoutRequest.addJsonHeaders();
+      return PreparedRequest(request: logoutRequest);
+    } else {
+      return null;
     }
-    return logoutRequest;
   }
 
   dynamic _parseGenericResponse(Response response) {
@@ -302,7 +310,7 @@ class DirectusAPI implements IDirectusAPI {
   }
 
   @override
-  BaseRequest prepareGetListOfItemsRequest(
+  PreparedRequest prepareGetListOfItemsRequest(
       {required String endpointName,
       required String endpointPrefix,
       String fields = "*",
@@ -310,12 +318,13 @@ class DirectusAPI implements IDirectusAPI {
       List<SortProperty>? sortBy,
       int? limit,
       int? offset}) {
-    return _prepareGetRequest("$endpointPrefix$endpointName",
+    final request = _prepareGetRequest("$endpointPrefix$endpointName",
         filter: filter,
         fields: fields,
         sortBy: sortBy,
         limit: limit,
         offset: offset);
+    return PreparedRequest(request: request);
   }
 
   @override
@@ -348,21 +357,23 @@ class DirectusAPI implements IDirectusAPI {
   }
 
   @override
-  BaseRequest prepareGetSpecificItemRequest(
+  PreparedRequest prepareGetSpecificItemRequest(
       {String fields = "*",
       required String endpointPrefix,
       required String endpointName,
-      required String itemId}) {
-    return _prepareGetRequest("$endpointPrefix$endpointName/$itemId",
+      required String itemId,
+      List<String> tags = const []}) {
+    final request = _prepareGetRequest("$endpointPrefix$endpointName/$itemId",
         fields: fields);
+    return PreparedRequest(request: request, tags: tags);
   }
 
   @override
-  Request prepareUserInviteRequest(String email, String roleId) {
+  PreparedRequest prepareUserInviteRequest(String email, String roleId) {
     final request = Request("POST", Uri.parse("$_baseURL/users/invite"));
     request.body = jsonEncode({"email": email, "role": roleId});
     request.addJsonHeaders();
-    return request;
+    return PreparedRequest(request: request);
   }
 
   @override
@@ -381,7 +392,7 @@ class DirectusAPI implements IDirectusAPI {
   }
 
   @override
-  Request prepareCreateNewItemRequest(
+  PreparedRequest prepareCreateNewItemRequest(
       {required String endpointName,
       required String endpointPrefix,
       required dynamic objectData,
@@ -393,11 +404,11 @@ class DirectusAPI implements IDirectusAPI {
       toEncodable: (nonEncodable) => _toEncodable(nonEncodable),
     );
     request.addJsonHeaders();
-    return authenticateRequest(request) as Request;
+    return PreparedRequest(request: authenticateRequest(request) as Request);
   }
 
   @override
-  Request prepareUpdateItemRequest(
+  PreparedRequest prepareUpdateItemRequest(
       {required String endpointName,
       required String endpointPrefix,
       required String itemId,
@@ -412,16 +423,17 @@ class DirectusAPI implements IDirectusAPI {
       toEncodable: (nonEncodable) => _toEncodable(nonEncodable),
     );
     request.addJsonHeaders();
-    return authenticateRequest(request) as Request;
+    return PreparedRequest(request: authenticateRequest(request) as Request);
   }
 
   @override
-  BaseRequest prepareGetCurrentUserRequest({String fields = "*"}) {
+  PreparedRequest prepareGetCurrentUserRequest({String fields = "*"}) {
     return prepareGetSpecificItemRequest(
         endpointName: "users",
         endpointPrefix: "/",
         itemId: "me",
-        fields: fields);
+        fields: fields,
+        tags: const []);
   }
 
   Object? _toEncodable(Object? nonEncodable) {
@@ -446,7 +458,7 @@ class DirectusAPI implements IDirectusAPI {
   }
 
   @override
-  BaseRequest prepareDeleteItemRequest(
+  PreparedRequest prepareDeleteItemRequest(
       {required String endpointName,
       required String itemId,
       required String endpointPrefix,
@@ -454,14 +466,14 @@ class DirectusAPI implements IDirectusAPI {
     Request request = Request(
         "DELETE", Uri.parse("$_baseURL$endpointPrefix$endpointName/$itemId"));
     if (mustBeAuthenticated) {
-      return authenticateRequest(request);
+      return PreparedRequest(request: authenticateRequest(request) as Request);
     }
 
-    return request;
+    return PreparedRequest(request: request);
   }
 
   @override
-  BaseRequest prepareDeleteMultipleItemRequest(
+  PreparedRequest prepareDeleteMultipleItemRequest(
       {required String endpointName,
       required String endpointPrefix,
       required List<dynamic> itemIdList,
@@ -470,11 +482,11 @@ class DirectusAPI implements IDirectusAPI {
         Request("DELETE", Uri.parse("$_baseURL$endpointPrefix$endpointName"));
     request.body = jsonEncode(itemIdList);
     request.addJsonHeaders();
-    log(request.body);
+
     if (mustBeAuthenticated) {
-      return authenticateRequest(request);
+      return PreparedRequest(request: authenticateRequest(request) as Request);
     } else {
-      return request;
+      return PreparedRequest(request: request);
     }
   }
 
@@ -485,7 +497,7 @@ class DirectusAPI implements IDirectusAPI {
   }
 
   @override
-  BaseRequest prepareNewFileUploadRequest({
+  PreparedRequest prepareNewFileUploadRequest({
     required List<int> fileBytes,
     String? title,
     String? contentType,
@@ -493,12 +505,13 @@ class DirectusAPI implements IDirectusAPI {
     String? folder,
     String storage = "local",
   }) {
-    return _prepareMultipartFileRequest(
-        "POST", "$_baseURL/files", fileBytes, title,
-        contentType: contentType,
-        filename: filename,
-        folder: folder,
-        storage: storage);
+    return PreparedRequest(
+        request: _prepareMultipartFileRequest(
+            "POST", "$_baseURL/files", fileBytes, title,
+            contentType: contentType,
+            filename: filename,
+            folder: folder,
+            storage: storage));
   }
 
   MultipartRequest _prepareMultipartFileRequest(
@@ -528,19 +541,20 @@ class DirectusAPI implements IDirectusAPI {
   }
 
   @override
-  BaseRequest prepareUpdateFileRequest(
+  PreparedRequest prepareUpdateFileRequest(
       {required fileId,
       List<int>? fileBytes,
       String? title,
       String? contentType,
       required String filename}) {
-    return _prepareMultipartFileRequest(
-        "PATCH", "$_baseURL/files/$fileId", fileBytes, title,
-        contentType: contentType, filename: filename);
+    return PreparedRequest(
+        request: _prepareMultipartFileRequest(
+            "PATCH", "$_baseURL/files/$fileId", fileBytes, title,
+            contentType: contentType, filename: filename));
   }
 
   @override
-  Request prepareFileImportRequest(
+  PreparedRequest prepareFileImportRequest(
       {required String url, String? title, String? folder}) {
     final request = Request("POST", Uri.parse("$_baseURL/files/import"));
     request.body = jsonEncode({
@@ -548,14 +562,14 @@ class DirectusAPI implements IDirectusAPI {
       "data": {"title": title, "folder": folder}
     });
     request.addJsonHeaders();
-    return request;
+    return PreparedRequest(request: request);
   }
 
   @override
-  BaseRequest prepareFileDeleteRequest({required String fileId}) {
+  PreparedRequest prepareFileDeleteRequest({required String fileId}) {
     final request = Request("DELETE", Uri.parse("$_baseURL/files/$fileId"));
 
-    return authenticateRequest(request);
+    return PreparedRequest(request: authenticateRequest(request));
   }
 
   @override
@@ -572,23 +586,40 @@ class DirectusAPI implements IDirectusAPI {
   String? get currentAuthToken => _accessToken;
 
   @override
-  Request preparePasswordResetRequest(
+  PreparedRequest preparePasswordResetRequest(
       {required String email, String? resetUrl}) {
     final request =
         Request("POST", Uri.parse("$_baseURL/auth/password/request"));
     request.body = jsonEncode(
         {"email": email, if (resetUrl != null) "reset_url": resetUrl});
     request.addJsonHeaders();
-    return request;
+    return PreparedRequest(request: request);
   }
 
   @override
-  Request preparePasswordChangeRequest(
+  PreparedRequest preparePasswordChangeRequest(
       {required String token, required String newPassword}) {
     final request = Request("POST", Uri.parse("$_baseURL/auth/password/reset"));
     request.body = jsonEncode({"token": token, "password": newPassword});
     request.addJsonHeaders();
-    return request;
+    return PreparedRequest(request: request);
+  }
+
+  @override
+  PreparedRequest prepareRegisterUserRequest(
+      {required String email,
+      required String password,
+      String? firstname,
+      String? lastname}) {
+    final request = Request("POST", Uri.parse("$_baseURL/users/register"));
+    request.body = jsonEncode({
+      "email": email,
+      "password": password,
+      if (firstname != null) "first_name": firstname,
+      if (lastname != null) "last_name": lastname
+    });
+    request.addJsonHeaders();
+    return PreparedRequest(request: request);
   }
 }
 

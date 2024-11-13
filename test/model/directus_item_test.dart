@@ -5,16 +5,14 @@ import 'package:test/scaffolding.dart';
 @DirectusCollection()
 @CollectionMetadata(endpointName: "itemTest")
 class DirectusItemTest extends DirectusItem {
-  DirectusItemTest(Map<String, dynamic> rawReceivedData)
-      : super(rawReceivedData);
+  DirectusItemTest(super.rawReceivedData);
   DirectusItemTest.newItem() : super.newItem();
 }
 
 @DirectusCollection()
 @CollectionMetadata(endpointName: "itemTest", defaultUpdateFields: "id,name")
 class DirectusItemTestWithUpdateField extends DirectusItem {
-  DirectusItemTestWithUpdateField(Map<String, dynamic> rawReceivedData)
-      : super(rawReceivedData);
+  DirectusItemTestWithUpdateField(super.rawReceivedData);
   DirectusItemTestWithUpdateField.newItem() : super.newItem();
 
   String get name => getValue(forKey: "name");
