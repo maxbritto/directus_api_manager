@@ -27,6 +27,16 @@ class DirectusUser extends DirectusData {
   String? get avatar => getValue(forKey: "avatar");
   set avatar(String? value) => setValue(value, forKey: "avatar");
 
+  UserStatus? get status {
+    final value = getValue(forKey: "status");
+    if (value == null) {
+      return null;
+    }
+    return UserStatus.values.firstWhere((e) => e.name == value);
+  }
+
+  set status(UserStatus? value) => setValue(value?.name, forKey: "status");
+
   /// Creates a new [DirectusUser]
   ///
   /// [_rawReceivedData] must contain at least an `"id"`. Throws [Exception] if it is missing.
@@ -68,4 +78,13 @@ class DirectusUser extends DirectusData {
 
     return buffer.toString();
   }
+}
+
+enum UserStatus {
+  draft,
+  invited,
+  unverified,
+  active,
+  suspended,
+  archived;
 }

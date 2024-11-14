@@ -1,3 +1,6 @@
+## 1.9.1 - 2024/11/14
+- Added new properties that can be used on `DirectusUser` to get/set the user's status. An `UserStatus` enum is provided that matches possible values offered by the Directus team.
+
 ## 1.9.0 - 2024/11/04
 - Added a new API for registering a new user (which is different from creating a user object in Directus). See https://docs.directus.io/reference/authentication.html#register
 - Improved update return : now returns the server returned object and not the one sent to the server.
