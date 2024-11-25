@@ -141,7 +141,7 @@ class DirectusAPI implements IDirectusAPI {
   @override
   bool get shouldRefreshToken {
     bool shouldRefresh = false;
-    if (_refreshToken != null) {
+    if (_refreshToken != null || _loadRefreshTokenCallback != null) {
       final accessTokenExpirationDate = _accessTokenExpirationDate;
       if (_accessToken == null ||
           (accessTokenExpirationDate != null &&

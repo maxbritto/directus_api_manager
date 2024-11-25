@@ -334,6 +334,28 @@ main() {
       );
       expect(await sut.hasLoggedInUser(), false);
     });
+    test(
+        'Empty manager with successfull refresh token load should refresh the token before fetching data',
+        () async {
+      bool hasUsedRefreshToken = false;
+      final mockClient = MockHTTPClient();
+      mockClient.addStreamResponse(
+          body:
+              '{"data":{"access_token":"NEW.ACCESS.TOKEN","expires":900000,"refresh_token":"NEW.REFRESH.TOKEN"}}');
+      const successLoginResponse = '{"data":[]}';
+      mockClient.addStreamResponse(body: successLoginResponse);
+      final sut = DirectusApiManager(
+          baseURL: "http://api.com",
+          httpClient: mockClient,
+          loadRefreshTokenCallback: () {
+            hasUsedRefreshToken = true;
+            return Future.delayed(
+                Duration(milliseconds: 100), () => "SAVED.TOKEN");
+          });
+      await sut.findListOfItems<DirectusUser>();
+      expect(hasUsedRefreshToken, true,
+          reason: "Refresh token should be used to fetch data");
+    });
 
     test("getSpecificItem with no item", () async {
       mockDirectusApi.addNextReturnFutureObject(DirectusApiError());

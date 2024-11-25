@@ -23,6 +23,13 @@ void main() {
       expect(sut.accessToken, "ABCD.1234.ABCD");
       expect(sut.shouldRefreshToken, false);
     });
+
+    test("shouldRefreshToken - when loadable from backup", () {
+      final sut = DirectusAPI("http://api.com",
+          loadRefreshTokenCallback: () async => "LOADED.TOKEN");
+      expect(sut.shouldRefreshToken, true,
+          reason: "Refresh token can be loaded, we should try it");
+    });
   });
 
   group("DirectusAPI Data Management", () {

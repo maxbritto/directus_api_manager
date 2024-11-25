@@ -1,3 +1,6 @@
+## 1.9.2 - 2024/11/25
+- Improved refresh token handling when reloading the app after a long time.
+
 ## 1.9.1 - 2024/11/14
 - Added new properties that can be used on `DirectusUser` to get/set the user's status. An `UserStatus` enum is provided that matches possible values offered by the Directus team.
 
