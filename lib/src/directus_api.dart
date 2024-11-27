@@ -23,7 +23,8 @@ abstract class IDirectusAPI {
       Filter? filter,
       List<SortProperty>? sortBy,
       int? limit,
-      int? offset});
+      int? offset,
+      required List<String> tags});
   Iterable<dynamic> parseGetListOfItemsResponse(Response response);
 
   PreparedRequest prepareGetSpecificItemRequest(
@@ -318,14 +319,15 @@ class DirectusAPI implements IDirectusAPI {
       Filter? filter,
       List<SortProperty>? sortBy,
       int? limit,
-      int? offset}) {
+      int? offset,
+      List<String> tags = const []}) {
     final request = _prepareGetRequest("$endpointPrefix$endpointName",
         filter: filter,
         fields: fields,
         sortBy: sortBy,
         limit: limit,
         offset: offset);
-    return PreparedRequest(request: request);
+    return PreparedRequest(request: request, tags: tags);
   }
 
   @override

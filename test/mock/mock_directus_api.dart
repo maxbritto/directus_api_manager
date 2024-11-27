@@ -171,7 +171,8 @@ class MockDirectusApi with MockMixin implements IDirectusAPI {
       Filter? filter,
       List<SortProperty>? sortBy,
       int? limit,
-      int? offset}) {
+      int? offset,
+      List<String>? tags = const []}) {
     addCalledFunction(named: "prepareGetListOfItemsRequest");
     addReceivedObject(endpointName, name: "endpointName");
     addReceivedObject(endpointPrefix, name: "endpointPrefix");
@@ -180,6 +181,7 @@ class MockDirectusApi with MockMixin implements IDirectusAPI {
     addReceivedObject(sortBy, name: "sortBy");
     addReceivedObject(limit, name: "limit");
     addReceivedObject(offset, name: "offset");
+    addReceivedObject(tags, name: "tags");
 
     return nextReturnedRequest;
   }

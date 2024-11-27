@@ -198,6 +198,9 @@ class DirectusApiManager implements IDirectusApiManager {
             dependsOnToken: false,
             parseResponse: (response) =>
                 _api.parseRefreshTokenResponse(response));
+        if (tokenRefreshed == false) {
+          logoutDirectusUser();
+        }
       } catch (_) {}
     } catch (error) {
       print(error);
@@ -405,7 +408,8 @@ class DirectusApiManager implements IDirectusApiManager {
             sortBy: sortBy,
             fields: fields ?? collectionMetadata.defaultFields,
             limit: limit,
-            offset: offset),
+            offset: offset,
+            tags: ["${collectionMetadata.endpointName}/list"]),
         parseResponse: (response) => _api
             .parseGetListOfItemsResponse(response)
             .map((json) => collectionClass.newInstance('', [json]) as Type));
@@ -454,7 +458,7 @@ class DirectusApiManager implements IDirectusApiManager {
   }) {
     final specificClass = _metadataGenerator.getClassMirrorForType(Type);
     final collectionMetadata = _collectionMetadataFromClass(specificClass);
-    return _sendRequest(
+    final Future<DirectusItemCreationResult<Type>> result = _sendRequest(
         canSaveResponseToCache: false,
         prepareRequest: () => _api.prepareCreateNewItemRequest(
             endpointName: collectionMetadata.endpointName,
@@ -465,6 +469,11 @@ class DirectusApiManager implements IDirectusApiManager {
           return DirectusItemCreationResult.fromDirectus(
               api: _api, response: response, classMirror: specificClass);
         });
+    if (cacheEngine != null) {
+      cacheEngine?.removeCacheEntriesWithTag(
+          tag: "${collectionMetadata.endpointName}/list");
+    }
+    return result;
   }
 
   @override
@@ -478,7 +487,7 @@ class DirectusApiManager implements IDirectusApiManager {
     final collectionMetadata = _collectionMetadataFromClass(specificClass);
     final List<Map<String, dynamic>> objectListData =
         objectList.map(((object) => object.mapForObjectCreation())).toList();
-    return _sendRequest(
+    final Future<DirectusItemCreationResult<Type>> result = _sendRequest(
         canSaveResponseToCache: false,
         prepareRequest: () => _api.prepareCreateNewItemRequest(
             endpointName: collectionMetadata.endpointName,
@@ -506,6 +515,11 @@ class DirectusApiManager implements IDirectusApiManager {
                   error: DirectusApiError(response: response));
           }
         });
+    if (cacheEngine != null) {
+      cacheEngine?.removeCacheEntriesWithTag(
+          tag: "${collectionMetadata.endpointName}/list");
+    }
+    return result;
   }
 
   /// Update the item with the given [objectToUpdate]. You have to specify a Type which extends DirectusData.
@@ -574,6 +588,8 @@ class DirectusApiManager implements IDirectusApiManager {
         if (cacheEngine != null) {
           await cacheEngine?.removeCacheEntriesWithTag(
               tag: "${collectionMetadata.endpointName}/${objectToUpdate.id}");
+          await cacheEngine?.removeCacheEntriesWithTag(
+              tag: "${collectionMetadata.endpointName}/list");
         }
       }
     } catch (error) {
@@ -601,6 +617,8 @@ class DirectusApiManager implements IDirectusApiManager {
       if (cacheEngine != null) {
         await cacheEngine?.removeCacheEntriesWithTag(
             tag: "${collectionMetadata.endpointName}/$objectId");
+        await cacheEngine?.removeCacheEntriesWithTag(
+            tag: "${collectionMetadata.endpointName}/list");
       }
       return wasDeleted;
     } catch (error) {
@@ -630,6 +648,8 @@ class DirectusApiManager implements IDirectusApiManager {
         await cacheEngine?.removeCacheEntriesWithTag(
             tag: "${collectionMetadata.endpointName}/$objectId");
       }
+      await cacheEngine?.removeCacheEntriesWithTag(
+          tag: "${collectionMetadata.endpointName}/list");
     }
     return wereDeleted;
   }
