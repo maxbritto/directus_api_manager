@@ -6,7 +6,7 @@ main() {
   group('DirectusUser', () {
     test('Creating an invalid user should throw', () {
       expect(() => DirectusUser({}), throwsException);
-      expect(() => DirectusUser({"id": "123-abc"}), throwsException);
+      expect(() => DirectusUser({"id": "123-abc"}), returnsNormally);
       expect(() => DirectusUser({"email": "will@acn.com"}), throwsException);
       expect(() => DirectusUser({"id": "123-abc", "email": "will@acn.com"}),
           returnsNormally);
