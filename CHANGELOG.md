@@ -1,3 +1,6 @@
+## 1.9.3 - 2024/12/09
+- Make the test 'Creating an invalid user should throw' pass after 1.9.0 implementation of optional email field.
+
 ## 1.9.2 - 2024/11/25
 - Improved refresh token handling when reloading the app after a long time.
 
@@ -29,7 +32,7 @@ This version offers a ready to use cache engine based on json files. It is disab
 This version adds a new feature:
 
 - adds the "DirectusGeometryType" class to manage the geometry type of Postgres databases.
-- Currently it can load any geometry type from a JSON object 
+- Currently it can load any geometry type from a JSON object
 - Currently it exposes convenience constructor and properties for the Point type used in regular geometry (x,y) or in map context (longitude, latitude)
 - Add addSubscription and removeSubscription to make the use of websocket more easy
 
