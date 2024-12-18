@@ -225,7 +225,8 @@ class MockDirectusApi with MockMixin implements IDirectusAPI {
       String? contentType,
       required String filename,
       String? folder,
-      String storage = "local"}) {
+      String storage = "local",
+      Map<String, dynamic>? additionalFields}) {
     addCalledFunction(named: "prepareNewFileUploadRequest");
     addReceivedObject(fileBytes, name: "fileBytes");
     addReceivedObject(title, name: "title");
@@ -233,6 +234,7 @@ class MockDirectusApi with MockMixin implements IDirectusAPI {
     addReceivedObject(filename, name: "filename");
     addReceivedObject(folder, name: "folder");
     addReceivedObject(storage, name: "storage");
+    addReceivedObject(additionalFields, name: "additionalFields");
     return nextReturnedRequest;
   }
 

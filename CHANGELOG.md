@@ -1,17 +1,25 @@
+## 1.9.4 - 2024/12/18
+
+-    Allow to add extra fields when a file is uploaded
+
 ## 1.9.3 - 2024/12/09
-- Make the test 'Creating an invalid user should throw' pass after 1.9.0 implementation of optional email field.
+
+-    Make the test 'Creating an invalid user should throw' pass after 1.9.0 implementation of optional email field.
 
 ## 1.9.2 - 2024/11/25
-- Improved refresh token handling when reloading the app after a long time.
+
+-    Improved refresh token handling when reloading the app after a long time.
 
 ## 1.9.1 - 2024/11/14
-- Added new properties that can be used on `DirectusUser` to get/set the user's status. An `UserStatus` enum is provided that matches possible values offered by the Directus team.
+
+-    Added new properties that can be used on `DirectusUser` to get/set the user's status. An `UserStatus` enum is provided that matches possible values offered by the Directus team.
 
 ## 1.9.0 - 2024/11/04
-- Added a new API for registering a new user (which is different from creating a user object in Directus). See https://docs.directus.io/reference/authentication.html#register
-- Improved update return : now returns the server returned object and not the one sent to the server.
-- User email field is now optional to better reflect what actually happens in Directus. When reading an user object, directus will return the fields the current user has access, if the user doesn't have access to the "email" field then the value will be null.
-- Added more convenience init and properties on directus_item and directus_data
+
+-    Added a new API for registering a new user (which is different from creating a user object in Directus). See https://docs.directus.io/reference/authentication.html#register
+-    Improved update return : now returns the server returned object and not the one sent to the server.
+-    User email field is now optional to better reflect what actually happens in Directus. When reading an user object, directus will return the fields the current user has access, if the user doesn't have access to the "email" field then the value will be null.
+-    Added more convenience init and properties on directus_item and directus_data
 
 ## 1.8.2 - 2024/10/08
 
@@ -31,10 +39,10 @@ This version offers a ready to use cache engine based on json files. It is disab
 
 This version adds a new feature:
 
-- adds the "DirectusGeometryType" class to manage the geometry type of Postgres databases.
-- Currently it can load any geometry type from a JSON object
-- Currently it exposes convenience constructor and properties for the Point type used in regular geometry (x,y) or in map context (longitude, latitude)
-- Add addSubscription and removeSubscription to make the use of websocket more easy
+-    adds the "DirectusGeometryType" class to manage the geometry type of Postgres databases.
+-    Currently it can load any geometry type from a JSON object
+-    Currently it exposes convenience constructor and properties for the Point type used in regular geometry (x,y) or in map context (longitude, latitude)
+-    Add addSubscription and removeSubscription to make the use of websocket more easy
 
 ## 1.7.6 - 2024/07/09
 

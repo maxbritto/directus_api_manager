@@ -661,7 +661,8 @@ class DirectusApiManager implements IDirectusApiManager {
       String? title,
       String? contentType,
       String? folder,
-      String storage = "local"}) {
+      String storage = "local",
+      Map<String, dynamic>? additionalFields}) {
     return _sendRequest(
         canSaveResponseToCache: false,
         prepareRequest: () => _api.prepareNewFileUploadRequest(
@@ -670,7 +671,8 @@ class DirectusApiManager implements IDirectusApiManager {
             title: title,
             contentType: contentType,
             folder: folder,
-            storage: storage),
+            storage: storage,
+            additionalFields: additionalFields),
         parseResponse: (response) => _api.parseFileUploadResponse(response));
   }
 
