@@ -1,3 +1,8 @@
+## 1.9.5 - 2024/12/18
+
+- Fix : Cache should only save response with status code 200 ... 299
+- Automatically clear list caches when adding or removing items of the same type
+
 ## 1.9.4 - 2024/12/18
 
 -    Allow to add extra fields when a file is uploaded

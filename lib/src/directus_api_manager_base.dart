@@ -145,7 +145,9 @@ class DirectusApiManager implements IDirectusApiManager {
 
         if (canSaveResponseToCache &&
             cacheEngine != null &&
-            cacheEntryKey != null) {
+            cacheEntryKey != null &&
+            response.statusCode >= 200 &&
+            response.statusCode <= 299) {
           await cacheEngine.setCacheEntry(
               cacheEntry: CacheEntry.fromResponse(response,
                   key: cacheEntryKey, maxCacheAge: maxCacheAge),
@@ -194,6 +196,7 @@ class DirectusApiManager implements IDirectusApiManager {
       try {
         tokenRefreshed = await _sendRequest(
             canSaveResponseToCache: false,
+            canUseCacheForResponse: false,
             prepareRequest: _api.prepareRefreshTokenRequest,
             dependsOnToken: false,
             parseResponse: (response) =>
