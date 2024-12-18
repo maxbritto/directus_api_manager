@@ -83,7 +83,8 @@ abstract class IDirectusAPI {
       String? contentType,
       required String filename,
       String? folder,
-      String storage = "local"});
+      String storage = "local",
+      Map<String, dynamic>? additionalFields});
   PreparedRequest prepareUpdateFileRequest(
       {required fileId,
       List<int>? fileBytes,
@@ -423,6 +424,7 @@ class DirectusAPI implements IDirectusAPI {
       toEncodable: (nonEncodable) => _toEncodable(nonEncodable),
     );
     request.addJsonHeaders();
+
     return PreparedRequest(request: authenticateRequest(request) as Request);
   }
 
@@ -497,21 +499,22 @@ class DirectusAPI implements IDirectusAPI {
   }
 
   @override
-  PreparedRequest prepareNewFileUploadRequest({
-    required List<int> fileBytes,
-    String? title,
-    String? contentType,
-    required String filename,
-    String? folder,
-    String storage = "local",
-  }) {
+  PreparedRequest prepareNewFileUploadRequest(
+      {required List<int> fileBytes,
+      String? title,
+      String? contentType,
+      required String filename,
+      String? folder,
+      String storage = "local",
+      Map<String, dynamic>? additionalFields}) {
     return PreparedRequest(
         request: _prepareMultipartFileRequest(
             "POST", "$_baseURL/files", fileBytes, title,
             contentType: contentType,
             filename: filename,
             folder: folder,
-            storage: storage));
+            storage: storage,
+            additionalFields: additionalFields));
   }
 
   MultipartRequest _prepareMultipartFileRequest(
@@ -519,7 +522,8 @@ class DirectusAPI implements IDirectusAPI {
       {String? contentType,
       required String filename,
       String? folder,
-      String storage = "local"}) {
+      String storage = "local",
+      Map<String, dynamic>? additionalFields}) {
     final request = MultipartRequest(method, Uri.parse(url));
     if (title != null) {
       request.fields["title"] = title;
@@ -530,6 +534,12 @@ class DirectusAPI implements IDirectusAPI {
     }
 
     request.fields["storage"] = storage;
+
+    if (additionalFields != null) {
+      additionalFields.forEach((key, value) {
+        request.fields[key] = value.toString();
+      });
+    }
 
     if (fileBytes != null) {
       request.files.add(MultipartFile.fromBytes("file", fileBytes,

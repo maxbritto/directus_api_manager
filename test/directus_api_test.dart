@@ -793,6 +793,17 @@ void main() {
       expect(multipartRequest.fields["folder"], "Folder");
     });
 
+    test("additionalFields", () {
+      final sut = makeAuthenticatedDirectusAPI();
+      final preparedRequest = sut.prepareNewFileUploadRequest(
+          fileBytes: [1, 2, 3],
+          additionalFields: {"extraField": "extraValue"},
+          filename: "file.txt");
+      final request = preparedRequest.request;
+      expect(request, isA<MultipartRequest>());
+      final multipartRequest = request as MultipartRequest;
+      expect(multipartRequest.fields["extraField"], "extraValue");
+    });
     test("File import from URL", () {
       final sut = makeAuthenticatedDirectusAPI();
       final request = sut.prepareFileImportRequest(
