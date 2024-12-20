@@ -372,7 +372,7 @@ class DirectusApiManager implements IDirectusApiManager {
             parseResponse: (response) => _api.parseLogoutResponse(response));
       } catch (_) {}
     }
-    discardCurrentUserCache();
+    cacheEngine?.clearCache();
     return wasLoggedOut;
   }
 

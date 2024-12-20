@@ -1,6 +1,6 @@
 name: directus_api_manager
 description: Communicate with a Directus server using its REST API.
-version: 1.9.5
+version: 1.9.6
 repository: https://github.com/maxbritto/directus_api_manager
 
 environment:

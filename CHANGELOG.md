@@ -1,3 +1,7 @@
+## 1.9.6 - 2024/12/18
+
+- logoutDirectusUser now clears all the cache
+
 ## 1.9.5 - 2024/12/18
 
 - Fix : Cache should only save response with status code 200 ... 299

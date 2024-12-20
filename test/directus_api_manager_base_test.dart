@@ -782,6 +782,11 @@ main() {
             contains("parseGetSpecificItemResponse"),
             reason: "We should still have a response to parse (from cache)");
       });
+
+      test("logoutDirectusUser should clear the cache", () async {
+        await sut.logoutDirectusUser();
+        expect(mockCacheEngine.calledFunctions, contains("clearCache"));
+      });
     });
   });
 }
