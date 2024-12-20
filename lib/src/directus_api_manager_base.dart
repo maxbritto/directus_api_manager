@@ -373,6 +373,7 @@ class DirectusApiManager implements IDirectusApiManager {
       } catch (_) {}
     }
     cacheEngine?.clearCache();
+    discardCurrentUserCache();
     return wasLoggedOut;
   }
 

@@ -784,8 +784,10 @@ main() {
       });
 
       test("logoutDirectusUser should clear the cache", () async {
+        sut.cachedCurrentUser = DirectusUser({"id": "user-123"});
         await sut.logoutDirectusUser();
         expect(mockCacheEngine.calledFunctions, contains("clearCache"));
+        expect(sut.cachedCurrentUser, isNull);
       });
     });
   });

@@ -1,6 +1,10 @@
-## 1.9.6 - 2024/12/18
+## 1.9.7 - 2024/12/20
 
-- logoutDirectusUser now clears all the cache
+- logoutDirectusUser should also clear the cachedCurrentUser variable
+
+## 1.9.6 - 2024/12/20
+
+- logoutDirectusUser now clears all the cache from the specified cache engine
 
 ## 1.9.5 - 2024/12/18
 
