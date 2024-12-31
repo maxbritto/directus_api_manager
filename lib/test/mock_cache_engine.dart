@@ -41,6 +41,7 @@ class MockCacheEngine with MockMixin implements ILocalDirectusCacheInterface {
 CacheEntry makeCacheEntry({
   String key = 'key',
   String value = 'value',
+  String? requestedUrl = 'http://example.com',
   DateTime? dateCreated,
   DateTime? validUntil,
   Map<String, String> headers = const {},
@@ -49,6 +50,7 @@ CacheEntry makeCacheEntry({
 }) {
   return CacheEntry(
     key: key,
+    requestedUrl: requestedUrl,
     dateCreated: dateCreated ?? DateTime(2024),
     validUntil: validUntil ?? DateTime(2024),
     headers: headers,

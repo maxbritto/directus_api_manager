@@ -1,4 +1,5 @@
 import 'package:directus_api_manager/src/cache/cache_entry.dart';
+import 'package:directus_api_manager/test/mock_cache_engine.dart';
 import 'package:http/http.dart';
 import 'package:test/test.dart';
 
@@ -9,6 +10,7 @@ void main() {
       final json = cacheEntry.toJson();
       final newCacheEntry = CacheEntry.fromJson(json);
       expect(newCacheEntry.key, cacheEntry.key);
+      expect(newCacheEntry.requestedUrl, cacheEntry.requestedUrl);
       expect(newCacheEntry.dateCreated, cacheEntry.dateCreated);
       expect(newCacheEntry.validUntil, cacheEntry.validUntil);
       expect(newCacheEntry.headers, cacheEntry.headers);
@@ -33,22 +35,4 @@ void main() {
       expect(cacheEntry.headers, response.headers);
     });
   });
-}
-
-CacheEntry makeCacheEntry({
-  String key = 'key',
-  DateTime? dateCreated,
-  DateTime? validUntil,
-  Map<String, String> headers = const {"Header-1": "Value-1"},
-  String body = 'body example',
-  int statusCode = 200,
-}) {
-  return CacheEntry(
-    key: key,
-    dateCreated: dateCreated ?? DateTime(2021),
-    validUntil: validUntil ?? DateTime(2022),
-    headers: headers,
-    body: body,
-    statusCode: statusCode,
-  );
 }

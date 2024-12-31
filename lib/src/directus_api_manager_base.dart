@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:developer';
 
 import 'package:http/http.dart';
+import 'package:mutex/mutex.dart';
 import 'package:reflectable/reflectable.dart';
 
 import 'annotations.dart';
@@ -45,6 +46,7 @@ class DirectusApiManager implements IDirectusApiManager {
   /// You can use the already provided [JsonCacheEngine] to have an already implemented cache.
   /// Or you can create your own engine by extending [ILocalDirectusCacheInterface] an providing an instance of your engine in this property
   final ILocalDirectusCacheInterface? cacheEngine;
+  final Mutex _requestLock = Mutex();
 
   @visibleForTesting
   DirectusUser? cachedCurrentUser;
@@ -112,8 +114,12 @@ class DirectusApiManager implements IDirectusApiManager {
       bool canSaveResponseToCache = true,
       bool canUseOldCachedResponseAsFallback = true,
       Duration maxCacheAge = const Duration(days: 1)}) async {
-    if (dependsOnToken && _api.shouldRefreshToken) {
-      await tryAndRefreshToken();
+    if (dependsOnToken) {
+      await _requestLock.acquire();
+      if (_api.shouldRefreshToken) {
+        await tryAndRefreshToken();
+      }
+      _requestLock.release();
     }
     final preparedRequest = prepareRequest();
     final request = preparedRequest.request;
@@ -123,7 +129,7 @@ class DirectusApiManager implements IDirectusApiManager {
     } else if (request is BaseRequest) {
       r = request;
     } else {
-      print("_sendRequest error. Received request : $request");
+      log("_sendRequest error. Received request : $request");
       throw Exception("No valid request to send");
     }
     Response? response;
@@ -131,7 +137,8 @@ class DirectusApiManager implements IDirectusApiManager {
     CacheEntry? cacheEntry;
     final cacheEngine = this.cacheEngine;
     if (cacheEngine != null) {
-      cacheEntryKey = requestIdentifier ?? "${r.method} ${r.url}";
+      cacheEntryKey = requestIdentifier ??
+          "${r.method} ${r.url.host} ${r.url.path} ${r.url.hashCode}";
       if (canUseCacheForResponse) {
         cacheEntry = await cacheEngine.getCacheEntry(key: cacheEntryKey);
       }
@@ -181,17 +188,12 @@ class DirectusApiManager implements IDirectusApiManager {
     return await preparedRequest.request != null;
   }
 
-  Future? _refreshTokenLock;
+  /// Tries to refresh the current auth token.
+  /// This function is called automatically when a request is made and the token is expired.
+  /// There is no need to call this function manually from outside the framework.
   @override
   Future<bool> tryAndRefreshToken() async {
     bool tokenRefreshed = false;
-    final completer = Completer();
-    final lock = _refreshTokenLock;
-    if (lock != null) {
-      await lock;
-    }
-    _refreshTokenLock = completer.future;
-
     try {
       try {
         tokenRefreshed = await _sendRequest(
@@ -208,9 +210,6 @@ class DirectusApiManager implements IDirectusApiManager {
     } catch (error) {
       print(error);
     }
-
-    _refreshTokenLock = null;
-    completer.complete();
     return tokenRefreshed;
   }
 

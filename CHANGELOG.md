@@ -1,3 +1,12 @@
+## 1.10.0 - 2024/12/31
+
+- Improved locking mechanism to avoid multiple refresh token requests at the same time
+- Added somne locking to json cache file accesses to prevent multiple writes at the same time
+- reduced the amount of read write into the file system for the json cache implementation
+- Changed keys and file naming for the json cache files to avoid issues with the file system with filenames being too long
+- Added the requested url within the cached meta data
+Possible breaking : if apps were using the json cache, the cache files will be renamed and previous cached files will be ignored. On next cache clean, they will be removed.
+
 ## 1.9.7 - 2024/12/20
 
 - logoutDirectusUser should also clear the cachedCurrentUser variable

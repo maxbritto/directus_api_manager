@@ -2,6 +2,7 @@ import 'package:http/http.dart';
 
 class CacheEntry {
   final String key;
+  final String? requestedUrl;
   final DateTime dateCreated;
   final DateTime validUntil;
   final Map<String, String> headers;
@@ -12,12 +13,14 @@ class CacheEntry {
       required this.validUntil,
       required this.headers,
       required this.body,
+      required this.requestedUrl,
       required this.statusCode,
       required this.key});
 
   Map<String, dynamic> toJson() {
     return {
       'key': key,
+      'requestedUrl': requestedUrl,
       'dateCreated': dateCreated.toIso8601String(),
       'validUntil': validUntil.toIso8601String(),
       'headers': headers,
@@ -29,6 +32,7 @@ class CacheEntry {
   factory CacheEntry.fromJson(Map<String, dynamic> json) {
     return CacheEntry(
       key: json['key'],
+      requestedUrl: json['requestedUrl'],
       dateCreated: DateTime.parse(json['dateCreated']),
       validUntil: DateTime.parse(json['validUntil']),
       headers: Map<String, String>.from(json['headers']),
@@ -42,6 +46,7 @@ class CacheEntry {
     final now = DateTime.now();
     return CacheEntry(
       key: key,
+      requestedUrl: response.request?.url.toString(),
       dateCreated: now,
       validUntil: now.add(maxCacheAge),
       headers: response.headers,
