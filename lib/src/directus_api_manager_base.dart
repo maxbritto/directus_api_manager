@@ -395,6 +395,9 @@ class DirectusApiManager implements IDirectusApiManager {
       bool canUseCacheForResponse = false,
       bool canSaveResponseToCache = true,
       bool canUseOldCachedResponseAsFallback = true,
+
+      /// Extra tags to associate with the cache entry
+      List<String> extraTags = const [],
       Duration maxCacheAge = const Duration(days: 1)}) {
     final collectionClass = _metadataGenerator.getClassMirrorForType(Type);
     final collectionMetadata = _collectionMetadataFromClass(collectionClass);
@@ -412,7 +415,7 @@ class DirectusApiManager implements IDirectusApiManager {
             fields: fields ?? collectionMetadata.defaultFields,
             limit: limit,
             offset: offset,
-            tags: ["${collectionMetadata.endpointName}/list"]),
+            tags: ["${collectionMetadata.endpointName}/list", ...extraTags]),
         parseResponse: (response) => _api
             .parseGetListOfItemsResponse(response)
             .map((json) => collectionClass.newInstance('', [json]) as Type));
@@ -426,6 +429,9 @@ class DirectusApiManager implements IDirectusApiManager {
       bool canUseCacheForResponse = false,
       bool canSaveResponseToCache = true,
       bool canUseOldCachedResponseAsFallback = true,
+
+      /// Extra tags to associate with the cache entry
+      List<String> extraTags = const [],
       Duration maxCacheAge = const Duration(days: 1)}) {
     final specificClass = _metadataGenerator.getClassMirrorForType(Type);
     final collectionMetadata = _collectionMetadataFromClass(specificClass);
@@ -440,7 +446,7 @@ class DirectusApiManager implements IDirectusApiManager {
             endpointPrefix: collectionMetadata.endpointPrefix,
             itemId: id,
             fields: fields ?? collectionMetadata.defaultFields,
-            tags: ["${collectionMetadata.endpointName}/$id"]),
+            tags: ["${collectionMetadata.endpointName}/$id", ...extraTags]),
         parseResponse: (response) {
           Type? item;
           try {
@@ -458,10 +464,13 @@ class DirectusApiManager implements IDirectusApiManager {
       createNewItem<Type extends DirectusData>({
     required Type objectToCreate,
     String? fields,
-  }) {
+
+    /// Extra tags to clear from the cache
+    List<String> extraTagsToClear = const [],
+  }) async {
     final specificClass = _metadataGenerator.getClassMirrorForType(Type);
     final collectionMetadata = _collectionMetadataFromClass(specificClass);
-    final Future<DirectusItemCreationResult<Type>> result = _sendRequest(
+    final DirectusItemCreationResult<Type> result = await _sendRequest(
         canSaveResponseToCache: false,
         prepareRequest: () => _api.prepareCreateNewItemRequest(
             endpointName: collectionMetadata.endpointName,
@@ -473,16 +482,21 @@ class DirectusApiManager implements IDirectusApiManager {
               api: _api, response: response, classMirror: specificClass);
         });
     if (cacheEngine != null) {
-      cacheEngine?.removeCacheEntriesWithTag(
-          tag: "${collectionMetadata.endpointName}/list");
+      await removeCacheEntriesWithTags(
+          ["${collectionMetadata.endpointName}/list", ...extraTagsToClear]);
     }
     return result;
   }
 
   @override
   Future<DirectusItemCreationResult<Type>>
-      createMultipleItems<Type extends DirectusData>(
-          {String? fields, required Iterable<Type> objectList}) {
+      createMultipleItems<Type extends DirectusData>({
+    String? fields,
+    required Iterable<Type> objectList,
+
+    /// Extra tags to clear from the cache
+    List<String> extraTags = const [],
+  }) async {
     if (objectList.isEmpty) {
       throw Exception("objectList can not be empty");
     }
@@ -490,7 +504,7 @@ class DirectusApiManager implements IDirectusApiManager {
     final collectionMetadata = _collectionMetadataFromClass(specificClass);
     final List<Map<String, dynamic>> objectListData =
         objectList.map(((object) => object.mapForObjectCreation())).toList();
-    final Future<DirectusItemCreationResult<Type>> result = _sendRequest(
+    final DirectusItemCreationResult<Type> result = await _sendRequest(
         canSaveResponseToCache: false,
         prepareRequest: () => _api.prepareCreateNewItemRequest(
             endpointName: collectionMetadata.endpointName,
@@ -519,8 +533,8 @@ class DirectusApiManager implements IDirectusApiManager {
           }
         });
     if (cacheEngine != null) {
-      cacheEngine?.removeCacheEntriesWithTag(
-          tag: "${collectionMetadata.endpointName}/list");
+      await removeCacheEntriesWithTags(
+          ["${collectionMetadata.endpointName}/list", ...extraTags]);
     }
     return result;
   }
@@ -535,6 +549,9 @@ class DirectusApiManager implements IDirectusApiManager {
   Future<Type> updateItem<Type extends DirectusData>(
       {required Type objectToUpdate,
       String? fields,
+
+      /// Extra tags to clear from the cache
+      List<String> extraTagsToClear = const [],
       bool force = false}) async {
     final specificClass = _metadataGenerator.getClassMirrorForType(Type);
     final collectionMetadata = _collectionMetadataFromClass(specificClass);
@@ -589,10 +606,11 @@ class DirectusApiManager implements IDirectusApiManager {
           }
         }
         if (cacheEngine != null) {
-          await cacheEngine?.removeCacheEntriesWithTag(
-              tag: "${collectionMetadata.endpointName}/${objectToUpdate.id}");
-          await cacheEngine?.removeCacheEntriesWithTag(
-              tag: "${collectionMetadata.endpointName}/list");
+          await removeCacheEntriesWithTags([
+            "${collectionMetadata.endpointName}/${objectToUpdate.id}",
+            "${collectionMetadata.endpointName}/list",
+            ...extraTagsToClear
+          ]);
         }
       }
     } catch (error) {
@@ -600,12 +618,17 @@ class DirectusApiManager implements IDirectusApiManager {
       rethrow;
     }
 
-    return Future.value(updatedObjectReturnedFromServer ?? objectToUpdate);
+    return updatedObjectReturnedFromServer ?? objectToUpdate;
   }
 
   @override
-  Future<bool> deleteItem<Type extends DirectusData>(
-      {required String objectId, bool mustBeAuthenticated = true}) async {
+  Future<bool> deleteItem<Type extends DirectusData>({
+    required String objectId,
+    bool mustBeAuthenticated = true,
+
+    /// Extra tags to clear from the cache
+    List<String> extraTagsToClear = const [],
+  }) async {
     final specificClass = _metadataGenerator.getClassMirrorForType(Type);
     final collectionMetadata = _collectionMetadataFromClass(specificClass);
     try {
@@ -618,10 +641,11 @@ class DirectusApiManager implements IDirectusApiManager {
               mustBeAuthenticated: mustBeAuthenticated),
           parseResponse: (response) => _api.parseGenericBoolResponse(response));
       if (cacheEngine != null) {
-        await cacheEngine?.removeCacheEntriesWithTag(
-            tag: "${collectionMetadata.endpointName}/$objectId");
-        await cacheEngine?.removeCacheEntriesWithTag(
-            tag: "${collectionMetadata.endpointName}/list");
+        await removeCacheEntriesWithTags([
+          "${collectionMetadata.endpointName}/$objectId",
+          "${collectionMetadata.endpointName}/list",
+          ...extraTagsToClear
+        ]);
       }
       return wasDeleted;
     } catch (error) {
@@ -630,9 +654,13 @@ class DirectusApiManager implements IDirectusApiManager {
   }
 
   @override
-  Future<bool> deleteMultipleItems<Type extends DirectusData>(
-      {required Iterable<dynamic> objectIdsToDelete,
-      bool mustBeAuthenticated = true}) async {
+  Future<bool> deleteMultipleItems<Type extends DirectusData>({
+    required Iterable<dynamic> objectIdsToDelete,
+    bool mustBeAuthenticated = true,
+
+    /// Extra tags to clear from the cache
+    List<String> extraTagsToClear = const [],
+  }) async {
     if (objectIdsToDelete.isEmpty) {
       throw Exception("objectIdsToDelete can not be empty");
     }
@@ -647,12 +675,12 @@ class DirectusApiManager implements IDirectusApiManager {
             mustBeAuthenticated: mustBeAuthenticated),
         parseResponse: (response) => _api.parseGenericBoolResponse(response));
     if (cacheEngine != null) {
-      for (final objectId in objectIdsToDelete) {
-        await cacheEngine?.removeCacheEntriesWithTag(
-            tag: "${collectionMetadata.endpointName}/$objectId");
-      }
-      await cacheEngine?.removeCacheEntriesWithTag(
-          tag: "${collectionMetadata.endpointName}/list");
+      await removeCacheEntriesWithTags([
+        "${collectionMetadata.endpointName}/list",
+        ...objectIdsToDelete
+            .map((objectId) => "${collectionMetadata.endpointName}/$objectId"),
+        ...extraTagsToClear
+      ]);
     }
     return wereDeleted;
   }
@@ -731,8 +759,14 @@ class DirectusApiManager implements IDirectusApiManager {
       bool canUseCacheForResponse = false,
       bool canSaveResponseToCache = true,
       bool canUseOldCachedResponseAsFallback = true,
-      Duration maxCacheAge = const Duration(days: 1)}) {
-    return _sendRequest(
+
+      /// Extra tags to associate with the cache entry
+      List<String> extraTagsToAssociate = const [],
+
+      /// Extra tags to clear from the cache if this request succeeds
+      List<String> extraTagsToClear = const [],
+      Duration maxCacheAge = const Duration(days: 1)}) async {
+    final T result = await _sendRequest(
         requestIdentifier: requestIdentifier,
         canUseCacheForResponse: canUseCacheForResponse,
         canSaveResponseToCache: canSaveResponseToCache,
@@ -742,9 +776,13 @@ class DirectusApiManager implements IDirectusApiManager {
           final request = prepareRequest();
           return PreparedRequest(
               request: _api.authenticateRequest(request),
-              tags: ["customRequest"]);
+              tags: ["customRequest", ...extraTagsToAssociate]);
         },
         parseResponse: (response) => jsonConverter(response));
+    if (cacheEngine != null && extraTagsToClear.isNotEmpty) {
+      await removeCacheEntriesWithTags(extraTagsToClear);
+    }
+    return result;
   }
 
   String convertPathToFullURL({required String path}) {
@@ -757,6 +795,37 @@ class DirectusApiManager implements IDirectusApiManager {
     try {
       await cacheEngine?.removeCacheEntry(key: cacheEntryKey);
     } catch (_) {}
+  }
+
+  /// Removes from cache any object with any of the given [tags].
+  Future<void> removeCacheEntriesWithTags(List<String> tags) async {
+    for (final tag in tags) {
+      await cacheEngine?.removeCacheEntriesWithTag(tag: tag);
+    }
+  }
+
+  /// Clears the cache for the object with the given [id].
+  /// It is important to specify the type of the object with the [Type] annotation when calling the function.
+  /// Example : clearCacheForObjectWithId<DirectusUser>(id);
+  /// If you already have a full object of that type prefer using [clearCacheForObject] instead that will automatically infer the type of the received object.
+  Future<void> clearCacheForObjectWithId<Type extends DirectusData>(
+      dynamic id) {
+    final specificClass = _metadataGenerator.getClassMirrorForType(Type);
+    final collectionMetadata = _collectionMetadataFromClass(specificClass);
+    final currentUserIsTheTarget =
+        Type == DirectusUser && cachedCurrentUser?.id == id;
+    if (currentUserIsTheTarget) {
+      discardCurrentUserCache();
+    }
+    return removeCacheEntriesWithTags([
+      "${collectionMetadata.endpointName}/$id",
+      "${collectionMetadata.endpointName}/list"
+    ]);
+  }
+
+  /// Clears the cache for the object with the given [object].
+  Future<void> clearCacheForObject<Type extends DirectusData>(Type object) {
+    return clearCacheForObjectWithId<Type>(object.id);
   }
 
   @override

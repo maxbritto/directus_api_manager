@@ -229,7 +229,11 @@ DirectusWebSocketSubscription<DirectusDataExtension>(
 
 This api comes with a caching system that can be enabled by providing an instance of `ILocalDirectusCacheInterface` when creating your `DirectusApiManager` instance.
 
-A ready to use implementation is provided with the `JsonCacheEngine` class. It will store the data in a folder of your choosing using json files.
+Currently 2 ready to use implementations are provided :
+
+- The `JsonCacheEngine` class will store the data in a folder of your choosing using json files.
+- The `MemoryCacheEngine` class will store the data in memory only. If you use it inside a Flutter app, the cache will emptied on each app restart
+
 Example : 
 
 ```dart
@@ -249,7 +253,7 @@ All read requests (get, find, currentUser, etc.) now have optional parameters to
 If you want to also replace future responses by a local cache read, you can set the `canUseCacheForResponse` parameter to `true` and tweak the `maxCacheAge` parameter to set the maximum age of the cache (defaults to 1 day). This will prevent calling the directus server if a valid cache exists for the same request.
 
 ```dart
-await sut.getSpecificItem<DirectusItemTest>(
+await apiManager.getSpecificItem<DirectusItemTest>(
     id: "element1",
     canUseCacheForResponse: true,
     maxCacheAge: const Duration(days: 1));
@@ -258,7 +262,7 @@ await sut.getSpecificItem<DirectusItemTest>(
 If you want to disable the cache completely for a request, you can set the `canSaveResponseToCache` parameter to `false`.
 
 ```dart
-await sut.getSpecificItem<DirectusItemTest>(
+await apiManager.getSpecificItem<DirectusItemTest>(
     id: "element1",
     canSaveResponseToCache: false);
 ```
@@ -266,12 +270,80 @@ await sut.getSpecificItem<DirectusItemTest>(
 By default, an expired cache can still be used if the real network request fails. If you want to disable this behavior, you can set the `canUseOldCachedResponseAsFallback` parameter to `false`.
 
 ```dart
-await sut.getSpecificItem<DirectusItemTest>(
+await apiManager.getSpecificItem<DirectusItemTest>(
     id: "element1",
     canUseOldCachedResponseAsFallback: false);
 ```
 
 Those parameters are available for all read based requests.
+
+### Clearing the cache before it expires
+
+The engine tries to be smart and will regularly invalidate caches when it performs modifications on the same type of data. For example :
+- if you create a new item, the cache for the list of items will be invalidated.
+- If you update an item, the cache for this specific item will be invalidated, as long as any list for that type of object. 
+- If you delete an item, the cache for this specific item will be invalidated, as long as any list for that type of object.
+
+We suggest you rely mostly on automatic cache invalidation, but you can also manually clear the cache for specific requests.
+
+#### Clearing cache for a specific object
+
+You can use the [clearCacheForObject] function to clear the cache for a specific object. The object must be of type extending `DirectusData`.
+If you only have the id of the object, you can use the [clearCacheForObjectWithId] function with the type hinted :
+
+```dart
+await apiManager.clearCacheForObjectWithId<DirectusItemTest>("element1");
+```
+
+#### Clearing the current user cache
+
+The current user is a specific cache and for it, you can use the [discardCurrentUserCache] function.
+
+#### Clearing all caches
+
+Logging out the current user will automatically clear all the cached data. 
+
+#### Clearing specific caches with the cache key
+
+Each cached object has a key that is used to store and retrieve it. This key is usually generated automatically based on the request, but you can provide your own cache key with the `requestIdentifier` parameter available on every `read` based method. 
+
+```dart
+await apiManager.getSpecificItem<DirectusItemTest>(
+    id: "element1",
+    requestIdentifier: "my_custom_key");
+```
+
+Then you can use the [clearCacheWithKey] function to clear the cache associated with this key.
+
+```dart
+await apiManager.clearCacheWithKey("my_custom_key");
+```
+
+#### Clearing specific caches with tags
+
+You can associate a set of tags with every read you perform. Those tags will be associated with the cached data, and can be use to invalidate those before the cache expiration time. 
+
+```dart
+await sut.getSpecificItem<DirectusItemTest>(
+    id: "element1",
+    extraTags: ["tag1", "tag2"]);
+await sut.getSpecificItem<DirectusItemTest>(
+    id: "element2",
+    extraTags: ["tag3"]);
+await sut.getSpecificItem<DirectusItemTest>(
+    id: "element3",
+    extraTags: ["tag2", "tag4"]);
+
+```
+Those parameters are available for all read based requests.
+
+Then you can use the [removeCacheEntriesWithTags] function to clear the caches entries associated with those tags.
+
+```dart
+await apiManager.removeCacheEntriesWithTags(["tag1", "tag3"]); //this will invalidate element1 and element2 from the example above
+```
+
+You can also use the `List<String> extraTagsToClear` parameter present in each modification based method (create, update, delete) to clear the cache associated with those tags if the call succeeds.
 
 ## Additional information
 

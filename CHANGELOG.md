@@ -1,3 +1,8 @@
+## 1.11.0 - 2025/02/04
+
+- Added a MemoryCacheEngine that can be used to store the cache in memory
+- Added new parameters to allow caching
+
 ## 1.10.0 - 2024/12/31
 
 - Improved locking mechanism to avoid multiple refresh token requests at the same time
