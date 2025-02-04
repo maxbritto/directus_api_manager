@@ -1,7 +1,10 @@
 ## 1.11.0 - 2025/02/04
 
+- Added more functions inside `DirectusApiError` to try to extract valuable information from failed api results
 - Added a MemoryCacheEngine that can be used to store the cache in memory
-- Added new parameters to allow caching
+- Added new parameters to provide extra caching invalidation : both manual and automatic.
+- Automatically invalidate cached data linked to created, updated or deleted objects
+- Added more cache documentation
 
 ## 1.10.0 - 2024/12/31
 
