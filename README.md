@@ -26,8 +26,7 @@ dependencies:
      flutter:
           sdk: flutter
 
-     directus_api_manager:
-          git: https://github.com/maxbritto/directus_api_manager.git
+     directus_api_manager: ^1.11.0 #replace by latest version
 ```
 
 ## Getting started
@@ -199,13 +198,13 @@ final updatedPlayer = await apiManager.updateItem(objectToUpdate: onePlayer);
 
 ### DirectusWebSocket
 
-`DirectusWebSocket` allow to consume data from Directus via a WebSocket. It will handle the authentication, the refresh token process and keep the connection alive. Each `DirectusWebSocket` can have more than one `DirectusWebSocketSubscription`.
+Web sockets allow your directus server to send you events as they occur and your app can react to those changes. This lib helps you set up `DirectusWebSocketSubscription` objects to register for those events. The lib will handle the authentication, the refresh token process and keep the connection alive automatically. You just have to start a subscription and stop a subscription when needed.
 
 ### DirectusWebSocketSubscription
 
 `DirectusWebSocketSubscription` represent a subscription to your Directus server. Here are the mandatory properties to use it :
 
--    `uid` must be specified. When the server will send a message, this uid will be provided. This allow us to know from which subscription this message came from.
+-    `uid` must be specified, the format can be any text that is unique between 2 subscriptions. When the server will send a message, this uid will be provided. This allow us to know from which subscription this message came from.
 -    `onCreate`, `onUpdate`, `onDelete` callbacks are trigger when a subscription receive a subscription message. They are all optional but the `DirectusWebSocketSubscription` must have at least one of them.
 
 ```dart
@@ -221,6 +220,18 @@ DirectusWebSocketSubscription<DirectusDataExtension>(
             field: "folder",
             operator: FilterOperator.equals,
             value: "folder_id"));
+```
+
+### start and stop a subscription
+
+First create your subscription and then call the `startWebsocketSubscription` method on your `DirectusApiManager` instance to start it.
+```dart
+await apiManager.startWebsocketSubscription(subscription);
+```
+
+When you no longer need the subscription, you can stop it by calling the `stopWebsocketSubscription` method on your `DirectusApiManager` instance and providing the uid of the subscription.
+```dart
+await apiManager.stopWebsocketSubscription(subscription.uid);
 ```
 
 ## Cache system

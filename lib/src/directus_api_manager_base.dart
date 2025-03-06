@@ -8,6 +8,8 @@ import 'package:reflectable/reflectable.dart';
 import 'annotations.dart';
 import 'cache/cache_entry.dart';
 import 'directus_api.dart';
+import 'directus_websocket.dart';
+import 'directus_websocket_subscription.dart';
 import 'filter.dart';
 import 'idirectus_api_manager.dart';
 import 'metadata_generator.dart';
@@ -47,6 +49,10 @@ class DirectusApiManager implements IDirectusApiManager {
   /// Or you can create your own engine by extending [ILocalDirectusCacheInterface] an providing an instance of your engine in this property
   final ILocalDirectusCacheInterface? cacheEngine;
   final Mutex _requestLock = Mutex();
+
+  DirectusWebSocket? _webSocket;
+  final Map<String, DirectusWebSocketSubscription> _webSocketSubscriptionIds =
+      {};
 
   @visibleForTesting
   DirectusUser? cachedCurrentUser;
@@ -275,6 +281,7 @@ class DirectusApiManager implements IDirectusApiManager {
     return cachedCurrentUser;
   }
 
+  /// Discards the cached current user information.
   void discardCurrentUserCache() {
     cachedCurrentUser = null;
     clearCacheWithKey(_currentUserRequestIdentifier);
@@ -791,6 +798,7 @@ class DirectusApiManager implements IDirectusApiManager {
 
   String? get currentAuthToken => _api.currentAuthToken;
 
+  /// Clears the cache for the object with the given [cacheEntryKey].
   Future<void> clearCacheWithKey(String cacheEntryKey) async {
     try {
       await cacheEngine?.removeCacheEntry(key: cacheEntryKey);
@@ -842,5 +850,44 @@ class DirectusApiManager implements IDirectusApiManager {
             firstname: firstname,
             lastname: lastname),
         parseResponse: _api.parseGenericBoolResponse);
+  }
+
+  Future<void> startWebsocketSubscription(
+      DirectusWebSocketSubscription subscription) async {
+    if (_webSocketSubscriptionIds.containsKey(subscription.uid) == false) {
+      final webSocket = _webSocket;
+      if (webSocket == null) {
+        _webSocket = DirectusWebSocket(
+            apiManager: this, subscriptionDataList: [subscription]);
+      } else {
+        webSocket.addSubscription(subscription);
+      }
+      _webSocketSubscriptionIds[subscription.uid] = subscription;
+    }
+  }
+
+  Future<void> stopWebsocketSubscription(String webSocketSubscriptionId) async {
+    if (_webSocketSubscriptionIds.containsKey(webSocketSubscriptionId)) {
+      final webSocket = _webSocket;
+      if (webSocket != null) {
+        webSocket.removeSubscription(uid: webSocketSubscriptionId);
+      }
+      _webSocketSubscriptionIds.remove(webSocketSubscriptionId);
+    }
+  }
+
+  Future<void> subscriptionWasRemoved(String webSocketSubscriptionId) async {
+    final webSocket = _webSocket;
+    if (webSocket != null && webSocket.hasSubscriptions == false) {
+      log("No more subscriptions. Disconnecting websocket");
+      await webSocket.disconnect();
+      _webSocket = null;
+    }
+    final existingSubscription =
+        _webSocketSubscriptionIds[webSocketSubscriptionId];
+    if (existingSubscription != null) {
+      stopWebsocketSubscription(webSocketSubscriptionId);
+      startWebsocketSubscription(existingSubscription);
+    }
   }
 }

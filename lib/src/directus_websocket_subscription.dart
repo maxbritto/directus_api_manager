@@ -16,6 +16,14 @@ class DirectusWebSocketSubscription<Type extends DirectusData> {
   Function(Map<String, dynamic>)? onUpdate;
   Function(Map<String, dynamic>)? onDelete;
 
+  /// Function to be called when an error occurs on the socket level. Each subscription on that socket will call this function if provided.
+  Function(dynamic)? onError;
+
+  /// Function to be called when the subscription has finished receiving events. This can happen in two cases:
+  /// 1 - The unsubcribe event has been sent and acknowledged for this subscription.
+  /// 2 - The socket holding this subscription has been closed.
+  Function()? onDone;
+
   String get collection => collectionMetadata.endpointName;
 
   final MetadataGenerator _metadataGenerator = MetadataGenerator();
@@ -34,7 +42,9 @@ class DirectusWebSocketSubscription<Type extends DirectusData> {
       this.offset,
       this.onCreate,
       this.onUpdate,
-      this.onDelete}) {
+      this.onDelete,
+      this.onError,
+      this.onDone}) {
     if (onCreate == null && onUpdate == null && onDelete == null) {
       throw Exception(
           "You must provide at least one callback for onCreate, onUpdate or onDelete");

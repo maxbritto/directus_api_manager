@@ -1,5 +1,7 @@
 ## 1.11.0 - 2025/02/04
 
+- Simplified Websocket subscription creations and stops and added documentation
+- Improved websocket keep alive and disconnects when network is lost
 - Added more functions inside `DirectusApiError` to try to extract valuable information from failed api results
 - Added a MemoryCacheEngine that can be used to store the cache in memory
 - Added new parameters to provide extra caching invalidation : both manual and automatic.

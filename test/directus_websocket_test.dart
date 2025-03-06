@@ -1,6 +1,5 @@
 import 'package:directus_api_manager/directus_api_manager.dart';
-import 'package:test/expect.dart';
-import 'package:test/scaffolding.dart';
+import 'package:test/test.dart';
 
 import 'directus_websocket_test.reflectable.dart';
 import 'model/directus_item_test.dart';
@@ -22,7 +21,10 @@ main() {
   }
 
   group('DirectusWebSocket', () {
+    late bool onDoneForSubscriptionCalled;
+    late bool onDoneForSocketCalled;
     setUp(() {
+      onDoneForSubscriptionCalled = false;
       sut = DirectusWebSocket(
           apiManager: DirectusApiManager(baseURL: "http://api.com:8055"),
           subscriptionDataList: [
@@ -30,8 +32,10 @@ main() {
                 uid: "itemTest",
                 onCreate: onCreate,
                 onUpdate: onUpdate,
-                onDelete: onDelete)
-          ]);
+                onDelete: onDelete,
+                onDone: () => onDoneForSubscriptionCalled = true)
+          ],
+          onDone: () => onDoneForSocketCalled = true);
     });
 
     test('Init value are set', () {
@@ -155,13 +159,39 @@ main() {
           '{"type":"subscription","event":"unsubscribe","data":[{"id":"abc-123","uploaded_by":{"id":"123456"}},{"id":"abc-123","uploaded_by":{"id":"123456"}}],"uid":"itemTest"}';
       sut.listenSocket(message);
       expect(sut.subscriptionDataList.length, 0);
+      expect(onDoneForSubscriptionCalled, true);
     });
 
     test("Add subscription", () {
       sut.addSubscription(DirectusWebSocketSubscription<DirectusItemTest>(
           uid: "itemTest2", onCreate: onCreate));
-      expect(sut.subscriptionDataList.length, 2);
-      expect(sut.subscriptionDataList.last.uid, "itemTest2");
+      expect(sut.subscriptionDataMap.length, 2);
+      expect(sut.subscriptionDataMap["itemTest2"], isNotNull);
+    });
+    test("Add multiple subscriptions", () {
+      sut.addSubscription(DirectusWebSocketSubscription<DirectusItemTest>(
+          uid: "itemTest2", onCreate: onCreate));
+      sut.addSubscription(DirectusWebSocketSubscription<DirectusItemTest>(
+          uid: "itemTest3", onCreate: onCreate));
+      expect(sut.subscriptionDataMap.length, 3);
+      expect(sut.subscriptionDataMap["itemTest2"], isNotNull);
+      expect(sut.subscriptionDataMap["itemTest3"], isNotNull);
+    });
+    test("Add same subscription twice", () {
+      sut.addSubscription(DirectusWebSocketSubscription<DirectusItemTest>(
+          uid: "itemTest2", onCreate: onCreate));
+      sut.addSubscription(DirectusWebSocketSubscription<DirectusItemTest>(
+          uid: "itemTest2", onCreate: onCreate));
+      expect(sut.subscriptionDataMap.length, 2);
+      expect(sut.subscriptionDataMap["itemTest2"], isNotNull);
+    });
+
+    test("onSocketDone", () {
+      sut.onSocketDone();
+      expect(onDoneForSubscriptionCalled, true);
+      expect(onDoneForSocketCalled, true);
+      expect(sut.subscriptionDataMap.length, 0,
+          reason: "All subscriptions should be removed");
     });
   });
 }
