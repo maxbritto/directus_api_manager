@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'geo_json_polygon.dart';
+
 enum FilterOperator {
   equals,
   notEqual,
@@ -23,9 +25,12 @@ enum FilterOperator {
   isNotEmpty
 }
 
+/// Enum for geospatial filter operations
+enum GeoFilterOperator { intersectsBbox }
+
 /// This class is astract and should not be used directly
 ///
-/// Instead use [PropertyFilter], [LogicalOperatorFilter], [RelationFilter].
+/// Instead use [PropertyFilter], [LogicalOperatorFilter], [RelationFilter], [GeoFilter].
 abstract class Filter {
   String get asJSON;
   Map<String, dynamic> get asMap;
@@ -179,4 +184,36 @@ class RelationFilter implements Filter {
 
   @override
   Map<String, dynamic> get asMap => {propertyName: linkedObjectFilter.asMap};
+}
+
+/// A filter for geospatial queries
+class GeoFilter implements Filter {
+  final String field;
+  final GeoFilterOperator operator;
+  final GeoJsonPolygon feature;
+
+  const GeoFilter({
+    required this.field,
+    required this.operator,
+    required this.feature,
+  });
+
+  String _operatorAsString(GeoFilterOperator operator) {
+    final String value;
+    switch (operator) {
+      case GeoFilterOperator.intersectsBbox:
+        value = "_intersects_bbox";
+        break;
+    }
+    return value;
+  }
+
+  @override
+  String get asJSON =>
+      '{ "$field": { "${_operatorAsString(operator)}": ${jsonEncode(feature.asJson)} }}';
+
+  @override
+  Map<String, dynamic> get asMap => {
+        field: {_operatorAsString(operator): feature.asJson}
+      };
 }

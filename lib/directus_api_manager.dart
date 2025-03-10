@@ -3,6 +3,7 @@ library directus_api_manager;
 export 'src/idirectus_api_manager.dart';
 export 'src/directus_api_manager_base.dart';
 export 'src/filter.dart';
+export 'src/geo_json_polygon.dart';
 export 'src/annotations.dart';
 export 'src/sort_property.dart';
 export 'src/model/directus_data.dart';

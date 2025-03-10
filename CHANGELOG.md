@@ -1,3 +1,14 @@
+## 1.12.0 - 2025/02/05
+
+- Added new `GeoFilter` class for geospatial filtering
+- Added new `GeoJsonPolygon` class with three constructors for creating geographical areas:
+  - `rectangle`: Creates a rectangular area from top-left and bottom-right coordinates
+  - `polygon`: Creates a custom polygon from a list of coordinates
+  - `squareFromCenter`: Creates a square area from a center point and distance in meters
+- Added `GeoFilterOperator` enum for geospatial operations
+- Moved geospatial filtering functionality from `PropertyFilter` to dedicated `GeoFilter` class
+- Updated documentation with examples for geospatial filtering
+
 ## 1.11.0 - 2025/02/04
 
 - Simplified Websocket subscription creations and stops and added documentation

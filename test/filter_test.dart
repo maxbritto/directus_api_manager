@@ -1,4 +1,5 @@
 import 'package:directus_api_manager/src/filter.dart';
+import 'package:directus_api_manager/src/geo_json_polygon.dart';
 import 'package:test/expect.dart';
 import 'package:test/scaffolding.dart';
 
@@ -220,5 +221,128 @@ main() {
         value: '{"key": "value"}');
     final json = sut.asJSON;
     expect(json, '{ "json": { "_eq": "{\\"key\\": \\"value\\"}" }}');
+  });
+
+  group('GeoFilter', () {
+    test('creates filter with rectangle polygon', () {
+      final rectangle = GeoJsonPolygon.rectangle(
+        topLeft: [168.2947501099543, -17.723682144590242],
+        bottomRight: [168.29840874403044, -17.727328428851507],
+      );
+
+      final sut = GeoFilter(
+        field: "location",
+        operator: GeoFilterOperator.intersectsBbox,
+        feature: rectangle,
+      );
+
+      final json = sut.asJSON;
+      final expectedJson =
+          '{ "location": { "_intersects_bbox": {"type":"Feature","geometry":{"coordinates":[[['
+          '168.2947501099543,-17.723682144590242],['
+          '168.29840874403044,-17.723682144590242],['
+          '168.29840874403044,-17.727328428851507],['
+          '168.2947501099543,-17.727328428851507],['
+          '168.2947501099543,-17.723682144590242]'
+          ']],"type":"Polygon"}} }}';
+
+      expect(json, expectedJson);
+    });
+
+    test('creates filter with custom polygon', () {
+      final polygon = GeoJsonPolygon.polygon(
+        points: [
+          [168.2947501099543, -17.723682144590242],
+          [168.29840874403044, -17.723682144590242],
+          [168.29840874403044, -17.727328428851507],
+          [168.2947501099543, -17.727328428851507],
+        ],
+      );
+
+      final sut = GeoFilter(
+        field: "location",
+        operator: GeoFilterOperator.intersectsBbox,
+        feature: polygon,
+      );
+
+      final json = sut.asJSON;
+      expect(json.contains('"_intersects_bbox"'), true);
+      expect(json.contains('"type":"Feature"'), true);
+      expect(json.contains('"type":"Polygon"'), true);
+    });
+
+    test('creates filter with square from center', () {
+      final square = GeoJsonPolygon.squareFromCenter(
+        center: [168.29658, -17.725505],
+        distanceInMeters: 400,
+      );
+
+      final sut = GeoFilter(
+        field: "location",
+        operator: GeoFilterOperator.intersectsBbox,
+        feature: square,
+      );
+
+      final map = sut.asMap;
+      expect(map['location']['_intersects_bbox']['type'], 'Feature');
+      expect(
+          map['location']['_intersects_bbox']['geometry']['type'], 'Polygon');
+      expect(
+          map['location']['_intersects_bbox']['geometry']['coordinates'][0]
+              .length,
+          5);
+    });
+
+    test('works with LogicalOperatorFilter', () {
+      final rectangle = GeoJsonPolygon.rectangle(
+        topLeft: [168.2947501099543, -17.723682144590242],
+        bottomRight: [168.29840874403044, -17.727328428851507],
+      );
+
+      final geoFilter = GeoFilter(
+        field: "location",
+        operator: GeoFilterOperator.intersectsBbox,
+        feature: rectangle,
+      );
+
+      final propertyFilter = PropertyFilter(
+        field: "type",
+        operator: FilterOperator.equals,
+        value: "restaurant",
+      );
+
+      final sut = LogicalOperatorFilter(
+        operator: LogicalOperator.and,
+        children: [geoFilter, propertyFilter],
+      );
+
+      final map = sut.asMap;
+      expect(map['_and'].length, 2);
+      expect(map['_and'][0]['location']['_intersects_bbox'], isNotNull);
+      expect(map['_and'][1]['type']['_eq'], 'restaurant');
+    });
+
+    test('works with RelationFilter', () {
+      final square = GeoJsonPolygon.squareFromCenter(
+        center: [168.29658, -17.725505],
+        distanceInMeters: 400,
+      );
+
+      final geoFilter = GeoFilter(
+        field: "area",
+        operator: GeoFilterOperator.intersectsBbox,
+        feature: square,
+      );
+
+      final sut = RelationFilter(
+        propertyName: "venue",
+        linkedObjectFilter: geoFilter,
+      );
+
+      final json = sut.asJSON;
+      expect(json.contains('"venue"'), true);
+      expect(json.contains('"area"'), true);
+      expect(json.contains('"_intersects_bbox"'), true);
+    });
   });
 }

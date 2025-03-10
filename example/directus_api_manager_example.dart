@@ -64,6 +64,9 @@ Future<void> main() async {
         await apiManager.updateItem(objectToUpdate: fetchedPlayer);
     print(updatedPlayer.bestScore);
   }
+
+  // Example of using GeoJsonPolygon with intersects_bbox filter
+  geoFilterExample();
 }
 
 @DirectusCollection()
@@ -79,4 +82,45 @@ class PlayerDirectusModel extends DirectusItem {
   int? get bestScore => getValue(forKey: "best_score");
   set bestScore(int? newBestScore) =>
       setValue(newBestScore, forKey: "best_score");
+}
+
+// Example of using GeoJsonPolygon with intersects_bbox filter
+void geoFilterExample() {
+  print('\n=== Geo Filter Example ===');
+
+  // Create a rectangular bounding box
+  final rectangle = GeoJsonPolygon.rectangle(
+    topLeft: [168.2947501099543, -17.723682144590242],
+    bottomRight: [168.29840874403044, -17.727328428851507],
+  );
+
+  // Create a polygon from a list of coordinates
+  // ignore: unused_local_variable
+  final polygon = GeoJsonPolygon.polygon(
+    points: [
+      [168.2947501099543, -17.723682144590242],
+      [168.29840874403044, -17.723682144590242],
+      [168.29840874403044, -17.727328428851507],
+      [168.2947501099543, -17.727328428851507],
+    ],
+  );
+
+  // Create a square centered at a specific point
+  // ignore: unused_local_variable
+  final square = GeoJsonPolygon.squareFromCenter(
+    center: [168.29658, -17.725505],
+    distanceInMeters: 400, // distance from center in meters
+  );
+
+  // Use the GeoJSON polygon with a PropertyFilter for geospatial queries
+  final locationFilter = GeoFilter(
+      field: "location",
+      operator: GeoFilterOperator.intersectsBbox,
+      feature: rectangle);
+
+  // You can use this filter in your API queries
+  print('Filter JSON: ${locationFilter.asJSON}');
+
+  // Or use it as a Map
+  print('Filter Map: ${locationFilter.asMap}');
 }

@@ -385,3 +385,167 @@ List<int> get requiredCourseIdList {
   }
 }
 ```
+
+### Filtering
+
+You can filter your items using the `filter` parameter. The filter can be a single filter or a combination of filters using logical operators.
+
+#### Property Filter
+
+A property filter is used to filter items based on a property value. Here are some examples:
+
+```dart
+// Filter by exact match
+final filter = PropertyFilter(
+    field: "title",
+    operator: FilterOperator.equals,
+    value: "Hello World!");
+
+// Filter by contains
+final filter = PropertyFilter(
+    field: "title",
+    operator: FilterOperator.contains,
+    value: "Hello");
+
+// Filter by greater than
+final filter = PropertyFilter(
+    field: "score",
+    operator: FilterOperator.greaterThan,
+    value: 10);
+
+// Filter by between
+final filter = PropertyFilter(
+    field: "score",
+    operator: FilterOperator.between,
+    value: [10, 100]);
+
+// Filter by is null
+final filter = PropertyFilter(
+    field: "description",
+    operator: FilterOperator.isNull,
+    value: null);
+```
+
+#### Logical Filter
+
+A logical filter is used to combine multiple filters using logical operators. Here are some examples:
+
+```dart
+// AND operator
+final filter = LogicalOperatorFilter(
+    operator: LogicalOperator.and,
+    children: [
+        PropertyFilter(
+            field: "title",
+            operator: FilterOperator.contains,
+            value: "Hello"),
+        PropertyFilter(
+            field: "description",
+            operator: FilterOperator.equals,
+            value: "world"),
+    ]);
+
+// OR operator
+final filter = LogicalOperatorFilter(
+    operator: LogicalOperator.or,
+    children: [
+        PropertyFilter(
+            field: "title",
+            operator: FilterOperator.contains,
+            value: "Hello"),
+        PropertyFilter(
+            field: "description",
+            operator: FilterOperator.equals,
+            value: "world"),
+    ]);
+```
+
+#### Relation Filter
+
+A relation filter is used to filter items based on related items. Here are some examples:
+
+```dart
+// Filter by related item
+final filter = RelationFilter(
+    propertyName: "users",
+    linkedObjectFilter: PropertyFilter(
+        field: "id",
+        operator: FilterOperator.equals,
+        value: "23"));
+
+// Filter by M2M relation
+final filter = RelationFilter(
+    propertyName: "words",
+    linkedObjectFilter: RelationFilter(
+        propertyName: "idWord",
+        linkedObjectFilter: PropertyFilter(
+            field: "word",
+            operator: FilterOperator.equals,
+            value: "zelda")));
+```
+
+#### Geo Filter
+
+A geo filter is used to filter items based on their geographical location. This is particularly useful for finding items within a specific geographical area. Here are some examples:
+
+```dart
+// Filter by rectangle area
+final rectangle = GeoJsonPolygon.rectangle(
+    topLeft: [longitude1, latitude1],
+    bottomRight: [longitude2, latitude2],
+);
+
+final filter = GeoFilter(
+    field: "location",
+    operator: GeoFilterOperator.intersectsBbox,
+    feature: rectangle,
+);
+
+// Filter by custom polygon area
+final polygon = GeoJsonPolygon.polygon(
+    points: [
+        [longitude1, latitude1],
+        [longitude2, latitude1],
+        [longitude2, latitude2],
+        [longitude1, latitude2],
+    ],
+);
+
+final filter = GeoFilter(
+    field: "location",
+    operator: GeoFilterOperator.intersectsBbox,
+    feature: polygon,
+);
+
+// Filter by square area from center point
+final square = GeoJsonPolygon.squareFromCenter(
+    center: [longitude, latitude],
+    distanceInMeters: 400, // Distance in meters
+);
+
+final filter = GeoFilter(
+    field: "location",
+    operator: GeoFilterOperator.intersectsBbox,
+    feature: square,
+);
+
+// Combine geo filter with other filters
+final combinedFilter = LogicalOperatorFilter(
+    operator: LogicalOperator.and,
+    children: [
+        geoFilter,
+        PropertyFilter(
+            field: "type",
+            operator: FilterOperator.equals,
+            value: "restaurant",
+        ),
+    ],
+);
+```
+
+The `GeoJsonPolygon` class provides three constructors for creating different types of geographical areas:
+- `rectangle`: Creates a rectangular area defined by top-left and bottom-right coordinates
+- `polygon`: Creates a custom polygon area defined by a list of coordinates
+- `squareFromCenter`: Creates a square area centered at a specific point with a given distance in meters
+
+All polygons are automatically closed (the last point connects back to the first point) to ensure valid GeoJSON format.
