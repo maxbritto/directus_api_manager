@@ -190,7 +190,7 @@ class JsonCacheEngine implements ILocalDirectusCacheInterface {
       content = null;
     }
     _indexFileLock.release();
-    return content;
+    return content == "" ? null : content;
   }
 
   Future<void> _saveIndexFile(
