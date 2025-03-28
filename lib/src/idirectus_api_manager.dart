@@ -12,7 +12,12 @@ abstract class IDirectusApiManager {
       String? firstname,
       String? lastname});
   Future<bool> hasLoggedInUser();
-  Future<DirectusUser?> currentDirectusUser({String fields = "*"});
+  Future<DirectusUser?> currentDirectusUser(
+      {String fields = "*",
+      bool canUseCacheForResponse = false,
+      bool canSaveResponseToCache = true,
+      bool canUseOldCachedResponseAsFallback = true,
+      Duration maxCacheAge = const Duration(days: 1)});
 
   Future<bool> requestPasswordReset({required String email, String? resetUrl});
   Future<bool> confirmPasswordReset(
@@ -23,9 +28,26 @@ abstract class IDirectusApiManager {
       List<SortProperty>? sortBy,
       String? fields,
       int? limit,
-      int? offset});
+      int? offset,
+      String? requestIdentifier,
+      bool canUseCacheForResponse = false,
+      bool canSaveResponseToCache = true,
+      bool canUseOldCachedResponseAsFallback = true,
+
+      /// Extra tags to associate with the cache entry
+      List<String> extraTags = const [],
+      Duration maxCacheAge = const Duration(days: 1)});
   Future<Type?> getSpecificItem<Type extends DirectusData>(
-      {required String id, String? fields});
+      {required String id,
+      String? fields,
+      String? requestIdentifier,
+      bool canUseCacheForResponse = false,
+      bool canSaveResponseToCache = true,
+      bool canUseOldCachedResponseAsFallback = true,
+
+      /// Extra tags to associate with the cache entry
+      List<String> extraTags = const [],
+      Duration maxCacheAge = const Duration(days: 1)});
 
   Future<DirectusItemCreationResult<Type>>
       createNewItem<Type extends DirectusData>({
@@ -51,7 +73,8 @@ abstract class IDirectusApiManager {
       String? title,
       String? contentType,
       String? folder,
-      String storage});
+      String storage = "local",
+      Map<String, dynamic>? additionalFields});
   Future<DirectusFile> updateExistingFile(
       {required List<int> fileBytes,
       required String fileId,
@@ -67,4 +90,6 @@ abstract class IDirectusApiManager {
   Future<bool> tryAndRefreshToken();
   String get webSocketBaseUrl;
   String get baseUrl;
+  Future<void> clearCacheWithKey(String cacheEntryKey);
+  void discardCurrentUserCache();
 }

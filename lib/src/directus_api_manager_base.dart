@@ -282,6 +282,7 @@ class DirectusApiManager implements IDirectusApiManager {
   }
 
   /// Discards the cached current user information.
+  @override
   void discardCurrentUserCache() {
     cachedCurrentUser = null;
     clearCacheWithKey(_currentUserRequestIdentifier);
