@@ -40,9 +40,19 @@ class MockDirectusApiManager extends IDirectusApiManager with MockMixin {
   }
 
   @override
-  Future<DirectusUser?> currentDirectusUser({String fields = "*"}) {
+  Future<DirectusUser?> currentDirectusUser(
+      {String fields = "*",
+      bool canUseCacheForResponse = false,
+      bool canSaveResponseToCache = true,
+      bool canUseOldCachedResponseAsFallback = true,
+      Duration maxCacheAge = const Duration(days: 1)}) {
     addCalledFunction(named: "currentDirectusUser");
     addReceivedObject(fields, name: "fields");
+    addReceivedObject(canUseCacheForResponse, name: "canUseCacheForResponse");
+    addReceivedObject(canSaveResponseToCache, name: "canSaveResponseToCache");
+    addReceivedObject(canUseOldCachedResponseAsFallback,
+        name: "canUseOldCachedResponseAsFallback");
+    addReceivedObject(maxCacheAge, name: "maxCacheAge");
     return Future.value(popNextReturnedObject());
   }
 
@@ -77,22 +87,49 @@ class MockDirectusApiManager extends IDirectusApiManager with MockMixin {
       List<SortProperty>? sortBy,
       String? fields,
       int? limit,
-      int? offset}) {
+      int? offset,
+      String? requestIdentifier,
+      bool canUseCacheForResponse = false,
+      bool canSaveResponseToCache = true,
+      bool canUseOldCachedResponseAsFallback = true,
+      List<String> extraTags = const [],
+      Duration maxCacheAge = const Duration(days: 1)}) {
     addCalledFunction(named: "findListOfItems");
     addReceivedObject(filter, name: "filter");
     addReceivedObject(sortBy, name: "sortBy");
     addReceivedObject(fields, name: "fields");
     addReceivedObject(limit, name: "limit");
     addReceivedObject(offset, name: "offset");
+    addReceivedObject(requestIdentifier, name: "requestIdentifier");
+    addReceivedObject(canUseCacheForResponse, name: "canUseCacheForResponse");
+    addReceivedObject(canSaveResponseToCache, name: "canSaveResponseToCache");
+    addReceivedObject(canUseOldCachedResponseAsFallback,
+        name: "canUseOldCachedResponseAsFallback");
+    addReceivedObject(extraTags, name: "extraTags");
+    addReceivedObject(maxCacheAge, name: "maxCacheAge");
     return Future.value(popNextReturnedObject());
   }
 
   @override
   Future<Type?> getSpecificItem<Type extends DirectusData>(
-      {required String id, String? fields}) {
+      {required String id,
+      String? fields,
+      String? requestIdentifier,
+      bool canUseCacheForResponse = false,
+      bool canSaveResponseToCache = true,
+      bool canUseOldCachedResponseAsFallback = true,
+      List<String> extraTags = const [],
+      Duration maxCacheAge = const Duration(days: 1)}) {
     addCalledFunction(named: "getSpecificItem");
     addReceivedObject(id, name: "id");
     addReceivedObject(fields, name: "fields");
+    addReceivedObject(requestIdentifier, name: "requestIdentifier");
+    addReceivedObject(canUseCacheForResponse, name: "canUseCacheForResponse");
+    addReceivedObject(canSaveResponseToCache, name: "canSaveResponseToCache");
+    addReceivedObject(canUseOldCachedResponseAsFallback,
+        name: "canUseOldCachedResponseAsFallback");
+    addReceivedObject(extraTags, name: "extraTags");
+    addReceivedObject(maxCacheAge, name: "maxCacheAge");
     return Future.value(popNextReturnedObject());
   }
 
@@ -169,13 +206,15 @@ class MockDirectusApiManager extends IDirectusApiManager with MockMixin {
       String? title,
       String? contentType,
       String? folder,
-      String storage = "local"}) {
+      String storage = "local",
+      Map<String, dynamic>? additionalFields}) {
     addCalledFunction(named: "uploadFile");
     addReceivedObject(fileBytes, name: "fileBytes");
     addReceivedObject(filename, name: "filename");
     addReceivedObject(title, name: "title");
     addReceivedObject(contentType, name: "contentType");
     addReceivedObject(folder, name: "folder");
+    addReceivedObject(additionalFields, name: "additionalFields");
     return Future.value(popNextReturnedObject());
   }
 
@@ -222,5 +261,18 @@ class MockDirectusApiManager extends IDirectusApiManager with MockMixin {
       "lastname": lastname
     });
     return Future.value(popNextReturnedObject());
+  }
+
+  @override
+  Future<void> clearCacheWithKey(String cacheEntryKey) {
+    addCall(
+        named: "clearCacheWithKey",
+        arguments: {"cacheEntryKey": cacheEntryKey});
+    return Future.value();
+  }
+
+  @override
+  void discardCurrentUserCache() {
+    addCall(named: "discardCurrentUserCache");
   }
 }
