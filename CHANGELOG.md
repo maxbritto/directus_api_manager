@@ -1,3 +1,7 @@
+## 1.12.2 - 2025/03/28
+
+-    Reflects previous change to abstract class `IDirectusApiManager`
+
 ## 1.12.1 - 2025/03/11
 
 -    Avoid error when the cache file is present but empty
