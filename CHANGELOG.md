@@ -1,45 +1,53 @@
+## 1.12.2 - 2025/03/28
+
+-    Reflects previous change to abstract class `IDirectusApiManager`
+
+## 1.12.1 - 2025/03/11
+
+-    Avoid error when the cache file is present but empty
+
 ## 1.12.0 - 2025/02/05
 
-- Added new `GeoFilter` class for geospatial filtering
-- Added new `GeoJsonPolygon` class with three constructors for creating geographical areas:
-  - `rectangle`: Creates a rectangular area from top-left and bottom-right coordinates
-  - `polygon`: Creates a custom polygon from a list of coordinates
-  - `squareFromCenter`: Creates a square area from a center point and distance in meters
-- Added `GeoFilterOperator` enum for geospatial operations
-- Moved geospatial filtering functionality from `PropertyFilter` to dedicated `GeoFilter` class
-- Updated documentation with examples for geospatial filtering
+-    Added new `GeoFilter` class for geospatial filtering
+-    Added new `GeoJsonPolygon` class with three constructors for creating geographical areas:
+     -    `rectangle`: Creates a rectangular area from top-left and bottom-right coordinates
+     -    `polygon`: Creates a custom polygon from a list of coordinates
+     -    `squareFromCenter`: Creates a square area from a center point and distance in meters
+-    Added `GeoFilterOperator` enum for geospatial operations
+-    Moved geospatial filtering functionality from `PropertyFilter` to dedicated `GeoFilter` class
+-    Updated documentation with examples for geospatial filtering
 
 ## 1.11.0 - 2025/02/04
 
-- Simplified Websocket subscription creations and stops and added documentation
-- Improved websocket keep alive and disconnects when network is lost
-- Added more functions inside `DirectusApiError` to try to extract valuable information from failed api results
-- Added a MemoryCacheEngine that can be used to store the cache in memory
-- Added new parameters to provide extra caching invalidation : both manual and automatic.
-- Automatically invalidate cached data linked to created, updated or deleted objects
-- Added more cache documentation
+-    Simplified Websocket subscription creations and stops and added documentation
+-    Improved websocket keep alive and disconnects when network is lost
+-    Added more functions inside `DirectusApiError` to try to extract valuable information from failed api results
+-    Added a MemoryCacheEngine that can be used to store the cache in memory
+-    Added new parameters to provide extra caching invalidation : both manual and automatic.
+-    Automatically invalidate cached data linked to created, updated or deleted objects
+-    Added more cache documentation
 
 ## 1.10.0 - 2024/12/31
 
-- Improved locking mechanism to avoid multiple refresh token requests at the same time
-- Added somne locking to json cache file accesses to prevent multiple writes at the same time
-- reduced the amount of read write into the file system for the json cache implementation
-- Changed keys and file naming for the json cache files to avoid issues with the file system with filenames being too long
-- Added the requested url within the cached meta data
-Possible breaking : if apps were using the json cache, the cache files will be renamed and previous cached files will be ignored. On next cache clean, they will be removed.
+-    Improved locking mechanism to avoid multiple refresh token requests at the same time
+-    Added somne locking to json cache file accesses to prevent multiple writes at the same time
+-    reduced the amount of read write into the file system for the json cache implementation
+-    Changed keys and file naming for the json cache files to avoid issues with the file system with filenames being too long
+-    Added the requested url within the cached meta data
+     Possible breaking : if apps were using the json cache, the cache files will be renamed and previous cached files will be ignored. On next cache clean, they will be removed.
 
 ## 1.9.7 - 2024/12/20
 
-- logoutDirectusUser should also clear the cachedCurrentUser variable
+-    logoutDirectusUser should also clear the cachedCurrentUser variable
 
 ## 1.9.6 - 2024/12/20
 
-- logoutDirectusUser now clears all the cache from the specified cache engine
+-    logoutDirectusUser now clears all the cache from the specified cache engine
 
 ## 1.9.5 - 2024/12/18
 
-- Fix : Cache should only save response with status code 200 ... 299
-- Automatically clear list caches when adding or removing items of the same type
+-    Fix : Cache should only save response with status code 200 ... 299
+-    Automatically clear list caches when adding or removing items of the same type
 
 ## 1.9.4 - 2024/12/18
 

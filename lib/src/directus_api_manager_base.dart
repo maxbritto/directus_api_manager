@@ -282,6 +282,7 @@ class DirectusApiManager implements IDirectusApiManager {
   }
 
   /// Discards the cached current user information.
+  @override
   void discardCurrentUserCache() {
     cachedCurrentUser = null;
     clearCacheWithKey(_currentUserRequestIdentifier);
@@ -799,6 +800,7 @@ class DirectusApiManager implements IDirectusApiManager {
   String? get currentAuthToken => _api.currentAuthToken;
 
   /// Clears the cache for the object with the given [cacheEntryKey].
+  @override
   Future<void> clearCacheWithKey(String cacheEntryKey) async {
     try {
       await cacheEngine?.removeCacheEntry(key: cacheEntryKey);
