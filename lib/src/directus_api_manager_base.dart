@@ -800,6 +800,7 @@ class DirectusApiManager implements IDirectusApiManager {
   String? get currentAuthToken => _api.currentAuthToken;
 
   /// Clears the cache for the object with the given [cacheEntryKey].
+  @override
   Future<void> clearCacheWithKey(String cacheEntryKey) async {
     try {
       await cacheEngine?.removeCacheEntry(key: cacheEntryKey);

@@ -5,8 +5,7 @@ import 'package:test/expect.dart';
 import 'package:test/scaffolding.dart';
 
 class TestDirectusData extends DirectusData {
-  TestDirectusData(Map<String, dynamic> rawReceivedData)
-      : super(rawReceivedData);
+  TestDirectusData(super.rawReceivedData);
 }
 
 main() {
