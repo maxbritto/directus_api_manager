@@ -19,7 +19,7 @@ class DirectusItemTestWithUpdateField extends DirectusItem {
   bool get canBeChanged => getValue(forKey: "canBeChanged");
 }
 
-main() {
+void main() {
   group('DirectusItem', () {
     test('New Item', () {
       expect(() => DirectusItemTest.newItem(), returnsNormally);

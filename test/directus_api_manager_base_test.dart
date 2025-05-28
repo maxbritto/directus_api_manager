@@ -7,7 +7,7 @@ import 'mock/mock_directus_api.dart';
 import 'mock/mock_http_client.dart';
 import 'model/directus_item_test.dart';
 
-main() {
+void main() {
   initializeReflectable();
   group("DirectusApiManager", () {
     late DirectusApiManager sut;

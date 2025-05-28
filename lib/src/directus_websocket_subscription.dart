@@ -12,9 +12,9 @@ class DirectusWebSocketSubscription<Type extends DirectusData> {
   final int? limit;
   final int? offset;
 
-  Function(Map<String, dynamic>)? onCreate;
-  Function(Map<String, dynamic>)? onUpdate;
-  Function(Map<String, dynamic>)? onDelete;
+  String? Function(Map<String, dynamic>)? onCreate;
+  String? Function(Map<String, dynamic>)? onUpdate;
+  String? Function(Map<String, dynamic>)? onDelete;
 
   /// Function to be called when an error occurs on the socket level. Each subscription on that socket will call this function if provided.
   Function(dynamic)? onError;

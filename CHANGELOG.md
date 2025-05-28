@@ -1,3 +1,9 @@
+## 1.13.0 - 2025/05/28
+
+- Updated to latest dart version and dependencies
+- Added strict return types when possible instead of dynamic
+- Fixed warnings raised with newer dart version lints
+
 ## 1.12.2 - 2025/03/28
 
 -    Reflects previous change to abstract class `IDirectusApiManager`

@@ -4,7 +4,7 @@ import 'package:directus_api_manager/src/model/directus_file.dart';
 import 'package:test/expect.dart';
 import 'package:test/scaffolding.dart';
 
-main() {
+void main() {
   group(
     "DirectusFile",
     () {

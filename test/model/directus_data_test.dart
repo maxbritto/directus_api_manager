@@ -8,7 +8,7 @@ class TestDirectusData extends DirectusData {
   TestDirectusData(super.rawReceivedData);
 }
 
-main() {
+void main() {
   group('DirectusData', () {
     test('Creating an invalid item should throw', () {
       expect(() => TestDirectusData({}), throwsException);

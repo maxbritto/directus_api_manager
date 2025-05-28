@@ -86,7 +86,7 @@ class DirectusWebSocket {
     onDone?.call();
   }
 
-  _reschedulePing() {
+  void _reschedulePing() {
     _sentPingTimer?.cancel();
     _nextNeededPingTimer?.cancel();
     _nextNeededPingTimer = Timer(Duration(seconds: 35), () {
@@ -94,7 +94,7 @@ class DirectusWebSocket {
     });
   }
 
-  listenSocket(dynamic message) {
+  String? listenSocket(dynamic message) {
     // Reschedule the ping timer every time a message comes in from the server
     _reschedulePing();
 
@@ -165,6 +165,7 @@ class DirectusWebSocket {
         _onError(subscription, error);
       }
     }
+    return null;
   }
 
   Future disconnect({int code = 1000, String reason = "Normal Closure"}) async {
@@ -199,7 +200,7 @@ class DirectusWebSocket {
     return "refresh token request sent";
   }
 
-  addSubscription(DirectusWebSocketSubscription subscription) {
+  void addSubscription(DirectusWebSocketSubscription subscription) {
     if (subscriptionDataMap.containsKey(subscription.uid) == false) {
       subscriptionDataMap[subscription.uid] = subscription;
       channel.sink.add(subscription.toJson());
@@ -207,7 +208,7 @@ class DirectusWebSocket {
   }
 
   /// Sends an unsubscribe request to the server. The actual removal of the subscription will be done in the listenSocket method
-  removeSubscription({required String uid}) {
+  void removeSubscription({required String uid}) {
     channel.sink.add(jsonEncode({
       "type": "unsubscribe",
       "uid": uid,

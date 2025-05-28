@@ -816,7 +816,7 @@ class DirectusApiManager implements IDirectusApiManager {
 
   /// Clears the cache for the object with the given [id].
   /// It is important to specify the type of the object with the [Type] annotation when calling the function.
-  /// Example : clearCacheForObjectWithId<DirectusUser>(id);
+  /// Example : `clearCacheForObjectWithId<DirectusUser>(id);`
   /// If you already have a full object of that type prefer using [clearCacheForObject] instead that will automatically infer the type of the received object.
   Future<void> clearCacheForObjectWithId<Type extends DirectusData>(
       dynamic id) {

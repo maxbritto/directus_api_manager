@@ -5,7 +5,7 @@ import 'package:extension_dart_tools/extension_tools.dart';
 import 'package:http/http.dart';
 
 class MockHTTPClient with MockMixin implements Client {
-  addStreamResponse({required String body, int statusCode = 200}) {
+  void addStreamResponse({required String body, int statusCode = 200}) {
     addNextReturnFutureObject(
         StreamedResponse(Stream.value(utf8.encode(body)), statusCode));
   }

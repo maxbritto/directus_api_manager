@@ -87,7 +87,7 @@ abstract class IDirectusAPI {
       String storage = "local",
       Map<String, dynamic>? additionalFields});
   PreparedRequest prepareUpdateFileRequest(
-      {required fileId,
+      {required String fileId,
       List<int>? fileBytes,
       String? title,
       String? contentType,
@@ -636,7 +636,7 @@ class DirectusAPI implements IDirectusAPI {
 }
 
 extension RequestJson on Request {
-  addJsonHeaders() {
+  void addJsonHeaders() {
     headers["Content-Type"] = "application/json; charset=utf-8";
   }
 }

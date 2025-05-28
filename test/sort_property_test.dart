@@ -2,7 +2,7 @@ import 'package:directus_api_manager/src/sort_property.dart';
 import 'package:test/expect.dart';
 import 'package:test/scaffolding.dart';
 
-main() {
+void main() {
   group("SortProperty", () {
     test("ascending by default", () {
       final sut = SortProperty("score");

@@ -4,7 +4,7 @@ import 'package:test/test.dart';
 import 'directus_websocket_test.reflectable.dart';
 import 'model/directus_item_test.dart';
 
-main() {
+void main() {
   initializeReflectable();
   late DirectusWebSocket sut;
 
@@ -40,18 +40,6 @@ main() {
 
     test('Init value are set', () {
       expect(sut.subscriptionDataList.length, 1);
-    });
-
-    test('Listen receive a ping message', () {
-      //TODO
-    });
-
-    test('Request auth', () {
-      //TODO
-    });
-
-    test('Request token refresh', () {
-      //TODO
     });
 
     test('Socket receive init subscription message', () {

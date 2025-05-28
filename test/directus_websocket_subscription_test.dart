@@ -5,11 +5,11 @@ import 'package:test/scaffolding.dart';
 import 'directus_websocket_subscription_test.reflectable.dart';
 import 'model/directus_item_test.dart';
 
-main() {
+void main() {
   initializeReflectable();
   late DirectusWebSocketSubscription sut;
 
-  callBack(Map<String, dynamic> data) {}
+  String? callBack(Map<String, dynamic> data) => null;
 
   group('DirectusWebSocketSubscription', () {
     setUp(() {

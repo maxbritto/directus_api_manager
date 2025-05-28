@@ -1,4 +1,4 @@
-library directus_api_manager;
+library;
 
 export 'src/idirectus_api_manager.dart';
 export 'src/directus_api_manager_base.dart';

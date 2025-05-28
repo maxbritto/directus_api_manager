@@ -46,7 +46,7 @@ abstract class DirectusData {
   bool hasChangedIn({required String forKey}) =>
       updatedProperties.containsKey(forKey);
 
-  setValue(dynamic value, {required String forKey}) {
+  void setValue(dynamic value, {required String forKey}) {
     if (value != getValue(forKey: forKey)) {
       updatedProperties[forKey] = value;
     }

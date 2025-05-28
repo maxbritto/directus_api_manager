@@ -3,7 +3,7 @@ import 'package:directus_api_manager/src/geo_json_polygon.dart';
 import 'package:test/expect.dart';
 import 'package:test/scaffolding.dart';
 
-main() {
+void main() {
   test('PropertyFilter equals', () {
     final sut = PropertyFilter(
         field: "title", operator: FilterOperator.equals, value: "Hello World!");

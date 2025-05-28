@@ -2,7 +2,7 @@ import 'package:directus_api_manager/directus_api_manager.dart';
 import 'package:test/expect.dart';
 import 'package:test/scaffolding.dart';
 
-main() {
+void main() {
   group('DirectusUser', () {
     test('Creating an invalid user should throw', () {
       expect(() => DirectusUser({}), throwsException);

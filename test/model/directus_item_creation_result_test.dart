@@ -23,12 +23,12 @@ class DirectusUserServiceTest {
   final DirectusApiManager apiManager;
   DirectusUserServiceTest({required this.apiManager});
 
-  DirectusUser fromDirectus(rawData) {
+  DirectusUser fromDirectus(dynamic rawData) {
     return DirectusUser(rawData);
   }
 }
 
-main() {
+void main() {
   initializeReflectable();
   final metadataGenerator = MetadataGenerator();
   group('DirectusItemCreationResult', () {
