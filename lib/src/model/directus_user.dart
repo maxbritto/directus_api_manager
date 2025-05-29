@@ -7,35 +7,44 @@ import 'package:directus_api_manager/src/model/directus_data.dart';
     endpointPrefix: "/",
     webSocketEndPoint: "directus_users")
 class DirectusUser extends DirectusData {
-  String? get email => getValue(forKey: "email");
-  set email(String? value) => setValue(value, forKey: "email");
+  static const String emailKey = "email";
+  static const String passwordKey = "password";
+  static const String firstnameKey = "first_name";
+  static const String lastnameKey = "last_name";
+  static const String descriptionKey = "description";
+  static const String roleKey = "role";
+  static const String avatarKey = "avatar";
+  static const String statusKey = "status";
 
-  set password(String value) => setValue(value, forKey: "password");
+  String? get email => getValue(forKey: emailKey);
+  set email(String? value) => setValue(value, forKey: emailKey);
 
-  String? get firstname => getValue(forKey: "first_name");
-  set firstname(String? value) => setValue(value, forKey: "first_name");
+  set password(String value) => setValue(value, forKey: passwordKey);
 
-  String? get lastname => getValue(forKey: "last_name");
-  set lastname(String? value) => setValue(value, forKey: "last_name");
+  String? get firstname => getValue(forKey: firstnameKey);
+  set firstname(String? value) => setValue(value, forKey: firstnameKey);
 
-  String? get description => getValue(forKey: "description");
-  set description(String? value) => setValue(value, forKey: "description");
+  String? get lastname => getValue(forKey: lastnameKey);
+  set lastname(String? value) => setValue(value, forKey: lastnameKey);
 
-  String? get roleUUID => getValue(forKey: "role");
-  set roleUUID(String? value) => setValue(value, forKey: "role");
+  String? get description => getValue(forKey: descriptionKey);
+  set description(String? value) => setValue(value, forKey: descriptionKey);
 
-  String? get avatar => getValue(forKey: "avatar");
-  set avatar(String? value) => setValue(value, forKey: "avatar");
+  String? get roleUUID => getValue(forKey: roleKey);
+  set roleUUID(String? value) => setValue(value, forKey: roleKey);
+
+  String? get avatar => getValue(forKey: avatarKey);
+  set avatar(String? value) => setValue(value, forKey: avatarKey);
 
   UserStatus? get status {
-    final value = getValue(forKey: "status");
+    final value = getValue(forKey: statusKey);
     if (value == null) {
       return null;
     }
     return UserStatus.values.firstWhere((e) => e.name == value);
   }
 
-  set status(UserStatus? value) => setValue(value?.name, forKey: "status");
+  set status(UserStatus? value) => setValue(value?.name, forKey: statusKey);
 
   /// Creates a new [DirectusUser]
   ///

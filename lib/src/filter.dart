@@ -14,11 +14,16 @@ enum FilterOperator {
   isNull,
   isNotNull,
   contains,
+  containsCaseInsensitive,
   notContains,
   startWith,
+  startsWithCaseInsensitive,
   notStartWith,
+  notStartsWithCaseInsensitive,
   endWith,
   notEndWith,
+  notEndsWithCaseInsensitive,
+  endsWithCaseInsensitive,
   between,
   notBetween,
   isEmpty,
@@ -82,21 +87,35 @@ class PropertyFilter implements Filter {
       case FilterOperator.contains:
         value = "_contains";
         break;
+      case FilterOperator.containsCaseInsensitive:
+        value = "_icontains";
+        break;
       case FilterOperator.notContains:
         value = "_ncontains";
         break;
-
       case FilterOperator.startWith:
         value = "_starts_with";
         break;
+      case FilterOperator.startsWithCaseInsensitive:
+        value = "_istarts_with";
+        break;
       case FilterOperator.notStartWith:
         value = "_nstarts_with";
+        break;
+      case FilterOperator.notStartsWithCaseInsensitive:
+        value = "_nistarts_with";
         break;
       case FilterOperator.endWith:
         value = "_ends_with";
         break;
       case FilterOperator.notEndWith:
         value = "_nends_with";
+        break;
+      case FilterOperator.notEndsWithCaseInsensitive:
+        value = "_niends_with";
+        break;
+      case FilterOperator.endsWithCaseInsensitive:
+        value = "_iends_with";
         break;
       case FilterOperator.between:
         value = "_between";

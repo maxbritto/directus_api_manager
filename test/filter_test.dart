@@ -118,6 +118,51 @@ void main() {
     expect(json, '{ "title": { "_nends_with": "Hello" }}');
   });
 
+  test('PropertyFilter contains case insensitive', () {
+    final sut = PropertyFilter(
+        field: "title",
+        operator: FilterOperator.containsCaseInsensitive,
+        value: "Hello");
+    final json = sut.asJSON;
+    expect(json, '{ "title": { "_icontains": "Hello" }}');
+  });
+
+  test('PropertyFilter starts with case insensitive', () {
+    final sut = PropertyFilter(
+        field: "title",
+        operator: FilterOperator.startsWithCaseInsensitive,
+        value: "Hello");
+    final json = sut.asJSON;
+    expect(json, '{ "title": { "_istarts_with": "Hello" }}');
+  });
+
+  test('PropertyFilter not starts with case insensitive', () {
+    final sut = PropertyFilter(
+        field: "title",
+        operator: FilterOperator.notStartsWithCaseInsensitive,
+        value: "Hello");
+    final json = sut.asJSON;
+    expect(json, '{ "title": { "_nistarts_with": "Hello" }}');
+  });
+
+  test('PropertyFilter ends with case insensitive', () {
+    final sut = PropertyFilter(
+        field: "title",
+        operator: FilterOperator.endsWithCaseInsensitive,
+        value: "Hello");
+    final json = sut.asJSON;
+    expect(json, '{ "title": { "_iends_with": "Hello" }}');
+  });
+
+  test('PropertyFilter not ends with case insensitive', () {
+    final sut = PropertyFilter(
+        field: "title",
+        operator: FilterOperator.notEndsWithCaseInsensitive,
+        value: "Hello");
+    final json = sut.asJSON;
+    expect(json, '{ "title": { "_niends_with": "Hello" }}');
+  });
+
   test('PropertyFilter between', () {
     final sut = PropertyFilter(
         field: "score", operator: FilterOperator.between, value: [10, 100]);

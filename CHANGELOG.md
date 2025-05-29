@@ -1,3 +1,8 @@
+## 1.14.0 - 2025/05/29
+
+- Added new filter operators : `containsCaseInsensitive`, `startsWithCaseInsensitive`, `endsWithCaseInsensitive`, `notStartsWithCaseInsensitive`, `notEndsWithCaseInsensitive`
+- added const keys for directus_user and directus_data properties to avoid hardcoded strings in request we will make with filters
+
 ## 1.13.0 - 2025/05/28
 
 - Updated to latest dart version and dependencies
