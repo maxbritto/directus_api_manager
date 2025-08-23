@@ -73,6 +73,16 @@ void main() {
       sut.setValue(null, forKey: "checkString");
 
       expect(sut.getValue(forKey: "checkString"), null);
+      expect(sut.updatedProperties, {"checkString": null},
+          reason: "should make sure we send the null value on next save");
+    });
+    test(
+        'setting a new property to null should mark it as updated with null value',
+        () {
+      final sut = TestDirectusData({"id": "abc"});
+      sut.setValue(null, forKey: "checkString");
+      expect(sut.updatedProperties, {"checkString": null},
+          reason: "should make sure we send the null value on next save");
     });
 
     test("getStringList should return an empty list if the property is null",

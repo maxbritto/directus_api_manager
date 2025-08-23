@@ -50,7 +50,8 @@ abstract class DirectusData {
       updatedProperties.containsKey(forKey);
 
   void setValue(dynamic value, {required String forKey}) {
-    if (value != getValue(forKey: forKey)) {
+    if (value != getValue(forKey: forKey) ||
+        _rawReceivedData.containsKey(forKey) == false) {
       updatedProperties[forKey] = value;
     }
   }

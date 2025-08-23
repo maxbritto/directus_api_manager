@@ -1,3 +1,7 @@
+## 1.14.1 - 2025/08/23
+
+- Fixed issue with `DirectusData.setValue` when setting a property to null.
+
 ## 1.14.0 - 2025/05/29
 
 - Added new filter operators : `containsCaseInsensitive`, `startsWithCaseInsensitive`, `endsWithCaseInsensitive`, `notStartsWithCaseInsensitive`, `notEndsWithCaseInsensitive`
