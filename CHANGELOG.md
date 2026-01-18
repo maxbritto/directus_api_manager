@@ -1,3 +1,8 @@
+## 1.14.3 - 2026/01/18
+
+- Updated reflectable for their breaking change in version 5 : we now need to add the `reflectable_builder` to the dev dependencies in order to for the builder to work.
+- Fixed major version of reflectable to 5.1.0 to avoid future surprises with breaking changes.
+
 ## 1.14.2 - 2025/11/20
 
 - Updated reflectable dependency to accept version between 4 and 5
