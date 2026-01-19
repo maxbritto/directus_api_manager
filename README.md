@@ -19,7 +19,14 @@ This packages can generate model classes for your each of your Directus collecti
 
 ## Install
 
-Add the package as a dependency in your pubspec.yaml file
+You need to add 1 dependencies :  (will be added to your app)
+- directus_api_manager 
+
+And 2 dev dependencies : (will be only be used at build time to generate the model classes)
+- reflectable_builder 
+- build_runner 
+
+Add the packages as a dependencies in your pubspec.yaml file :
 
 ```yaml
 dependencies:
@@ -27,6 +34,10 @@ dependencies:
           sdk: flutter
 
      directus_api_manager: ^1.11.0 #replace by latest version
+
+dev_dependencies:
+     build_runner: any
+     reflectable_builder: any
 ```
 
 ## Getting started
