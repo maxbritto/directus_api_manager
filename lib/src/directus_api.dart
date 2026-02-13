@@ -105,6 +105,10 @@ abstract class IDirectusAPI {
       required String password,
       String? firstname,
       String? lastname});
+
+  PreparedRequest prepareOtpCodeRequest({required String email});
+  PreparedRequest prepareOtpVerifyRequest(
+      {required String email, required String code});
 }
 
 class DirectusAPI implements IDirectusAPI {
@@ -191,13 +195,19 @@ class DirectusAPI implements IDirectusAPI {
     _accessToken = null;
     _refreshToken = null;
     if (response.statusCode != 200) {
-      if (response.statusCode == 401) {
-        final errorCode =
+      String? errorCode;
+      try {
+        errorCode =
             jsonDecode(response.body)["errors"][0]["extensions"]["code"];
-        if (errorCode == "INVALID_OTP") {
-          return DirectusLoginResult(DirectusLoginResultType.invalidOTP,
-              message: _extractErrorMessageFromResponse(response));
-        }
+      } catch (_) {}
+
+      if (errorCode == "INVALID_OTP") {
+        return DirectusLoginResult(DirectusLoginResultType.invalidOTP,
+            message: _extractErrorMessageFromResponse(response));
+      } else if (errorCode == "REQUESTS_EXCEEDED") {
+        return DirectusLoginResult(DirectusLoginResultType.requestsExceeded,
+            message: _extractErrorMessageFromResponse(response));
+      } else if (response.statusCode == 401) {
         return DirectusLoginResult(DirectusLoginResultType.invalidCredentials,
             message: _extractErrorMessageFromResponse(response));
       } else {
@@ -612,6 +622,23 @@ class DirectusAPI implements IDirectusAPI {
       {required String token, required String newPassword}) {
     final request = Request("POST", Uri.parse("$_baseURL/auth/password/reset"));
     request.body = jsonEncode({"token": token, "password": newPassword});
+    request.addJsonHeaders();
+    return PreparedRequest(request: request);
+  }
+
+  @override
+  PreparedRequest prepareOtpCodeRequest({required String email}) {
+    final request = Request("POST", Uri.parse("$_baseURL/otp-auth/request"));
+    request.body = jsonEncode({"email": email});
+    request.addJsonHeaders();
+    return PreparedRequest(request: request);
+  }
+
+  @override
+  PreparedRequest prepareOtpVerifyRequest(
+      {required String email, required String code}) {
+    final request = Request("POST", Uri.parse("$_baseURL/otp-auth/verify"));
+    request.body = jsonEncode({"email": email, "code": code});
     request.addJsonHeaders();
     return PreparedRequest(request: request);
   }

@@ -23,6 +23,10 @@ abstract class IDirectusApiManager {
   Future<bool> confirmPasswordReset(
       {required String token, required String password});
 
+  Future<bool> requestOtpCode({required String email});
+  Future<DirectusLoginResult> loginDirectusUserWithOtp(
+      {required String email, required String otpCode});
+
   Future<Iterable<T>> findListOfItems<T extends DirectusData>(
       {Filter? filter,
       List<SortProperty>? sortBy,
