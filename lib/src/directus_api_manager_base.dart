@@ -210,7 +210,7 @@ class DirectusApiManager implements IDirectusApiManager {
             parseResponse: (response) =>
                 _api.parseRefreshTokenResponse(response));
         if (tokenRefreshed == false) {
-          logoutDirectusUser();
+          await logoutDirectusUser();
         }
       } catch (_) {}
     } catch (error) {
@@ -395,11 +395,16 @@ class DirectusApiManager implements IDirectusApiManager {
       try {
         wasLoggedOut = await _sendRequest(
             canSaveResponseToCache: false,
+            canUseOldCachedResponseAsFallback: false,
             prepareRequest: () => logoutRequest,
             dependsOnToken: false,
             parseResponse: (response) => _api.parseLogoutResponse(response));
-      } catch (_) {}
+      } catch (_) {
+        wasLoggedOut = false;
+      }
     }
+    _api.clearTokens();
+    _disconnectWebSocket();
     cacheEngine?.clearCache();
     discardCurrentUserCache();
     return wasLoggedOut;
@@ -871,6 +876,15 @@ class DirectusApiManager implements IDirectusApiManager {
             firstname: firstname,
             lastname: lastname),
         parseResponse: _api.parseGenericBoolResponse);
+  }
+
+  void _disconnectWebSocket() {
+    final webSocket = _webSocket;
+    if (webSocket != null) {
+      webSocket.disconnect();
+      _webSocket = null;
+    }
+    _webSocketSubscriptionIds.clear();
   }
 
   Future<void> startWebsocketSubscription(

@@ -855,6 +855,92 @@ void main() {
         expect(mockCacheEngine.calledFunctions, contains("clearCache"));
         expect(sut.cachedCurrentUser, isNull);
       });
+
+      test("logoutDirectusUser should always call clearTokens", () async {
+        mockDirectusApi.addNextReturnFutureObject(true);
+        await sut.logoutDirectusUser();
+        expect(mockDirectusApi.calledFunctions, contains("clearTokens"),
+            reason: "clearTokens must be called after logout");
+      });
+
+      test(
+          "logoutDirectusUser should return false on network error but still clean up",
+          () async {
+        final throwingClient = MockHTTPClient();
+        final throwingMockApi = MockDirectusApi();
+        final throwingMockCache = MockCacheEngine();
+        final throwingSut = DirectusApiManager(
+          baseURL: "http://api.com",
+          httpClient: throwingClient,
+          api: throwingMockApi,
+          cacheEngine: throwingMockCache,
+        );
+        throwingSut.cachedCurrentUser = DirectusUser({"id": "user-123"});
+        throwingClient.addNextReturnFutureObject(
+            Exception("Network error")); // will cause send to throw
+
+        final result = await throwingSut.logoutDirectusUser();
+        expect(result, false,
+            reason: "Should return false on network error");
+        expect(throwingMockApi.calledFunctions, contains("clearTokens"),
+            reason: "Tokens should still be cleared on network error");
+        expect(throwingMockCache.calledFunctions, contains("clearCache"),
+            reason: "Cache should still be cleared on network error");
+        expect(throwingSut.cachedCurrentUser, isNull,
+            reason: "Current user cache should be cleared on network error");
+      });
+
+      test(
+          "logoutDirectusUser should return false on server error but still clean up",
+          () async {
+        mockClient.addStreamResponse(body: "", statusCode: 500);
+        mockDirectusApi.addNextReturnFutureObject(false);
+        sut.cachedCurrentUser = DirectusUser({"id": "user-123"});
+
+        final result = await sut.logoutDirectusUser();
+        expect(result, false,
+            reason: "Should return false on server error");
+        expect(mockDirectusApi.calledFunctions, contains("clearTokens"),
+            reason: "Tokens should still be cleared on server error");
+        expect(mockCacheEngine.calledFunctions, contains("clearCache"),
+            reason: "Cache should still be cleared on server error");
+        expect(sut.cachedCurrentUser, isNull,
+            reason: "Current user cache should be cleared on server error");
+      });
+    });
+
+    group("Logout with persisted tokens", () {
+      test(
+          "Persisted refresh token should be cleared after logout and hasLoggedInUser should return false",
+          () async {
+        String persistedToken = "PERSISTED.REFRESH.TOKEN";
+        final mockClient = MockHTTPClient();
+        final localSut = DirectusApiManager(
+          baseURL: "http://api.com",
+          httpClient: mockClient,
+          saveRefreshTokenCallback: (token) async {
+            persistedToken = token;
+          },
+          loadRefreshTokenCallback: () async => persistedToken,
+        );
+
+        // Login
+        mockClient.addStreamResponse(
+            body:
+                '{"data":{"access_token":"ACCESS","expires":900000,"refresh_token":"REFRESH"}}');
+        await localSut.loginDirectusUser("user", "pass");
+        expect(await localSut.hasLoggedInUser(), true);
+
+        // Logout
+        mockClient.addStreamResponse(body: "", statusCode: 200);
+        await localSut.logoutDirectusUser();
+
+        expect(persistedToken, "",
+            reason: "Persisted refresh token should be cleared");
+        expect(await localSut.hasLoggedInUser(), false,
+            reason:
+                "hasLoggedInUser should return false after logout with persisted tokens");
+      });
     });
   });
 }

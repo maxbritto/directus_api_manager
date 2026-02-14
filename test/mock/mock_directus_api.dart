@@ -304,6 +304,11 @@ class MockDirectusApi with MockMixin implements IDirectusAPI {
   }
 
   @override
+  void clearTokens() {
+    addCalledFunction(named: "clearTokens");
+  }
+
+  @override
   bool shouldRefreshToken = false;
 
   @override

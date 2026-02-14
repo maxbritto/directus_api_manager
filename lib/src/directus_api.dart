@@ -66,6 +66,7 @@ abstract class IDirectusAPI {
 
   PreparedRequest? prepareLogoutRequest();
   bool parseLogoutResponse(Response response);
+  void clearTokens();
 
   PreparedRequest prepareLoginRequest(String username, String password,
       {String? oneTimePassword});
@@ -285,13 +286,24 @@ class DirectusAPI implements IDirectusAPI {
 
   @override
   bool parseLogoutResponse(Response response) {
-    if (response.statusCode < 200 || response.statusCode > 299) {
-      return false;
-    }
     _refreshToken = null;
     _accessToken = null;
     _accessTokenExpirationDate = null;
+    if (response.statusCode < 200 || response.statusCode > 299) {
+      return false;
+    }
     return true;
+  }
+
+  @override
+  void clearTokens() {
+    _accessToken = null;
+    _refreshToken = null;
+    _accessTokenExpirationDate = null;
+    final saveFunction = _saveRefreshTokenCallback;
+    if (saveFunction != null) {
+      saveFunction("");
+    }
   }
 
   @override

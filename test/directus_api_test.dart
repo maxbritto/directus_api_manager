@@ -586,6 +586,49 @@ void main() {
       expect(sut.shouldRefreshToken, false);
     });
 
+    test('Parse Logout response with server error should still clear tokens',
+        () {
+      final sut = makeAuthenticatedDirectusAPI();
+      expect(sut.accessToken, isNotNull);
+      expect(sut.refreshToken, isNotNull);
+      final didLogout = sut.parseLogoutResponse(Response("", 500));
+      expect(didLogout, false);
+      expect(sut.accessToken, isNull,
+          reason: "Tokens should be cleared even on server error");
+      expect(sut.refreshToken, isNull,
+          reason: "Tokens should be cleared even on server error");
+      expect(sut.shouldRefreshToken, false);
+    });
+
+    test('clearTokens should clear all token state', () {
+      final sut = makeAuthenticatedDirectusAPI();
+      expect(sut.accessToken, isNotNull);
+      expect(sut.refreshToken, isNotNull);
+      sut.clearTokens();
+      expect(sut.accessToken, isNull);
+      expect(sut.refreshToken, isNull);
+      expect(sut.shouldRefreshToken, false);
+    });
+
+    test('clearTokens should call save callback with empty string', () async {
+      String? savedToken;
+      final sut = DirectusAPI("http://api.com",
+          saveRefreshTokenCallback: (token) async {
+        savedToken = token;
+      });
+      final response = Response(
+          '{"data":{"access_token":"$defaultAccessToken","expires":900000,"refresh_token":"$defaultRefreshToken"}}',
+          200);
+      sut.parseLoginResponse(response);
+      expect(sut.accessToken, isNotNull);
+
+      sut.clearTokens();
+      expect(sut.accessToken, isNull);
+      expect(sut.refreshToken, isNull);
+      expect(savedToken, "",
+          reason: "Save callback should be called with empty string");
+    });
+
     test('Get specific user request', () {
       final sut = makeAuthenticatedDirectusAPI();
       final request = sut.prepareGetSpecificItemRequest(

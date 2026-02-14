@@ -1,3 +1,12 @@
+## 1.16.0 - 2026/02/14
+
+- Fixed `logoutDirectusUser` to fully clean up auth state in all scenarios:
+  - Tokens are now always cleared locally, even when the server rejects the logout request or a network error occurs
+  - Persisted refresh tokens (via `saveRefreshTokenCallback`) are now cleared on logout
+  - Active WebSocket connections are now disconnected and subscriptions cleared on logout
+  - Method now correctly returns `false` when the server or network fails (previously returned `true` on network error)
+- Fixed race condition in `tryAndRefreshToken`: logout is now properly awaited before continuing
+
 ## 1.15.0 - 2026/02/13
 
 - Added OTP email authentication support with extension at https://github.com/maxbritto/directus-extension-otp-auth
