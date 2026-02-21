@@ -4,7 +4,7 @@ import 'package:directus_api_manager/directus_api_manager.dart';
 import 'metadata_generator.dart';
 import 'package:reflectable/reflectable.dart';
 
-class DirectusWebSocketSubscription<Type extends DirectusData> {
+class DirectusWebSocketSubscription<T extends DirectusData> {
   final List<String>? fields;
   final Filter? filter;
   final List<SortProperty>? sort;
@@ -28,8 +28,7 @@ class DirectusWebSocketSubscription<Type extends DirectusData> {
 
   final MetadataGenerator _metadataGenerator = MetadataGenerator();
 
-  ClassMirror get specificClass =>
-      _metadataGenerator.getClassMirrorForType(Type);
+  ClassMirror get specificClass => _metadataGenerator.getClassMirrorForType(T);
   CollectionMetadata get collectionMetadata =>
       _collectionMetadataFromClass(specificClass);
 

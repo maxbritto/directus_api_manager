@@ -19,7 +19,14 @@ This packages can generate model classes for your each of your Directus collecti
 
 ## Install
 
-Add the package as a dependency in your pubspec.yaml file
+You need to add 1 dependencies :  (will be added to your app)
+- directus_api_manager 
+
+And 2 dev dependencies : (will be only be used at build time to generate the model classes)
+- reflectable_builder 
+- build_runner 
+
+Add the packages as a dependencies in your pubspec.yaml file :
 
 ```yaml
 dependencies:
@@ -27,6 +34,10 @@ dependencies:
           sdk: flutter
 
      directus_api_manager: ^1.11.0 #replace by latest version
+
+dev_dependencies:
+     build_runner: any
+     reflectable_builder: any
 ```
 
 ## Getting started
@@ -123,8 +134,8 @@ if (result.type == DirectusLoginResultType.success) {
   print("Please verify entered credentials");
 } else if (result.type == DirectusLoginResultType.invalidOTP) {
   print("Please provide OTP");
-  // Keep email and password for the next screen or extra field and resumit using
-  // await apiManager.loginDirectusUserWithOtp("will@acn.com", "will-password", "123456");
+  // Keep email and password for the next screen or extra field and resubmit using
+  // await apiManager.loginDirectusUser("will@acn.com", "will-password", oneTimePassword: "123456");
 } else if (result.type == DirectusLoginResultType.error) {
   print("An unknown error occured");
   final additionalMessage = result.message;
@@ -134,13 +145,46 @@ if (result.type == DirectusLoginResultType.success) {
 }
 ```
 
-If the user's login requires MFA/OTP, you should present an extra field or page to the user to complete, and resend the authentification to the `loginDirectusUserWithOtp` method:
+If the user's login requires MFA/OTP, you should present an extra field or page to the user to complete, and resend the authentication with the `oneTimePassword` parameter:
 
 ```dart
-final result = await apiManager.loginDirectusUserWithOtp("will@acn.com", "will-password", "123456");
+final result = await apiManager.loginDirectusUser("will@acn.com", "will-password", oneTimePassword: "123456");
 ```
 
 All future request of this `apiManager` instance will include this user token.
+
+### OTP Email Authentication
+
+Directus does not yet support OTP email authentication natively. However, you can use our OTP email authentication extension to add this functionality to your Directus server : https://github.com/maxbritto/directus-extension-otp-auth
+
+Then, with the OTP email authentication extension installed, you can use passwordless login via a one-time code sent by email.
+
+First, request a code to be sent to the user's email:
+
+```dart
+final codeSent = await apiManager.requestOtpCode(email: "will@acn.com");
+if (codeSent) {
+  print("A one-time code has been sent to your email");
+}
+```
+
+Then, once the user has received and entered the code, verify it to log in:
+
+```dart
+final result = await apiManager.loginDirectusUserWithOtp(
+    email: "will@acn.com", otpCode: "123456");
+if (result.type == DirectusLoginResultType.success) {
+  print("User logged in");
+} else if (result.type == DirectusLoginResultType.invalidOTP) {
+  print("Invalid code, please try again");
+} else if (result.type == DirectusLoginResultType.requestsExceeded) {
+  print("Too many attempts, please wait before trying again");
+} else if (result.type == DirectusLoginResultType.error) {
+  print("An error occurred: ${result.message}");
+}
+```
+
+On success, the user is fully authenticated and all future requests will include their token, just like with `loginDirectusUser`.
 
 ### CRUD for your collections
 

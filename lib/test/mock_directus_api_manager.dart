@@ -20,9 +20,9 @@ class MockDirectusApiManager extends IDirectusApiManager with MockMixin {
   }
 
   @override
-  Future<DirectusItemCreationResult<Type>>
-      createMultipleItems<Type extends DirectusData>(
-          {String? fields, required Iterable<Type> objectList}) {
+  Future<DirectusItemCreationResult<T>>
+      createMultipleItems<T extends DirectusData>(
+          {String? fields, required Iterable<T> objectList}) {
     addCalledFunction(named: "createMultipleItems");
     addReceivedObject(fields, name: "fields");
     addReceivedObject(objectList, name: "objectList");
@@ -30,9 +30,8 @@ class MockDirectusApiManager extends IDirectusApiManager with MockMixin {
   }
 
   @override
-  Future<DirectusItemCreationResult<Type>>
-      createNewItem<Type extends DirectusData>(
-          {required Type objectToCreate, String? fields}) {
+  Future<DirectusItemCreationResult<T>> createNewItem<T extends DirectusData>(
+      {required T objectToCreate, String? fields}) {
     addCalledFunction(named: "createNewItem");
     addReceivedObject(objectToCreate, name: "objectToCreate");
     addReceivedObject(fields, name: "fields");
@@ -64,7 +63,7 @@ class MockDirectusApiManager extends IDirectusApiManager with MockMixin {
   }
 
   @override
-  Future<bool> deleteItem<Type extends DirectusData>(
+  Future<bool> deleteItem<T extends DirectusData>(
       {required String objectId, bool mustBeAuthenticated = true}) {
     addCalledFunction(named: "deleteItem");
     addReceivedObject(objectId, name: "objectId");
@@ -73,7 +72,7 @@ class MockDirectusApiManager extends IDirectusApiManager with MockMixin {
   }
 
   @override
-  Future<bool> deleteMultipleItems<Type extends DirectusData>(
+  Future<bool> deleteMultipleItems<T extends DirectusData>(
       {required Iterable objectIdsToDelete, bool mustBeAuthenticated = true}) {
     addCalledFunction(named: "deleteMultipleItems");
     addReceivedObject(objectIdsToDelete, name: "objectIdsToDelete");
@@ -82,7 +81,7 @@ class MockDirectusApiManager extends IDirectusApiManager with MockMixin {
   }
 
   @override
-  Future<Iterable<Type>> findListOfItems<Type extends DirectusData>(
+  Future<Iterable<T>> findListOfItems<T extends DirectusData>(
       {Filter? filter,
       List<SortProperty>? sortBy,
       String? fields,
@@ -111,7 +110,7 @@ class MockDirectusApiManager extends IDirectusApiManager with MockMixin {
   }
 
   @override
-  Future<Type?> getSpecificItem<Type extends DirectusData>(
+  Future<T?> getSpecificItem<T extends DirectusData>(
       {required String id,
       String? fields,
       String? requestIdentifier,
@@ -167,6 +166,22 @@ class MockDirectusApiManager extends IDirectusApiManager with MockMixin {
   }
 
   @override
+  Future<bool> requestOtpCode({required String email}) {
+    addCalledFunction(named: "requestOtpCode");
+    addReceivedObject(email, name: "email");
+    return Future.value(popNextReturnedObject());
+  }
+
+  @override
+  Future<DirectusLoginResult> loginDirectusUserWithOtp(
+      {required String email, required String otpCode}) {
+    addCalledFunction(named: "loginDirectusUserWithOtp");
+    addReceivedObject(email, name: "email");
+    addReceivedObject(otpCode, name: "otpCode");
+    return Future.value(popNextReturnedObject());
+  }
+
+  @override
   Future<T> sendRequestToEndpoint<T>(
       {required BaseRequest Function() prepareRequest,
       required T Function(Response p1) jsonConverter}) {
@@ -191,8 +206,8 @@ class MockDirectusApiManager extends IDirectusApiManager with MockMixin {
   }
 
   @override
-  Future<Type> updateItem<Type extends DirectusData>(
-      {required Type objectToUpdate, String? fields, bool force = false}) {
+  Future<T> updateItem<T extends DirectusData>(
+      {required T objectToUpdate, String? fields, bool force = false}) {
     addCalledFunction(named: "updateItem");
     addReceivedObject(objectToUpdate, name: "objectToUpdate");
     addReceivedObject(fields, name: "fields");

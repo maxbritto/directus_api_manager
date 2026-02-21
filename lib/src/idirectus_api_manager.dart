@@ -23,7 +23,11 @@ abstract class IDirectusApiManager {
   Future<bool> confirmPasswordReset(
       {required String token, required String password});
 
-  Future<Iterable<Type>> findListOfItems<Type extends DirectusData>(
+  Future<bool> requestOtpCode({required String email});
+  Future<DirectusLoginResult> loginDirectusUserWithOtp(
+      {required String email, required String otpCode});
+
+  Future<Iterable<T>> findListOfItems<T extends DirectusData>(
       {Filter? filter,
       List<SortProperty>? sortBy,
       String? fields,
@@ -37,7 +41,7 @@ abstract class IDirectusApiManager {
       /// Extra tags to associate with the cache entry
       List<String> extraTags = const [],
       Duration maxCacheAge = const Duration(days: 1)});
-  Future<Type?> getSpecificItem<Type extends DirectusData>(
+  Future<T?> getSpecificItem<T extends DirectusData>(
       {required String id,
       String? fields,
       String? requestIdentifier,
@@ -49,20 +53,19 @@ abstract class IDirectusApiManager {
       List<String> extraTags = const [],
       Duration maxCacheAge = const Duration(days: 1)});
 
-  Future<DirectusItemCreationResult<Type>>
-      createNewItem<Type extends DirectusData>({
-    required Type objectToCreate,
+  Future<DirectusItemCreationResult<T>> createNewItem<T extends DirectusData>({
+    required T objectToCreate,
     String? fields,
   });
-  Future<DirectusItemCreationResult<Type>>
-      createMultipleItems<Type extends DirectusData>(
-          {String? fields, required Iterable<Type> objectList});
+  Future<DirectusItemCreationResult<T>>
+      createMultipleItems<T extends DirectusData>(
+          {String? fields, required Iterable<T> objectList});
 
-  Future<Type> updateItem<Type extends DirectusData>(
-      {required Type objectToUpdate, String? fields, bool force = false});
-  Future<bool> deleteItem<Type extends DirectusData>(
+  Future<T> updateItem<T extends DirectusData>(
+      {required T objectToUpdate, String? fields, bool force = false});
+  Future<bool> deleteItem<T extends DirectusData>(
       {required String objectId, bool mustBeAuthenticated = true});
-  Future<bool> deleteMultipleItems<Type extends DirectusData>(
+  Future<bool> deleteMultipleItems<T extends DirectusData>(
       {required Iterable<dynamic> objectIdsToDelete,
       bool mustBeAuthenticated = true});
   Future<DirectusFile> uploadFileFromUrl(

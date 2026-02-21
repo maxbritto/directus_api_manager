@@ -1,3 +1,13 @@
+## 1.15.0 - 2026/02/13
+
+- Added OTP email authentication support with extension at https://github.com/maxbritto/directus-extension-otp-auth
+
+## 1.14.2 - 2025/11/20
+
+- Updated reflectable dependency to accept version between 4 and 5
+- Updated other dependencies to latest versions
+- Fixed warnings raised with newer dart version lints
+
 ## 1.14.1 - 2025/08/23
 
 - Fixed issue with `DirectusData.setValue` when setting a property to null.

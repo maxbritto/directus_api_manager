@@ -423,6 +423,19 @@ void main() {
       expect(sut.shouldRefreshToken, false);
     });
 
+    test('Login with too many attempts response', () {
+      final sut = DirectusAPI("http://api.com");
+      final response = Response("""
+      {"errors":[{"message":"Too many attempts.","extensions":{"code":"REQUESTS_EXCEEDED"}}]}
+      """, 429);
+      final loginResponse = sut.parseLoginResponse(response);
+      expect(loginResponse.type, DirectusLoginResultType.requestsExceeded);
+      expect(loginResponse.message, "Too many attempts.\n");
+      expect(sut.accessToken, isNull);
+      expect(sut.refreshToken, isNull);
+      expect(sut.shouldRefreshToken, false);
+    });
+
     test('Error during Login response', () {
       final sut = DirectusAPI("http://api.com");
       final response = Response("""
@@ -731,6 +744,32 @@ void main() {
       final jsonParsedBody = jsonDecode(request.request.body) as Map;
       expect(jsonParsedBody["password"], "new-password");
       expect(jsonParsedBody["token"], "token-abc");
+    });
+
+    test('Request OTP code', () {
+      final sut = DirectusAPI("http://api.com");
+      final request = sut.prepareOtpCodeRequest(email: "will@acn.com");
+      expect(
+          request.request.url.toString(), "http://api.com/otp-auth/request");
+      expect(request.request.method, "POST");
+      expect(request.request.headers["Content-Type"],
+          "application/json; charset=utf-8");
+      final jsonParsedBody = jsonDecode(request.request.body) as Map;
+      expect(jsonParsedBody["email"], "will@acn.com");
+    });
+
+    test('Verify OTP code', () {
+      final sut = DirectusAPI("http://api.com");
+      final request = sut.prepareOtpVerifyRequest(
+          email: "will@acn.com", code: "123456");
+      expect(
+          request.request.url.toString(), "http://api.com/otp-auth/verify");
+      expect(request.request.method, "POST");
+      expect(request.request.headers["Content-Type"],
+          "application/json; charset=utf-8");
+      final jsonParsedBody = jsonDecode(request.request.body) as Map;
+      expect(jsonParsedBody["email"], "will@acn.com");
+      expect(jsonParsedBody["code"], "123456");
     });
 
     test('Delete User request', () {

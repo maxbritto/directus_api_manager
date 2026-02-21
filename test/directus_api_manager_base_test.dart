@@ -330,6 +330,72 @@ void main() {
       expect(result, isTrue);
     });
 
+    test("requestOtpCode", () async {
+      mockDirectusApi.addNextReturnFutureObject(true);
+      final result = await sut.requestOtpCode(email: "will@acn.com");
+      expect(mockDirectusApi.calledFunctions,
+          contains("prepareOtpCodeRequest"));
+      expect(mockDirectusApi.receivedObjects["email"], "will@acn.com");
+
+      expect(mockDirectusApi.calledFunctions,
+          contains("parseGenericBoolResponse"));
+      expect(result, isTrue);
+    });
+
+    test("loginDirectusUserWithOtp", () async {
+      mockDirectusApi.addNextReturnFutureObject(
+          const DirectusLoginResult(DirectusLoginResultType.success));
+      final result = await sut.loginDirectusUserWithOtp(
+          email: "will@acn.com", otpCode: "123456");
+      expect(mockDirectusApi.calledFunctions,
+          contains("prepareOtpVerifyRequest"));
+      expect(mockDirectusApi.receivedObjects["email"], "will@acn.com");
+      expect(mockDirectusApi.receivedObjects["code"], "123456");
+
+      expect(
+          mockDirectusApi.calledFunctions, contains("parseLoginResponse"));
+      expect(result.type, DirectusLoginResultType.success);
+    });
+
+    test('loginDirectusUserWithOtp logs in user', () async {
+      final mockClient = MockHTTPClient();
+      const successLoginResponse =
+          '{"data":{"access_token":"ABCD.1234.ABCD","expires":900000,"refresh_token":"REFRESH.TOKEN.5678"}}';
+      mockClient.addStreamResponse(body: successLoginResponse);
+      final sut = DirectusApiManager(
+          baseURL: "http://api.com", httpClient: mockClient);
+      final result = await sut.loginDirectusUserWithOtp(
+          email: "will@acn.com", otpCode: "123456");
+      expect(result.type, DirectusLoginResultType.success);
+      expect(await sut.hasLoggedInUser(), true);
+      expect(sut.accessToken, "ABCD.1234.ABCD");
+    });
+
+    test('loginDirectusUserWithOtp with invalid code', () async {
+      final mockClient = MockHTTPClient();
+      const errorResponse =
+          '{"errors":[{"message":"Invalid user OTP.","extensions":{"code":"INVALID_OTP"}}]}';
+      mockClient.addStreamResponse(body: errorResponse, statusCode: 401);
+      final sut = DirectusApiManager(
+          baseURL: "http://api.com", httpClient: mockClient);
+      final result = await sut.loginDirectusUserWithOtp(
+          email: "will@acn.com", otpCode: "wrong");
+      expect(result.type, DirectusLoginResultType.invalidOTP);
+    });
+
+    test('loginDirectusUserWithOtp with too many attempts', () async {
+      final mockClient = MockHTTPClient();
+      const errorResponse =
+          '{"errors":[{"message":"Too many attempts.","extensions":{"code":"REQUESTS_EXCEEDED"}}]}';
+      mockClient.addStreamResponse(body: errorResponse, statusCode: 429);
+      final sut = DirectusApiManager(
+          baseURL: "http://api.com", httpClient: mockClient);
+      final result = await sut.loginDirectusUserWithOtp(
+          email: "will@acn.com", otpCode: "123456");
+      expect(result.type, DirectusLoginResultType.requestsExceeded);
+      expect(result.message, "Too many attempts.\n");
+    });
+
     test('Empty manager with NOT successfull refresh token load', () async {
       final mockClient = MockHTTPClient();
       final sut = DirectusApiManager(
