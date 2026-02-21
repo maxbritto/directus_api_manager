@@ -290,4 +290,18 @@ class MockDirectusApiManager extends IDirectusApiManager with MockMixin {
   void discardCurrentUserCache() {
     addCall(named: "discardCurrentUserCache");
   }
+
+  @override
+  Future<DirectusLoginResult> loginDirectusUserWithProvider(
+      {required String provider}) {
+    addCall(
+        named: "loginDirectusUserWithProvider",
+        arguments: {"provider": provider});
+    return Future.value(popNextReturnedObject());
+  }
+
+  @override
+  set accessToken(String? value) {
+    addCall(named: "set accessToken", arguments: {"value": value});
+  }
 }

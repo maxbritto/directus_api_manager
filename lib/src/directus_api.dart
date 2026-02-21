@@ -2,12 +2,15 @@ import 'dart:convert';
 
 import 'package:directus_api_manager/directus_api_manager.dart';
 import 'package:http/http.dart';
+import 'package:http_parser/http_parser.dart';
 
 abstract class IDirectusAPI {
   bool get hasLoggedInUser;
   bool get shouldRefreshToken;
   String? get accessToken;
+  set accessToken(String? value);
   String? get currentAuthToken;
+
   String? get refreshToken;
   set refreshToken(String? value);
   String get baseUrl;
@@ -69,6 +72,7 @@ abstract class IDirectusAPI {
 
   PreparedRequest prepareLoginRequest(String username, String password,
       {String? oneTimePassword});
+
   DirectusLoginResult parseLoginResponse(Response response);
 
   PreparedRequest prepareUserInviteRequest(String email, String roleId);
@@ -117,6 +121,8 @@ class DirectusAPI implements IDirectusAPI {
   String get baseUrl => _baseURL;
 
   String? _accessToken;
+  @override
+  set accessToken(String? value) => _accessToken = value;
   String? _refreshToken;
   @override
   set refreshToken(String? value) => _refreshToken = value;

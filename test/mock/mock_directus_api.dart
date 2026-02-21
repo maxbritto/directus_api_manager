@@ -347,4 +347,10 @@ class MockDirectusApi with MockMixin implements IDirectusAPI {
     addReceivedObject(lastname, name: "lastname");
     return nextReturnedRequest;
   }
+
+  @override
+  set accessToken(String? value) {
+    addCalledFunction(named: "set accessToken");
+    addReceivedObject(value, name: "value");
+  }
 }

@@ -61,6 +61,8 @@ class DirectusApiManager implements IDirectusApiManager {
   bool get shouldRefreshToken => _api.shouldRefreshToken;
   @override
   String? get accessToken => _api.accessToken;
+  @override
+  set accessToken(String? value) => _api.accessToken = value;
 
   @override
   String? get refreshToken => _api.refreshToken;

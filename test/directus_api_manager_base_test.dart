@@ -28,6 +28,12 @@ void main() {
       );
     });
 
+    test("Set access token", () {
+      sut.accessToken = "NEW.ACCESS.TOKEN";
+      expect(mockDirectusApi.calledFunctions, contains("set accessToken"));
+      expect(mockDirectusApi.receivedObjects["value"], "NEW.ACCESS.TOKEN");
+    });
+
     test('Empty manager does not have a logged in user', () async {
       final mockClient = MockHTTPClient();
       final sut =

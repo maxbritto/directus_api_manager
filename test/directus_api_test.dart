@@ -32,6 +32,15 @@ void main() {
     });
   });
 
+  group("DirectusAPI Setter", () {
+    test("Set access token", () {
+      final sut = DirectusAPI("http://api.com");
+      expect(sut.accessToken, isNull);
+      sut.accessToken = "NEW.ACCESS.TOKEN";
+      expect(sut.accessToken, "NEW.ACCESS.TOKEN");
+    });
+  });
+
   group("DirectusAPI Data Management", () {
     test('Get list of items request', () {
       final sut = makeAuthenticatedDirectusAPI();

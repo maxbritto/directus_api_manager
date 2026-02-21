@@ -1,0 +1,10 @@
+targets:
+     $default:
+          builders:
+               reflectable_builder:
+                    generate_for:
+                         - example/**.dart
+                         - test/**.dart
+                         - lib/**.dart
+                    options:
+                         formatted: true
