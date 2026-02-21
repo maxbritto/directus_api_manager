@@ -319,6 +319,22 @@ class MockDirectusApi with MockMixin implements IDirectusAPI {
   set refreshToken(String? value) {}
 
   @override
+  PreparedRequest prepareOtpCodeRequest({required String email}) {
+    addCalledFunction(named: "prepareOtpCodeRequest");
+    addReceivedObject(email, name: "email");
+    return nextReturnedRequest;
+  }
+
+  @override
+  PreparedRequest prepareOtpVerifyRequest(
+      {required String email, required String code}) {
+    addCalledFunction(named: "prepareOtpVerifyRequest");
+    addReceivedObject(email, name: "email");
+    addReceivedObject(code, name: "code");
+    return nextReturnedRequest;
+  }
+
+  @override
   PreparedRequest prepareRegisterUserRequest(
       {required String email,
       required String password,

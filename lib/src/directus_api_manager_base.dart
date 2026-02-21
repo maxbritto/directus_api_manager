@@ -349,6 +349,27 @@ class DirectusApiManager implements IDirectusApiManager {
         parseResponse: _api.parseGenericBoolResponse);
   }
 
+  @override
+  Future<bool> requestOtpCode({required String email}) {
+    return _sendRequest(
+        canSaveResponseToCache: false,
+        dependsOnToken: false,
+        prepareRequest: () => _api.prepareOtpCodeRequest(email: email),
+        parseResponse: _api.parseGenericBoolResponse);
+  }
+
+  @override
+  Future<DirectusLoginResult> loginDirectusUserWithOtp(
+      {required String email, required String otpCode}) {
+    discardCurrentUserCache();
+    return _sendRequest(
+        prepareRequest: () =>
+            _api.prepareOtpVerifyRequest(email: email, code: otpCode),
+        dependsOnToken: false,
+        canSaveResponseToCache: false,
+        parseResponse: (response) => _api.parseLoginResponse(response));
+  }
+
   @Deprecated("Use [createNewItem] instead")
   Future<DirectusItemCreationResult<DirectusUser>> createNewDirectusUser(
       {required String email,

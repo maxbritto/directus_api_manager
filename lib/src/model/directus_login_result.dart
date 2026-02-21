@@ -9,6 +9,9 @@ enum DirectusLoginResultType {
   /// The login failed because OTP is required.
   invalidOTP,
 
+  /// The login failed because of too many attempts.
+  requestsExceeded,
+
   /// The login failed because of a server orror or an unknown error, unrelated to the user credentials.
   error
 }

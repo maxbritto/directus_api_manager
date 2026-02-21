@@ -166,6 +166,22 @@ class MockDirectusApiManager extends IDirectusApiManager with MockMixin {
   }
 
   @override
+  Future<bool> requestOtpCode({required String email}) {
+    addCalledFunction(named: "requestOtpCode");
+    addReceivedObject(email, name: "email");
+    return Future.value(popNextReturnedObject());
+  }
+
+  @override
+  Future<DirectusLoginResult> loginDirectusUserWithOtp(
+      {required String email, required String otpCode}) {
+    addCalledFunction(named: "loginDirectusUserWithOtp");
+    addReceivedObject(email, name: "email");
+    addReceivedObject(otpCode, name: "otpCode");
+    return Future.value(popNextReturnedObject());
+  }
+
+  @override
   Future<T> sendRequestToEndpoint<T>(
       {required BaseRequest Function() prepareRequest,
       required T Function(Response p1) jsonConverter}) {
