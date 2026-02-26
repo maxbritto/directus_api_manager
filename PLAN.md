@@ -1,0 +1,293 @@
+# Plan : Génération automatique des entités Directus
+
+## Analyse de l'existant
+
+### Ce que le développeur doit écrire aujourd'hui
+
+Pour chaque collection Directus, le développeur crée manuellement un fichier Dart :
+
+```dart
+@DirectusCollection()
+@CollectionMetadata(endpointName: "player")
+class PlayerDirectusModel extends DirectusItem {
+  PlayerDirectusModel(super.rawReceivedData);
+  PlayerDirectusModel.newItem() : super.newItem();
+
+  String get nickname => getValue(forKey: "nickname");
+  int? get bestScore => getValue(forKey: "best_score");
+  set bestScore(int? newBestScore) =>
+      setValue(newBestScore, forKey: "best_score");
+}
+```
+
+**Boilerplate répétitif :**
+- Les 2 annotations (`@DirectusCollection()`, `@CollectionMetadata(...)`)
+- Les 2 constructeurs (obligatoires et identiques pour chaque classe)
+- Chaque propriété = un getter + setter qui appelle `getValue`/`setValue` avec la bonne clé
+
+### API Directus disponibles pour l'introspection du schéma
+
+Directus expose des endpoints REST pour décrire son schéma :
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /collections` | Liste toutes les collections (nom, meta, etc.) |
+| `GET /fields` | Liste tous les champs de toutes les collections |
+| `GET /fields/:collection` | Liste les champs d'une collection spécifique |
+| `GET /relations` | Liste toutes les relations entre collections |
+
+**Exemple de réponse `/fields/player` :**
+```json
+{
+  "data": [
+    {
+      "collection": "player",
+      "field": "id",
+      "type": "integer",
+      "schema": { "is_nullable": false, "is_primary_key": true },
+      "meta": { "interface": "input", "required": true, "readonly": true }
+    },
+    {
+      "collection": "player",
+      "field": "nickname",
+      "type": "string",
+      "schema": { "is_nullable": false, "max_length": 255 },
+      "meta": { "interface": "input", "required": true }
+    },
+    {
+      "collection": "player",
+      "field": "best_score",
+      "type": "integer",
+      "schema": { "is_nullable": true },
+      "meta": { "interface": "input", "required": false }
+    }
+  ]
+}
+```
+
+**Types de champs Directus → Types Dart :**
+
+| Type Directus | Type Dart | Méthode d'accès |
+|---------------|-----------|-----------------|
+| `string` | `String` | `getValue()` |
+| `text` | `String` | `getValue()` |
+| `integer` | `int` | `getValue()` |
+| `bigInteger` | `int` | `getValue()` |
+| `float` | `double` | `getValue()` |
+| `decimal` | `double` | `getValue()` |
+| `boolean` | `bool` | `getValue()` |
+| `dateTime` | `DateTime` | `getDateTime()` / `getOptionalDateTime()` |
+| `date` | `DateTime` | `getDateTime()` / `getOptionalDateTime()` |
+| `time` | `String` | `getValue()` |
+| `timestamp` | `DateTime` | `getDateTime()` / `getOptionalDateTime()` |
+| `json` | `Map<String, dynamic>` | `getValue()` |
+| `csv` | `List<String>` | `getList<String>()` |
+| `uuid` | `String` | `getValue()` |
+| `hash` | `String` | `getValue()` |
+| `geometry` | `DirectusGeometryType` | `getDirectusGeometryType()` |
+| `file` (M2O vers directus_files) | `DirectusFile` | `getDirectusFile()` / `getOptionalDirectusFile()` |
+
+---
+
+## Solution proposée : Commande CLI `directus_entity_generator`
+
+### Architecture
+
+Créer un **outil CLI exécutable** intégré dans le package, invocable via :
+
+```bash
+dart run directus_api_manager:generate --url http://localhost:8055 --token mon_token_statique --output lib/models/
+```
+
+### Composants
+
+```
+lib/
+└── src/
+    └── generator/
+        ├── directus_schema_fetcher.dart    # Appels API /collections, /fields, /relations
+        ├── field_type_mapper.dart           # Mapping type Directus → type Dart
+        ├── entity_class_generator.dart      # Génère le code Dart pour chaque classe
+        └── generator_config.dart            # Configuration (URL, token, output, exclusions)
+bin/
+└── generate.dart                           # Point d'entrée CLI
+```
+
+### Flux de fonctionnement
+
+```
+1. Lire la config (arguments CLI ou fichier directus_generate.yaml)
+         │
+2. Se connecter à l'API Directus (token statique ou login email/password)
+         │
+3. GET /collections → liste des collections utilisateur
+   (exclure les collections système : directus_*)
+         │
+4. Pour chaque collection :
+   ├── GET /fields/{collection} → liste des champs
+   ├── GET /relations → relations impliquant cette collection
+   │
+   └── Générer le fichier Dart :
+       ├── Annotations @DirectusCollection() + @CollectionMetadata
+       ├── Constructeurs standard
+       ├── Pour chaque champ :
+       │   ├── Constante statique pour la clé
+       │   ├── Getter typé (nullable si is_nullable)
+       │   └── Setter (sauf si readonly comme 'id')
+       └── Écrire dans output_dir/{collection}_directus_model.dart
+```
+
+### Exemple de fichier généré
+
+Pour une collection `player` avec les champs `id`, `nickname`, `best_score`, `avatar` (file), `created_at` :
+
+```dart
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// Generated by directus_api_manager entity generator
+// Source collection: player
+
+import 'package:directus_api_manager/directus_api_manager.dart';
+
+@DirectusCollection()
+@CollectionMetadata(endpointName: "player")
+class PlayerDirectusModel extends DirectusItem {
+  PlayerDirectusModel(super.rawReceivedData);
+  PlayerDirectusModel.newItem() : super.newItem();
+
+  // --- Field Keys ---
+  static const String nicknameKey = "nickname";
+  static const String bestScoreKey = "best_score";
+  static const String avatarKey = "avatar";
+  static const String createdAtKey = "created_at";
+
+  // --- Properties ---
+
+  /// nickname (string, required)
+  String get nickname => getValue(forKey: nicknameKey);
+  set nickname(String value) => setValue(value, forKey: nicknameKey);
+
+  /// best_score (integer, optional)
+  int? get bestScore => getValue(forKey: bestScoreKey);
+  set bestScore(int? value) => setValue(value, forKey: bestScoreKey);
+
+  /// avatar (file, optional)
+  DirectusFile? get avatar => getOptionalDirectusFile(forKey: avatarKey);
+  set avatar(DirectusFile? value) => setOptionalDirectusFile(value, forKey: avatarKey);
+
+  /// created_at (timestamp, optional, readonly)
+  DateTime? get createdAt => getOptionalDateTime(forKey: createdAtKey);
+}
+```
+
+### Configuration
+
+Fichier optionnel `directus_generate.yaml` à la racine du projet utilisateur :
+
+```yaml
+# Configuration pour la génération d'entités Directus
+directus_url: "http://localhost:8055"
+# Utiliser un token statique (recommandé pour la génération)
+static_token: "mon_token_statique"
+# OU login/password (alternatif)
+# email: "admin@example.com"
+# password: "admin_password"
+
+# Dossier de sortie pour les fichiers générés
+output_directory: "lib/models/directus"
+
+# Collections à exclure (en plus des collections système directus_*)
+exclude_collections:
+  - "internal_logs"
+
+# Collections à inclure uniquement (si spécifié, seules celles-ci sont générées)
+# include_collections:
+#   - "player"
+#   - "game"
+
+# Suffixe pour les noms de classes (défaut: "DirectusModel")
+class_suffix: "DirectusModel"
+
+# Générer les setters pour les champs readonly (défaut: false)
+generate_readonly_setters: false
+```
+
+### Arguments CLI
+
+```
+dart run directus_api_manager:generate [options]
+
+Options:
+  --url, -u          URL du serveur Directus (requis si pas de fichier config)
+  --token, -t        Token statique d'authentification
+  --email, -e        Email pour authentification
+  --password, -p     Password pour authentification
+  --output, -o       Dossier de sortie (défaut: lib/models/directus)
+  --config, -c       Chemin du fichier de config (défaut: directus_generate.yaml)
+  --collection       Générer uniquement pour cette collection (peut être répété)
+  --exclude          Exclure cette collection (peut être répété)
+  --dry-run          Afficher ce qui serait généré sans écrire les fichiers
+```
+
+### Gestion des relations
+
+Les relations Directus (M2O, O2M, M2M) seraient gérées ainsi :
+
+| Type de relation | Code généré |
+|-----------------|-------------|
+| **M2O** (ex: `author` → `directus_users`) | `String? get authorId => getValue(forKey: "author");` |
+| **M2O vers fichier** | `DirectusFile? get avatar => getOptionalDirectusFile(forKey: "avatar");` |
+| **O2M** | Commentaire avec info de la relation, pas de propriété typée (nécessite un fetch séparé) |
+| **M2M** | Commentaire avec info de la relation, pas de propriété typée |
+
+### Gestion du re-run (idempotence)
+
+- Les fichiers générés contiennent un header `// GENERATED CODE - DO NOT MODIFY BY HAND`
+- Re-lancer la commande **écrase** les fichiers existants ayant ce header
+- Un fichier sans ce header ne sera **jamais** écrasé (protection contre l'écrasement de code custom)
+- Un fichier `_extensions.dart` pourrait être créé pour permettre au dev d'ajouter du code custom via des extensions Dart
+
+### Extension par le développeur
+
+Pour ajouter de la logique custom sans risquer l'écrasement :
+
+```dart
+// Dans un fichier séparé : player_extensions.dart (non généré, non écrasé)
+extension PlayerExtensions on PlayerDirectusModel {
+  String get displayName => "$nickname #${bestScore ?? 0}";
+
+  bool get isTopPlayer => (bestScore ?? 0) > 1000;
+}
+```
+
+---
+
+## Étapes d'implémentation
+
+### Phase 1 : Infrastructure du générateur
+1. Créer `lib/src/generator/directus_schema_fetcher.dart` - Client HTTP pour `/collections`, `/fields`, `/relations`
+2. Créer `lib/src/generator/field_type_mapper.dart` - Mapping des types Directus → Dart
+3. Créer `lib/src/generator/generator_config.dart` - Parsing config YAML + arguments CLI
+
+### Phase 2 : Moteur de génération de code
+4. Créer `lib/src/generator/entity_class_generator.dart` - Template et génération du code Dart
+5. Créer `bin/generate.dart` - Point d'entrée CLI avec parsing d'arguments
+
+### Phase 3 : Tests
+6. Tests unitaires pour le type mapper
+7. Tests unitaires pour le générateur de code (à partir de données de schéma mockées)
+8. Test d'intégration du flux complet avec un mock HTTP
+
+### Phase 4 : Documentation
+9. Mettre à jour le README avec la section sur la génération
+10. Ajouter un exemple d'utilisation complète
+
+---
+
+## Avantages de cette approche
+
+1. **Zéro boilerplate** : Le développeur n'écrit plus les classes d'entités manuellement
+2. **Type-safe** : Les types Dart sont déduits automatiquement du schéma Directus
+3. **Synchronisation** : Un re-run met à jour les classes si le schéma change
+4. **Non-intrusif** : Compatible avec le code existant, les fichiers custom ne sont pas touchés
+5. **Extensible** : Le pattern d'extensions Dart permet d'ajouter de la logique sans conflits
+6. **Pas de dépendance runtime supplémentaire** : Le générateur utilise le package `http` déjà présent
