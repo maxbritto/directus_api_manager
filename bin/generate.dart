@@ -7,18 +7,45 @@ import 'package:directus_api_manager/src/generator/generator_config.dart';
 /// CLI entry point for the Directus entity generator.
 ///
 /// Usage:
-///   dart run directus_api_manager:generate --url http://localhost:8055 --token YOUR_TOKEN
+///   dart run directus_api_manager:generate
+///
+/// Configuration is read from `directus_api_manager_options.json` (default)
+/// or from a custom path via `--config path/to/options.json`.
 Future<void> main(List<String> args) async {
+  // Parse minimal CLI args (--config, --dry-run, --help)
+  final ({String configPath, bool dryRun}) cliArgs;
+  try {
+    cliArgs = GeneratorConfig.parseCliArgs(args);
+  } on HelpRequestedException {
+    exit(0);
+  } catch (e) {
+    stderr.writeln("Error: $e");
+    exit(1);
+  }
+
+  // Load config from JSON file
+  final configFile = File(cliArgs.configPath);
+  if (!configFile.existsSync()) {
+    stderr.writeln(
+        "Options file not found: ${cliArgs.configPath}");
+    stderr.writeln(
+        "Create a ${GeneratorConfig.defaultConfigFileName} file at the root of your project.");
+    stderr.writeln(
+        "See directus_api_manager_options.template.json for a documented example.");
+    exit(1);
+  }
+
   final GeneratorConfig config;
   try {
-    config = GeneratorConfig.fromArgs(args);
+    final jsonString = configFile.readAsStringSync();
+    config =
+        GeneratorConfig.fromJsonString(jsonString, dryRun: cliArgs.dryRun);
   } on ArgumentError catch (e) {
-    stderr.writeln("Error: ${e.message}");
-    stderr.writeln("Use --help for usage information.");
+    stderr.writeln("Error in options file: ${e.message}");
     exit(1);
-  } catch (_) {
-    // Help was requested
-    exit(0);
+  } catch (e) {
+    stderr.writeln("Error reading options file: $e");
+    exit(1);
   }
 
   print("Directus Entity Generator");
@@ -56,12 +83,7 @@ Future<void> main(List<String> args) async {
 
   // Filter collections based on config
   final filteredCollections = collections.where((c) {
-    if (config.excludeCollections.contains(c.collection)) return false;
-    if (config.includeCollections != null &&
-        !config.includeCollections!.contains(c.collection)) {
-      return false;
-    }
-    return true;
+    return !config.excludeCollections.contains(c.collection);
   }).toList();
 
   if (filteredCollections.isEmpty) {
@@ -84,7 +106,6 @@ Future<void> main(List<String> args) async {
 
   final generator = EntityClassGenerator(
     classSuffix: config.classSuffix,
-    generateReadonlySetters: config.generateReadonlySetters,
   );
 
   // Ensure output directory exists
@@ -110,10 +131,14 @@ Future<void> main(List<String> args) async {
       continue;
     }
 
+    final collectionOptions =
+        config.optionsForCollection(collection.collection);
+
     final source = generator.generateClassFile(
       collection: collection,
       fields: fields,
       relations: relations,
+      collectionOptions: collectionOptions,
     );
 
     final fileName = generator.generateFileName(collection.collection);
@@ -147,13 +172,9 @@ Future<void> main(List<String> args) async {
       "\nDone! Generated $generatedCount file(s)${config.dryRun ? " (dry run)" : ""}.");
 
   if (!config.dryRun && generatedCount > 0) {
-    print(
-        "\nNext steps:");
-    print(
-        "  1. Add an import for each generated file in your main file");
-    print(
-        "  2. Run: dart run build_runner build");
-    print(
-        "  3. Call initializeReflectable() in your main() function");
+    print("\nNext steps:");
+    print("  1. Add an import for each generated file in your main file");
+    print("  2. Run: dart run build_runner build");
+    print("  3. Call initializeReflectable() in your main() function");
   }
 }

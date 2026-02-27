@@ -1,0 +1,39 @@
+{
+  "_comment": "Directus API Manager - Entity Generator Options",
+  "_comment2": "Copy this file as 'directus_api_manager_options.json' and fill in your values.",
+  "_comment3": "Run: dart run directus_api_manager:generate",
+
+  "directus_url": "http://localhost:8055",
+
+  "_comment_auth": "Authentication: use either a static_token OR email+password",
+  "static_token": "your_static_token_here",
+
+  "_comment_auth_alt": "Alternative: use email and password instead of static_token",
+  "_email": "admin@example.com",
+  "_password": "your_password_here",
+
+  "_comment_output": "Relative path from project root where generated files will be written. Created automatically if it does not exist.",
+  "output_directory": "lib/directus_api_manager_models",
+
+  "_comment_suffix": "Suffix appended to each generated class name. Example: 'player' collection -> 'PlayerDirectusModel'",
+  "class_suffix": "DirectusModel",
+
+  "_comment_exclude": "List of collection names to exclude from generation. System collections (directus_*) are always excluded.",
+  "exclude_collections": [
+    "example_excluded_collection"
+  ],
+
+  "_comment_collections": "Per-collection options to customize the generated @CollectionMetadata annotation. Only add entries for collections that need non-default values. All fields are optional.",
+  "collections": {
+    "example_collection": {
+      "_comment": "defaultFields: fields to fetch by default (default: \"*\")",
+      "defaultFields": "id,title,status",
+
+      "_comment2": "webSocketEndPoint: custom WebSocket endpoint name (default: null, uses collection name)",
+      "webSocketEndPoint": "custom_ws_endpoint",
+
+      "_comment3": "defaultUpdateFields: fields to return after an update (default: null)",
+      "defaultUpdateFields": "id,title,status,date_updated"
+    }
+  }
+}

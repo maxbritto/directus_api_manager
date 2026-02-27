@@ -1,5 +1,6 @@
 import 'package:directus_api_manager/src/generator/directus_schema_fetcher.dart';
 import 'package:directus_api_manager/src/generator/field_type_mapper.dart';
+import 'package:directus_api_manager/src/generator/generator_config.dart';
 
 /// Generates Dart entity class source code from Directus schema information.
 class EntityClassGenerator {
@@ -15,10 +16,12 @@ class EntityClassGenerator {
   });
 
   /// Generates a complete Dart file for a Directus collection.
+  /// [collectionOptions] provides per-collection metadata for the annotation.
   String generateClassFile({
     required DirectusCollectionInfo collection,
     required List<DirectusFieldInfo> fields,
     required List<DirectusRelationInfo> relations,
+    CollectionOptions collectionOptions = const CollectionOptions(),
   }) {
     final buffer = StringBuffer();
     final collectionName = collection.collection;
@@ -38,8 +41,8 @@ class EntityClassGenerator {
 
     // Annotations
     buffer.writeln("@DirectusCollection()");
-    buffer.writeln(
-        '@CollectionMetadata(endpointName: "$collectionName")');
+    buffer.writeln(_buildCollectionMetadataAnnotation(
+        collectionName, collectionOptions));
 
     // Class declaration
     buffer.writeln("class $className extends DirectusItem {");
@@ -83,9 +86,11 @@ class EntityClassGenerator {
     final relationFields =
         fields.where((f) => f.isOneToMany || f.isManyToMany).toList();
     if (relationFields.isNotEmpty) {
-      buffer.writeln("  // --- Relations (not directly accessible as properties) ---");
+      buffer.writeln(
+          "  // --- Relations (not directly accessible as properties) ---");
       for (final field in relationFields) {
-        final relationType = field.isOneToMany ? "One-to-Many" : "Many-to-Many";
+        final relationType =
+            field.isOneToMany ? "One-to-Many" : "Many-to-Many";
         final relatedCollection = _findRelatedCollection(
             field.collection, field.field, relations);
         buffer.writeln(
@@ -98,6 +103,28 @@ class EntityClassGenerator {
     buffer.writeln("}");
 
     return buffer.toString();
+  }
+
+  /// Builds the `@CollectionMetadata(...)` annotation string.
+  String _buildCollectionMetadataAnnotation(
+      String collectionName, CollectionOptions options) {
+    final params = <String>[];
+    params.add('endpointName: "$collectionName"');
+
+    if (options.defaultFields != "*") {
+      params.add('defaultFields: "${options.defaultFields}"');
+    }
+
+    if (options.webSocketEndPoint != null) {
+      params.add('webSocketEndPoint: "${options.webSocketEndPoint}"');
+    }
+
+    if (options.defaultUpdateFields != null) {
+      params
+          .add('defaultUpdateFields: "${options.defaultUpdateFields}"');
+    }
+
+    return "@CollectionMetadata(${params.join(", ")})";
   }
 
   void _generateFieldProperty(

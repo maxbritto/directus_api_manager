@@ -1,5 +1,6 @@
 import 'package:directus_api_manager/src/generator/directus_schema_fetcher.dart';
 import 'package:directus_api_manager/src/generator/entity_class_generator.dart';
+import 'package:directus_api_manager/src/generator/generator_config.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -11,6 +12,15 @@ void main() {
       generateReadonlySetters: false,
     );
   });
+
+  DirectusFieldInfo _idField(String collection) => DirectusFieldInfo(
+        collection: collection,
+        field: "id",
+        type: "integer",
+        isPrimaryKey: true,
+        isReadonly: true,
+        isNullable: false,
+      );
 
   group("EntityClassGenerator", () {
     group("generateFileName", () {
@@ -29,16 +39,7 @@ void main() {
       test("generates header with collection name", () {
         final source = generator.generateClassFile(
           collection: DirectusCollectionInfo(collection: "player"),
-          fields: [
-            DirectusFieldInfo(
-              collection: "player",
-              field: "id",
-              type: "integer",
-              isPrimaryKey: true,
-              isReadonly: true,
-              isNullable: false,
-            ),
-          ],
+          fields: [_idField("player")],
           relations: [],
         );
 
@@ -49,16 +50,7 @@ void main() {
       test("generates correct import", () {
         final source = generator.generateClassFile(
           collection: DirectusCollectionInfo(collection: "player"),
-          fields: [
-            DirectusFieldInfo(
-              collection: "player",
-              field: "id",
-              type: "integer",
-              isPrimaryKey: true,
-              isReadonly: true,
-              isNullable: false,
-            ),
-          ],
+          fields: [_idField("player")],
           relations: [],
         );
 
@@ -66,40 +58,106 @@ void main() {
             contains("import 'package:directus_api_manager/directus_api_manager.dart';"));
       });
 
-      test("generates correct annotations", () {
-        final source = generator.generateClassFile(
-          collection: DirectusCollectionInfo(collection: "player"),
-          fields: [
-            DirectusFieldInfo(
-              collection: "player",
-              field: "id",
-              type: "integer",
-              isPrimaryKey: true,
-              isReadonly: true,
-              isNullable: false,
-            ),
-          ],
-          relations: [],
-        );
+      group("CollectionMetadata annotation", () {
+        test("generates default annotation with only endpointName", () {
+          final source = generator.generateClassFile(
+            collection: DirectusCollectionInfo(collection: "player"),
+            fields: [_idField("player")],
+            relations: [],
+          );
 
-        expect(source, contains("@DirectusCollection()"));
-        expect(
-            source, contains('@CollectionMetadata(endpointName: "player")'));
+          expect(source, contains("@DirectusCollection()"));
+          expect(
+              source, contains('@CollectionMetadata(endpointName: "player")'));
+        });
+
+        test("generates annotation with custom defaultFields", () {
+          final source = generator.generateClassFile(
+            collection: DirectusCollectionInfo(collection: "player"),
+            fields: [_idField("player")],
+            relations: [],
+            collectionOptions: const CollectionOptions(
+              defaultFields: "id,nickname,best_score",
+            ),
+          );
+
+          expect(
+              source,
+              contains(
+                  '@CollectionMetadata(endpointName: "player", defaultFields: "id,nickname,best_score")'));
+        });
+
+        test("generates annotation with webSocketEndPoint", () {
+          final source = generator.generateClassFile(
+            collection: DirectusCollectionInfo(collection: "player"),
+            fields: [_idField("player")],
+            relations: [],
+            collectionOptions: const CollectionOptions(
+              webSocketEndPoint: "player_ws",
+            ),
+          );
+
+          expect(
+              source,
+              contains(
+                  '@CollectionMetadata(endpointName: "player", webSocketEndPoint: "player_ws")'));
+        });
+
+        test("generates annotation with defaultUpdateFields", () {
+          final source = generator.generateClassFile(
+            collection: DirectusCollectionInfo(collection: "player"),
+            fields: [_idField("player")],
+            relations: [],
+            collectionOptions: const CollectionOptions(
+              defaultUpdateFields: "id,nickname",
+            ),
+          );
+
+          expect(
+              source,
+              contains(
+                  '@CollectionMetadata(endpointName: "player", defaultUpdateFields: "id,nickname")'));
+        });
+
+        test("generates annotation with all metadata params", () {
+          final source = generator.generateClassFile(
+            collection: DirectusCollectionInfo(collection: "player"),
+            fields: [_idField("player")],
+            relations: [],
+            collectionOptions: const CollectionOptions(
+              defaultFields: "id,nickname",
+              webSocketEndPoint: "player_ws",
+              defaultUpdateFields: "id,nickname,score",
+            ),
+          );
+
+          expect(source, contains('@CollectionMetadata(endpointName: "player"'));
+          expect(source, contains('defaultFields: "id,nickname"'));
+          expect(source, contains('webSocketEndPoint: "player_ws"'));
+          expect(
+              source, contains('defaultUpdateFields: "id,nickname,score"'));
+        });
+
+        test("does not add defaultFields when value is *", () {
+          final source = generator.generateClassFile(
+            collection: DirectusCollectionInfo(collection: "player"),
+            fields: [_idField("player")],
+            relations: [],
+            collectionOptions: const CollectionOptions(
+              defaultFields: "*",
+            ),
+          );
+
+          expect(
+              source, contains('@CollectionMetadata(endpointName: "player")'));
+          expect(source, isNot(contains("defaultFields")));
+        });
       });
 
       test("generates PascalCase class name from snake_case collection", () {
         final source = generator.generateClassFile(
           collection: DirectusCollectionInfo(collection: "game_session"),
-          fields: [
-            DirectusFieldInfo(
-              collection: "game_session",
-              field: "id",
-              type: "uuid",
-              isPrimaryKey: true,
-              isReadonly: true,
-              isNullable: false,
-            ),
-          ],
+          fields: [_idField("game_session")],
           relations: [],
         );
 
@@ -110,36 +168,21 @@ void main() {
       test("generates constructors", () {
         final source = generator.generateClassFile(
           collection: DirectusCollectionInfo(collection: "player"),
-          fields: [
-            DirectusFieldInfo(
-              collection: "player",
-              field: "id",
-              type: "integer",
-              isPrimaryKey: true,
-              isReadonly: true,
-              isNullable: false,
-            ),
-          ],
+          fields: [_idField("player")],
           relations: [],
         );
 
-        expect(source, contains("PlayerDirectusModel(super.rawReceivedData);"));
         expect(
-            source, contains("PlayerDirectusModel.newItem() : super.newItem();"));
+            source, contains("PlayerDirectusModel(super.rawReceivedData);"));
+        expect(source,
+            contains("PlayerDirectusModel.newItem() : super.newItem();"));
       });
 
       test("generates string property with getter and setter", () {
         final source = generator.generateClassFile(
           collection: DirectusCollectionInfo(collection: "player"),
           fields: [
-            DirectusFieldInfo(
-              collection: "player",
-              field: "id",
-              type: "integer",
-              isPrimaryKey: true,
-              isReadonly: true,
-              isNullable: false,
-            ),
+            _idField("player"),
             DirectusFieldInfo(
               collection: "player",
               field: "nickname",
@@ -155,22 +198,17 @@ void main() {
             contains('static const String nicknameKey = "nickname";'));
         expect(source,
             contains("String get nickname => getValue(forKey: nicknameKey);"));
-        expect(source,
-            contains("set nickname(String value) => setValue(value, forKey: nicknameKey);"));
+        expect(
+            source,
+            contains(
+                "set nickname(String value) => setValue(value, forKey: nicknameKey);"));
       });
 
       test("generates nullable integer property", () {
         final source = generator.generateClassFile(
           collection: DirectusCollectionInfo(collection: "player"),
           fields: [
-            DirectusFieldInfo(
-              collection: "player",
-              field: "id",
-              type: "integer",
-              isPrimaryKey: true,
-              isReadonly: true,
-              isNullable: false,
-            ),
+            _idField("player"),
             DirectusFieldInfo(
               collection: "player",
               field: "best_score",
@@ -185,22 +223,17 @@ void main() {
             contains('static const String bestScoreKey = "best_score";'));
         expect(source,
             contains("int? get bestScore => getValue(forKey: bestScoreKey);"));
-        expect(source,
-            contains("set bestScore(int? value) => setValue(value, forKey: bestScoreKey);"));
+        expect(
+            source,
+            contains(
+                "set bestScore(int? value) => setValue(value, forKey: bestScoreKey);"));
       });
 
       test("generates DateTime property with correct accessor", () {
         final source = generator.generateClassFile(
           collection: DirectusCollectionInfo(collection: "player"),
           fields: [
-            DirectusFieldInfo(
-              collection: "player",
-              field: "id",
-              type: "integer",
-              isPrimaryKey: true,
-              isReadonly: true,
-              isNullable: false,
-            ),
+            _idField("player"),
             DirectusFieldInfo(
               collection: "player",
               field: "created_at",
@@ -212,25 +245,19 @@ void main() {
           relations: [],
         );
 
-        expect(source,
-            contains("DateTime? get createdAt => getOptionalDateTime(forKey: createdAtKey);"));
+        expect(
+            source,
+            contains(
+                "DateTime? get createdAt => getOptionalDateTime(forKey: createdAtKey);"));
         // Readonly, so no setter
-        expect(source,
-            isNot(contains("set createdAt")));
+        expect(source, isNot(contains("set createdAt")));
       });
 
       test("skips primary key field in properties", () {
         final source = generator.generateClassFile(
           collection: DirectusCollectionInfo(collection: "player"),
           fields: [
-            DirectusFieldInfo(
-              collection: "player",
-              field: "id",
-              type: "integer",
-              isPrimaryKey: true,
-              isReadonly: true,
-              isNullable: false,
-            ),
+            _idField("player"),
             DirectusFieldInfo(
               collection: "player",
               field: "name",
@@ -250,14 +277,7 @@ void main() {
         final source = generator.generateClassFile(
           collection: DirectusCollectionInfo(collection: "player"),
           fields: [
-            DirectusFieldInfo(
-              collection: "player",
-              field: "id",
-              type: "integer",
-              isPrimaryKey: true,
-              isReadonly: true,
-              isNullable: false,
-            ),
+            _idField("player"),
             DirectusFieldInfo(
               collection: "player",
               field: "avatar",
@@ -275,24 +295,21 @@ void main() {
           ],
         );
 
-        expect(source,
-            contains("DirectusFile? get avatar => getOptionalDirectusFile(forKey: avatarKey);"));
-        expect(source,
-            contains("set avatar(DirectusFile? value) => setOptionalDirectusFile(value, forKey: avatarKey);"));
+        expect(
+            source,
+            contains(
+                "DirectusFile? get avatar => getOptionalDirectusFile(forKey: avatarKey);"));
+        expect(
+            source,
+            contains(
+                "set avatar(DirectusFile? value) => setOptionalDirectusFile(value, forKey: avatarKey);"));
       });
 
       test("generates M2O relation as String id", () {
         final source = generator.generateClassFile(
           collection: DirectusCollectionInfo(collection: "article"),
           fields: [
-            DirectusFieldInfo(
-              collection: "article",
-              field: "id",
-              type: "integer",
-              isPrimaryKey: true,
-              isReadonly: true,
-              isNullable: false,
-            ),
+            _idField("article"),
             DirectusFieldInfo(
               collection: "article",
               field: "author",
@@ -310,7 +327,8 @@ void main() {
           ],
         );
 
-        expect(source, contains("/// author (relation M2O -> directus_users)"));
+        expect(
+            source, contains("/// author (relation M2O -> directus_users)"));
         expect(source,
             contains("String? get author => getValue(forKey: authorKey);"));
       });
@@ -319,14 +337,7 @@ void main() {
         final source = generator.generateClassFile(
           collection: DirectusCollectionInfo(collection: "player"),
           fields: [
-            DirectusFieldInfo(
-              collection: "player",
-              field: "id",
-              type: "integer",
-              isPrimaryKey: true,
-              isReadonly: true,
-              isNullable: false,
-            ),
+            _idField("player"),
             DirectusFieldInfo(
               collection: "player",
               field: "games",
@@ -353,14 +364,7 @@ void main() {
         final source = generator.generateClassFile(
           collection: DirectusCollectionInfo(collection: "player"),
           fields: [
-            DirectusFieldInfo(
-              collection: "player",
-              field: "id",
-              type: "integer",
-              isPrimaryKey: true,
-              isReadonly: true,
-              isNullable: false,
-            ),
+            _idField("player"),
             DirectusFieldInfo(
               collection: "player",
               field: "date_updated",
@@ -372,8 +376,10 @@ void main() {
           relations: [],
         );
 
-        expect(source,
-            contains("DateTime? get dateUpdated => getOptionalDateTime(forKey: dateUpdatedKey);"));
+        expect(
+            source,
+            contains(
+                "DateTime? get dateUpdated => getOptionalDateTime(forKey: dateUpdatedKey);"));
         expect(source, isNot(contains("set dateUpdated")));
       });
 
@@ -386,14 +392,7 @@ void main() {
         final source = generatorWithSetters.generateClassFile(
           collection: DirectusCollectionInfo(collection: "player"),
           fields: [
-            DirectusFieldInfo(
-              collection: "player",
-              field: "id",
-              type: "integer",
-              isPrimaryKey: true,
-              isReadonly: true,
-              isNullable: false,
-            ),
+            _idField("player"),
             DirectusFieldInfo(
               collection: "player",
               field: "date_updated",
@@ -415,16 +414,7 @@ void main() {
 
         final source = customGenerator.generateClassFile(
           collection: DirectusCollectionInfo(collection: "player"),
-          fields: [
-            DirectusFieldInfo(
-              collection: "player",
-              field: "id",
-              type: "integer",
-              isPrimaryKey: true,
-              isReadonly: true,
-              isNullable: false,
-            ),
-          ],
+          fields: [_idField("player")],
           relations: [],
         );
 
@@ -515,11 +505,24 @@ void main() {
               relatedCollection: "directus_users",
             ),
           ],
+          collectionOptions: const CollectionOptions(
+            defaultFields: "id,title,content,published",
+            webSocketEndPoint: "blog_posts_ws",
+            defaultUpdateFields: "id,title,date_created",
+          ),
         );
 
         // Class structure
         expect(source,
             contains("class BlogPostDirectusModel extends DirectusItem"));
+
+        // Annotation with metadata
+        expect(source, contains('endpointName: "blog_post"'));
+        expect(source,
+            contains('defaultFields: "id,title,content,published"'));
+        expect(source, contains('webSocketEndPoint: "blog_posts_ws"'));
+        expect(source,
+            contains('defaultUpdateFields: "id,title,date_created"'));
 
         // String field
         expect(source, contains("String get title"));
@@ -544,7 +547,8 @@ void main() {
 
         // M2O relation
         expect(source, contains("String? get author"));
-        expect(source, contains("/// author (relation M2O -> directus_users)"));
+        expect(
+            source, contains("/// author (relation M2O -> directus_users)"));
 
         // Readonly DateTime
         expect(source, contains("DateTime? get dateCreated"));

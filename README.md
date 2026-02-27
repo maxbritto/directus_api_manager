@@ -64,59 +64,128 @@ You need a Directus server with your collections already configured, and either 
 - A **static token** (recommended) : create one in your Directus user settings
 - Or **email/password** credentials with access to the schema
 
-#### Generate the models
+#### 1. Create the options file
 
-Run the generator from your project folder :
+Create a `directus_api_manager_options.json` file at the root of your project. A documented template is available in the package : `directus_api_manager_options.template.json`.
 
-```bash
-dart run directus_api_manager:generate --url http://localhost:8055 --token YOUR_STATIC_TOKEN
+Minimal example with a static token :
+
+```json
+{
+  "directus_url": "http://localhost:8055",
+  "static_token": "your_static_token_here"
+}
 ```
 
-This will create one Dart file per collection in `lib/models/directus/` (the default output directory).
+Or with email/password :
 
-#### Full list of options
+```json
+{
+  "directus_url": "http://localhost:8055",
+  "email": "admin@example.com",
+  "password": "your_password_here"
+}
+```
+
+**Important :** Add this file to your `.gitignore` to avoid committing credentials :
+
+```
+directus_api_manager_options.json
+```
+
+#### 2. Run the generator
+
+```bash
+dart run directus_api_manager:generate
+```
+
+This will create one Dart file per collection in `lib/directus_api_manager_models/` (the default output directory). The directory is created automatically if it does not exist.
+
+CLI options :
 
 ```
 dart run directus_api_manager:generate [options]
 
 Options:
-  --url, -u          Directus server URL (required)
-  --token, -t        Static authentication token
-  --email, -e        Email for authentication (alternative to --token)
-  --password, -p     Password for authentication (use with --email)
-  --output, -o       Output directory (default: lib/models/directus)
-  --collection       Generate only for this collection (can be repeated)
-  --exclude          Exclude this collection (can be repeated)
-  --suffix           Class name suffix (default: DirectusModel)
+  --config, -c       Path to the options JSON file
+                     (default: directus_api_manager_options.json)
   --dry-run          Show what would be generated without writing files
   --help, -h         Show help message
 ```
 
-#### Examples
-
-Generate all collections :
-```bash
-dart run directus_api_manager:generate -u http://localhost:8055 -t my_token
-```
-
-Generate only specific collections :
-```bash
-dart run directus_api_manager:generate -u http://localhost:8055 -t my_token --collection player --collection game
-```
-
-Generate with email/password and custom output directory :
-```bash
-dart run directus_api_manager:generate -u http://localhost:8055 -e admin@example.com -p secret -o lib/src/models
-```
-
 Preview without writing files :
 ```bash
-dart run directus_api_manager:generate -u http://localhost:8055 -t my_token --dry-run
+dart run directus_api_manager:generate --dry-run
 ```
+
+Use a different config file :
+```bash
+dart run directus_api_manager:generate --config path/to/my_options.json
+```
+
+#### Options file reference
+
+All options with their default values :
+
+```json
+{
+  "directus_url": "http://localhost:8055",
+
+  "static_token": "your_token",
+
+  "output_directory": "lib/directus_api_manager_models",
+
+  "class_suffix": "DirectusModel",
+
+  "exclude_collections": ["collection_to_exclude"],
+
+  "collections": {
+    "player": {
+      "defaultFields": "id,nickname,best_score",
+      "webSocketEndPoint": "player_ws",
+      "defaultUpdateFields": "id,nickname"
+    }
+  }
+}
+```
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `directus_url` | string | _(required)_ | URL of your Directus server |
+| `static_token` | string | `null` | Static authentication token |
+| `email` | string | `null` | Email for login (alternative to `static_token`) |
+| `password` | string | `null` | Password for login (use with `email`) |
+| `output_directory` | string | `lib/directus_api_manager_models` | Folder path for generated files (relative to project root). Created automatically with intermediary folders if needed |
+| `class_suffix` | string | `DirectusModel` | Suffix for generated class names (e.g. `player` -> `PlayerDirectusModel`) |
+| `exclude_collections` | string[] | `[]` | List of Directus collection names to exclude from generation. System collections (`directus_*`) are always excluded |
+| `collections` | object | `{}` | Per-collection metadata overrides (see below) |
+
+**Per-collection options** (inside the `collections` object, keyed by collection name) :
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `defaultFields` | string | `"*"` | Fields to fetch by default. Maps to `@CollectionMetadata(defaultFields:)` |
+| `webSocketEndPoint` | string | `null` | Custom WebSocket endpoint name. Maps to `@CollectionMetadata(webSocketEndPoint:)` |
+| `defaultUpdateFields` | string | `null` | Fields to return after an update. Maps to `@CollectionMetadata(defaultUpdateFields:)` |
+
+You only need to add entries in `collections` for collections that need non-default values. Collections not listed will use the defaults.
 
 #### What gets generated
 
-For a `player` collection with fields `id`, `nickname` (string, required), `best_score` (integer, nullable), `avatar` (file), and `created_at` (timestamp, readonly), the generator produces :
+For a `player` collection with fields `id`, `nickname` (string, required), `best_score` (integer, nullable), `avatar` (file), and `created_at` (timestamp, readonly), and with the following options :
+
+```json
+{
+  "collections": {
+    "player": {
+      "defaultFields": "id,nickname,best_score",
+      "webSocketEndPoint": "player_ws"
+    }
+  }
+}
+```
+
+The generator produces :
 
 ```dart
 // GENERATED CODE - DO NOT MODIFY BY HAND
@@ -126,7 +195,7 @@ For a `player` collection with fields `id`, `nickname` (string, required), `best
 import 'package:directus_api_manager/directus_api_manager.dart';
 
 @DirectusCollection()
-@CollectionMetadata(endpointName: "player")
+@CollectionMetadata(endpointName: "player", defaultFields: "id,nickname,best_score", webSocketEndPoint: "player_ws")
 class PlayerDirectusModel extends DirectusItem {
   PlayerDirectusModel(super.rawReceivedData);
   PlayerDirectusModel.newItem() : super.newItem();
