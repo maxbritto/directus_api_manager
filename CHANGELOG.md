@@ -1,3 +1,7 @@
+## 1.16.1 - 2026/03/07
+
+- Added `http_parser` as a direct dependency to fix build errors when consumers resolve `http` < 1.6.0 (which doesn't re-export `MediaType`)
+
 ## 1.16.0 - 2026/02/14
 
 - Fixed `logoutDirectusUser` to fully clean up auth state in all scenarios:

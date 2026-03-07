@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:directus_api_manager/directus_api_manager.dart';
 import 'package:http/http.dart';
+// ignore: unnecessary_import
+import 'package:http_parser/http_parser.dart';
 
 abstract class IDirectusAPI {
   bool get hasLoggedInUser;
