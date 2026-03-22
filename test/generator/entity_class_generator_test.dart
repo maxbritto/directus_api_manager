@@ -421,6 +421,93 @@ void main() {
         expect(source, contains("class PlayerModel extends DirectusItem"));
       });
 
+      test("all setters have typed parameter declaration", () {
+        final source = generator.generateClassFile(
+          collection: DirectusCollectionInfo(collection: "player"),
+          fields: [
+            _idField("player"),
+            DirectusFieldInfo(
+              collection: "player",
+              field: "nickname",
+              type: "string",
+              isNullable: false,
+              isRequired: true,
+            ),
+            DirectusFieldInfo(
+              collection: "player",
+              field: "best_score",
+              type: "integer",
+              isNullable: true,
+            ),
+            DirectusFieldInfo(
+              collection: "player",
+              field: "rating",
+              type: "float",
+              isNullable: true,
+            ),
+            DirectusFieldInfo(
+              collection: "player",
+              field: "active",
+              type: "boolean",
+              isNullable: false,
+            ),
+            DirectusFieldInfo(
+              collection: "player",
+              field: "last_login",
+              type: "dateTime",
+              isNullable: true,
+            ),
+            DirectusFieldInfo(
+              collection: "player",
+              field: "avatar",
+              type: "uuid",
+              isNullable: true,
+              specialType: "file",
+            ),
+            DirectusFieldInfo(
+              collection: "player",
+              field: "team",
+              type: "uuid",
+              isNullable: true,
+              specialType: "m2o",
+            ),
+          ],
+          relations: [
+            DirectusRelationInfo(
+              collection: "player",
+              field: "avatar",
+              relatedCollection: "directus_files",
+            ),
+            DirectusRelationInfo(
+              collection: "player",
+              field: "team",
+              relatedCollection: "teams",
+            ),
+          ],
+        );
+
+        // Extract all setter lines from the generated source
+        final setterLines = source
+            .split('\n')
+            .where((line) => line.trimLeft().startsWith('set '))
+            .toList();
+
+        // Every setter must have a typed parameter: set name(Type value) =>
+        for (final line in setterLines) {
+          final trimmed = line.trim();
+          expect(
+            trimmed,
+            matches(RegExp(r'^set \w+\(\w[\w<>?]* value\) =>')),
+            reason: 'Setter has invalid syntax: $trimmed',
+          );
+        }
+
+        // Verify we actually found setters for the expected fields
+        expect(setterLines.length, 7,
+            reason:
+                'Expected 7 setters: nickname, bestScore, rating, active, lastLogin, avatar, team');
+      });
+
       test("generates complete file for realistic collection", () {
         final source = generator.generateClassFile(
           collection: DirectusCollectionInfo(collection: "blog_post"),
