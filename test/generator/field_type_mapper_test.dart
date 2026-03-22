@@ -203,7 +203,8 @@ void main() {
           typeInfo: typeInfo,
           keyConstantName: "nicknameKey",
         );
-        expect(code, 'nickname => setValue(nickname, forKey: nicknameKey)');
+        expect(code,
+            'nickname(String value) => setValue(value, forKey: nicknameKey)');
       });
 
       test("generates setOptionalDateTime setter", () {
@@ -216,7 +217,7 @@ void main() {
           keyConstantName: "createdAtKey",
         );
         expect(code,
-            'createdAt => setOptionalDateTime(createdAt, forKey: createdAtKey)');
+            'createdAt(DateTime? value) => setOptionalDateTime(value, forKey: createdAtKey)');
       });
 
       test("generates setOptionalDirectusFile setter", () {
@@ -230,7 +231,7 @@ void main() {
           keyConstantName: "avatarKey",
         );
         expect(code,
-            'avatar => setOptionalDirectusFile(avatar, forKey: avatarKey)');
+            'avatar(DirectusFile? value) => setOptionalDirectusFile(value, forKey: avatarKey)');
       });
 
       test("returns null for geometry setter", () {

@@ -125,16 +125,16 @@ class FieldTypeMapper {
     required FieldTypeInfo typeInfo,
     required String keyConstantName,
   }) {
+    final param = "${typeInfo.dartType} value";
     switch (typeInfo.getter) {
       case GetterMethod.getOptionalDateTime:
-        return "$propertyName => setOptionalDateTime($propertyName, forKey: $keyConstantName)";
       case GetterMethod.getDateTime:
-        return "$propertyName => setOptionalDateTime($propertyName, forKey: $keyConstantName)";
+        return "$propertyName($param) => setOptionalDateTime(value, forKey: $keyConstantName)";
       case GetterMethod.getDirectusFile:
       case GetterMethod.getOptionalDirectusFile:
-        return "$propertyName => setOptionalDirectusFile($propertyName, forKey: $keyConstantName)";
+        return "$propertyName($param) => setOptionalDirectusFile(value, forKey: $keyConstantName)";
       case GetterMethod.getValue:
-        return "$propertyName => setValue($propertyName, forKey: $keyConstantName)";
+        return "$propertyName($param) => setValue(value, forKey: $keyConstantName)";
       case GetterMethod.getDirectusGeometryType:
       case GetterMethod.getOptionalDirectusGeometryType:
         // No built-in setter for geometry types
