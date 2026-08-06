@@ -86,7 +86,7 @@ abstract class IDirectusAPI {
       String? contentType,
       required String filename,
       String? folder,
-      String storage = "local",
+      String? storage,
       Map<String, dynamic>? additionalFields});
   PreparedRequest prepareUpdateFileRequest(
       {required String fileId,
@@ -530,7 +530,7 @@ class DirectusAPI implements IDirectusAPI {
       String? contentType,
       required String filename,
       String? folder,
-      String storage = "local",
+      String? storage,
       Map<String, dynamic>? additionalFields}) {
     return PreparedRequest(
         request: _prepareMultipartFileRequest(
@@ -547,7 +547,7 @@ class DirectusAPI implements IDirectusAPI {
       {String? contentType,
       required String filename,
       String? folder,
-      String storage = "local",
+      String? storage,
       Map<String, dynamic>? additionalFields}) {
     final request = MultipartRequest(method, Uri.parse(url));
     if (title != null) {
@@ -558,7 +558,9 @@ class DirectusAPI implements IDirectusAPI {
       request.fields["folder"] = folder;
     }
 
-    request.fields["storage"] = storage;
+    if (storage != null) {
+      request.fields["storage"] = storage;
+    }
 
     if (additionalFields != null) {
       additionalFields.forEach((key, value) {

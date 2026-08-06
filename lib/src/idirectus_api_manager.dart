@@ -76,7 +76,7 @@ abstract class IDirectusApiManager {
       String? title,
       String? contentType,
       String? folder,
-      String storage = "local",
+      String? storage,
       Map<String, dynamic>? additionalFields});
   Future<DirectusFile> updateExistingFile(
       {required List<int> fileBytes,

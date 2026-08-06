@@ -1,3 +1,8 @@
+## 1.17.0 - 2026/05/15
+
+- **BREAKING**: File upload no longer defaults the `storage` field to `"local"`. The `storage` parameter on `uploadFile` / `prepareNewFileUploadRequest` is now `String?` with no default, and the `storage` field is omitted from the multipart request when not provided. This lets the Directus server pick the default storage location from its `STORAGE_LOCATIONS` configuration instead of forcing a location literally named `"local"`.
+  - **Migration**: If you were relying on the previous default and your server has a storage location named `"local"`, pass `storage: "local"` explicitly. Otherwise no change is needed — uploads now respect the server's default storage.
+
 ## 1.16.1 - 2026/03/07
 
 - Added `http_parser` as a direct dependency to fix build errors when consumers resolve `http` < 1.6.0 (which doesn't re-export `MediaType`)

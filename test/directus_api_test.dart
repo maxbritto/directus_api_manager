@@ -886,6 +886,22 @@ void main() {
       final multipartRequest = request as MultipartRequest;
       expect(multipartRequest.fields["extraField"], "extraValue");
     });
+
+    test("storage field is omitted by default so the server picks it", () {
+      final sut = makeAuthenticatedDirectusAPI();
+      final preparedRequest = sut.prepareNewFileUploadRequest(
+          fileBytes: [1, 2, 3], filename: "file.txt");
+      final multipartRequest = preparedRequest.request as MultipartRequest;
+      expect(multipartRequest.fields.containsKey("storage"), isFalse);
+    });
+
+    test("storage field is included when explicitly provided", () {
+      final sut = makeAuthenticatedDirectusAPI();
+      final preparedRequest = sut.prepareNewFileUploadRequest(
+          fileBytes: [1, 2, 3], filename: "file.txt", storage: "s3");
+      final multipartRequest = preparedRequest.request as MultipartRequest;
+      expect(multipartRequest.fields["storage"], "s3");
+    });
     test("File import from URL", () {
       final sut = makeAuthenticatedDirectusAPI();
       final request = sut.prepareFileImportRequest(
